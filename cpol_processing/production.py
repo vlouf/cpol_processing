@@ -4,8 +4,6 @@ CPOL Level 1b main production line.
 @title: CPOL_PROD_1b
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institution: Bureau of Meteorology
-@date: 21/08/2017
-@version: 0.999
 
 .. autosummary::
     :toctree: generated/
@@ -32,11 +30,11 @@ import matplotlib.pyplot as pl
 import pyart
 
 # Custom modules.
-from processing_codes import radar_codes
-from processing_codes import atten_codes
-from processing_codes import phase_codes
-from processing_codes import gridding_codes
-from processing_codes import hydro_codes
+from .processing_codes import radar_codes
+from .processing_codes import atten_codes
+from .processing_codes import phase_codes
+from .processing_codes import gridding_codes
+from .processing_codes import hydro_codes
 
 
 def correct_output_filename(outfilename):
