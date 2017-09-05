@@ -38,7 +38,7 @@ import pandas as pd  # Using only 1 function from pandas, should drop dependency
 
 # Custom modules.
 import cpol_processing
-from processing_codes import raijin_tools
+# from processing_codes import raijin_tools
 
 
 class TimeoutException(Exception):   # Custom exception class
@@ -56,6 +56,64 @@ def chunks(l, n):
     """
     for i in range(0, len(l), n):
         yield l[i:i + n]
+
+
+def get_files(inpath, date=None):
+    '''
+    Find the list of files with the supported extension in the given
+    path. Will recursively search in subdirectories too. If provided a date
+    (string or datetime object) it will only returns the files whose
+    filename matches.
+
+    Parameters
+    ==========
+        inpath: str
+            General path for the data.
+        date: str or datetime
+            Look for files with a specific date. If date is None, it will look
+            for all files with the supported extension.
+
+    Returns
+    =======
+        flist: list
+            List of files found.
+    '''
+
+    supported_extension = ['.nc', '.NC']
+    flist = []
+
+    # Check date type
+    if isinstance(date, datetime.datetime):
+        date = date.strftime("%Y%m%d")
+
+    for dirpath, dirnames, filenames in os.walk(inpath):
+        for filenames_slice in filenames:
+
+            # If no date provided, nothing new under the sun
+            if date is None:
+                pass  # pretends there was no if statement
+            elif date in filenames_slice:
+                pass  # pretends there was no if statement
+            else:
+                continue  # A date was given and we didn't found it.
+
+            file_extension = os.path.splitext(str(filenames_slice))[1]
+            # Get extension
+
+            if np.any(np.in1d(supported_extension, file_extension)):
+                # Check if file extension is in the list of supported ones
+                the_path = os.path.join(dirpath, filenames_slice)
+            else:  # If not test next file.
+                continue
+
+            # File does have the supported extension, we keep it for returning
+            # list
+            flist.append(the_path)
+
+    to_return = flist
+    # hello
+
+    return sorted(to_return)  # Type: List[str, ...]
 
 
 def production_line_manager(radar_file_name, outpath, outpath_grid, figure_path, sound_dir):
@@ -132,7 +190,7 @@ def production_line_multiproc(mydate):
         pass
 
     # List netcdf files in directory.
-    flist = raijin_tools.get_files(indir, mydate)
+    flist = get_files(indir, mydate)
     if len(flist) == 0:
         logger.error('%s empty.', indir)
         return None
