@@ -64,7 +64,7 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', kdp_name='KDP_GG', alpha
 
     zdr_corr = zdr + atten
 
-    atten_meta = {'data': atten_spec, 'units': 'dB/km',
+    atten_meta = {'data': atten_specific, 'units': 'dB/km',
                   'standard_name': 'specific_attenuation_zdr',
                   'long_name': 'Differential reflectivity specific attenuation'}
 
