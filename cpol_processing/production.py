@@ -291,6 +291,11 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
     logger.info('RHOHV corrected.')
 
+    # Compute texture velocity
+    txt_vel = radar_codes.velocity_texture(radar, "VEL")
+    radar.add_field("TVEL", txt_vel, replace_existing=True)
+    logger.info("Texture velocity calculated.")
+
     # Get filter
     gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR')
     logger.info('Filter initialized.')

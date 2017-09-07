@@ -327,16 +327,17 @@ def get_field_names():
     fields_names = [('VEL', 'velocity'),
                     ('VEL_CORR', 'corrected_velocity'),
                     ('VEL_UNFOLDED', 'region_dealias_velocity'),
+                    ('TVEL', "velocity_texture"),
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'corrected_reflectivity'),
                     ('RHOHV_CORR', 'RHOHV'),
                     ('RHOHV', 'cross_correlation_ratio'),
                     ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
-                    ('PHIDP', 'differential_phase'),                    
-                    ('PHIDP_GG', 'corrected_differential_phase'),                    
-                    ('KDP', 'specific_differential_phase'),                    
-                    ('KDP_GG', 'corrected_specific_differential_phase'),                    
+                    ('PHIDP', 'differential_phase'),
+                    ('PHIDP_GG', 'corrected_differential_phase'),
+                    ('KDP', 'specific_differential_phase'),
+                    ('KDP_GG', 'corrected_specific_differential_phase'),
                     ('WIDTH', 'spectrum_width'),
                     ('SNR', 'signal_to_noise_ratio'),
                     ('NCP', 'normalized_coherent_power')]
@@ -579,3 +580,31 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, vel_name='VEL', rh
     vdop_vel['description'] = "Velocity unfolded using Py-ART region based dealiasing algorithm."
 
     return vdop_vel
+
+
+def velocity_texture(radar, vel_name='VEL'):
+    """
+    Compute velocity texture using new Bobby Jackson function in Py-ART.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    vel_name: str
+        Name of the (original) Doppler velocity field.
+
+    Returns:
+    ========
+    vdop_vel: dict
+        Velocity texture.
+    """
+
+    try:
+        v_nyq_vel = radar.instrument_parameters['nyquist_velocity']['data'][0]
+    except (KeyError, IndexError):
+        vdop_art = radar.fields[vel_name]['data']
+        v_nyq_vel = np.max(np.abs(vdop_art))
+
+    vel_dict = pyart.retrieve.calculate_velocity_texture(radar, vel_name, nyq=velnyq)
+
+    return vel_dict
