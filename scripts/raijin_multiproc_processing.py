@@ -248,7 +248,7 @@ if __name__ == '__main__':
     # Output directory for CF/Radial PPIs
     OUTPATH = "/g/data2/rr5/vhl548/NEW_CPOL_1B"
     # Input directory for Radiosoundings
-    SOUND_DIR = "/g/data2/rr5/vhl548/soudings_netcdf/"
+    SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde"
     # Output directory for log files.
     LOG_FILE_PATH = os.path.expanduser('~')
     # Time in seconds for which each subprocess is allowed to live.
@@ -267,6 +267,11 @@ if __name__ == '__main__':
     if not os.path.isdir(OUTPATH):
         print("Output directory does not exist {}.".format(OUTPATH))
         sys.exit()
+    OUTPATH = os.path.join(OUTPATH, "PPI")
+    if not os.path.isdir(OUTPATH):
+        print("Creating PPI files directory: {}.".format(OUTPATH))
+        os.mkdir(OUTPATH)
+
     if not os.path.isdir(LOG_FILE_PATH):
         print("Creating log files directory: {}.".format(LOG_FILE_PATH))
         os.mkdir(LOG_FILE_PATH)
