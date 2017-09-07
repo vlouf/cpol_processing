@@ -222,7 +222,8 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
     return corr_zdr
 
 
-def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP', zdr_name="ZDR"):
+def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
+                  vel_texture_name="TVEL", zdr_name="ZDR"):
     """
     Basic filtering
 
@@ -241,6 +242,14 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
             Gate filter (excluding all bad data).
     """
     gf = pyart.filters.GateFilter(radar)
+
+    try:
+        tvel = radar.fields[vel_texture_name]['data']
+        noise_threshold = _get_noise_threshold(tvel)
+        gf.exclude_above(vel_texture_name, noise_threshold)
+    except Exception:
+        pass
+
     gf.exclude_outside(refl_name, -30, 90)
     gf.exclude_below(rhohv_name, 0.5)
     gf.exclude_outside(zdr_name, -3.0, 8.0)
@@ -255,38 +264,6 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
     return gf_despeckeld
-
-
-def get_texture(radar, vel_field_name='VEL'):
-    """
-    Compute the texture of the velocity field and its noise threshold.
-
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        vel_field_name: str
-            Doppler velocity field name.
-
-    Returns:
-    ========
-        filtered_data: array
-            Velocity texture.
-        noise_threshold: float
-            The noise threshold estimated.
-    """
-    nyq = radar.instrument_parameters['nyquist_velocity']['data'][0]
-    vel = radar.fields[vel_field_name]['data']
-    data = ndimage.filters.generic_filter(vel, pyart.util.interval_std, size=(4, 4), extra_arguments=(-nyq, nyq))
-    filtered_data = ndimage.filters.median_filter(data, size=(4, 4))
-
-    try:
-        noise_threshold = _get_noise_threshold(filtered_data)
-    except Exception:
-        noise_threshold = np.NaN
-        print("Could not determine the noise threshold")
-
-    return filtered_data, noise_threshold
 
 
 def filter_hardcoding(my_array, nuke_filter, bad=-9999):
