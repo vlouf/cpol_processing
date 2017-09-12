@@ -382,8 +382,8 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
 
     # Hardcode mask
     for mykey in radar.fields:
-        if mykey in ['temperature', 'height', 'signal_to_noise_ratio',
-                     'normalized_coherent_power', 'spectrum_width', 'total_power',
+        if mykey in ['temperature', 'height', 'signal_to_noise_ratio', "differential_reflectivity",
+                     'normalized_coherent_power', 'spectrum_width', 'total_power', "velocity",
                      'corrected_differential_phase', 'corrected_specific_differential_phase']:
             # Virgin fields that are left untouch.
             continue
