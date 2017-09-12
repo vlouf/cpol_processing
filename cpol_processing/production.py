@@ -124,8 +124,8 @@ def plot_figure_check(radar, gatefilter, outfilename, radar_date, figure_path):
         except KeyError:
             pass
 
-        gr.plot_ppi('differential_phase', ax=the_ax[6], gatefilter=gatefilter, vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], gatefilter=gatefilter, vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
         gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], gatefilter=gatefilter, vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
         gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)

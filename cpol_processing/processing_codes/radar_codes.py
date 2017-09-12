@@ -312,6 +312,7 @@ def get_field_names():
                     ('VEL_CORR', 'corrected_velocity'),
                     ('VEL_UNFOLDED', 'region_dealias_velocity'),
                     ('TVEL', "velocity_texture"),
+                    ('TPHI', "differential_phase_texture"),
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'corrected_reflectivity'),
                     ('RHOHV_CORR', 'RHOHV'),
