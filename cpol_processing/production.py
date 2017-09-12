@@ -109,7 +109,7 @@ def plot_figure_check(radar, gatefilter, outfilename, radar_date, figure_path):
     # Initializing figure.
     with pl.style.context('seaborn-paper'):
         gr = pyart.graph.RadarDisplay(radar)
-        fig, the_ax = pl.subplots(4, 3, figsize=(12, 13.5), sharex=True, sharey=True)
+        fig, the_ax = pl.subplots(5, 3, figsize=(12, 17), sharex=True, sharey=True)
         the_ax = the_ax.flatten()
         # Plotting reflectivity
         gr.plot_ppi('total_power', ax=the_ax[0])
@@ -118,24 +118,23 @@ def plot_figure_check(radar, gatefilter, outfilename, radar_date, figure_path):
 
         gr.plot_ppi('differential_reflectivity', ax=the_ax[3])
         gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[4], gatefilter=gatefilter)
-
         # Seasons 0910: No RHOHV available.
         try:
             gr.plot_ppi('cross_correlation_ratio', ax=the_ax[5], norm=colors.LogNorm(vmin=0.5, vmax=1.05))
         except KeyError:
             pass
 
-        gr.plot_ppi('corrected_differential_phase', ax=the_ax[6],
-                    gatefilter=gatefilter, vmin=-180, vmax=180,
-                    cmap=pyart.config.get_field_colormap('corrected_differential_phase'))
-        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[7],
-                    gatefilter=gatefilter, vmin=-5, vmax=10,
-                    cmap=pyart.config.get_field_colormap('specific_differential_phase'))
-        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[8], gatefilter=gatefilter)
+        gr.plot_ppi('differential_phase', ax=the_ax[6], gatefilter=gatefilter, vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], gatefilter=gatefilter, vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], gatefilter=gatefilter, vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
         gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter, cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-        gr.plot_ppi('D0', ax=the_ax[11], gatefilter=gatefilter, cmap='pyart_Wild25', vmin=0, vmax=20)
+        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[11], gatefilter=gatefilter)
+
+        gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
+        gr.plot_ppi('NW', ax=the_ax[13], gatefilter=gatefilter, cmap='cubehelix', vmin=0, vmax=8)
+        gr.plot_ppi('thurai_echo_classification', ax=the_ax[14], gatefilter=gatefilter, cmap='jet', vmin=0, vmax=3)
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
@@ -355,6 +354,10 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     radar.add_field("NW", nw_dict)
     logger.info('DSD estimated.')
 
+    # Merhala classification
+    strat_class = hydro_codes.merhala_class_convstrat(radar, dbz_name="DBZ_CORR")
+    radar.add_field("thurai_echo_classification", strat_class, replace_existing=True)
+
     # Removing fake and useless fields.
     if fake_ncp:
         radar.fields.pop('NCP')
@@ -405,7 +408,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
                 'temperature', 'corrected_differential_phase', 'corrected_specific_differential_phase',
                 'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
-                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity']
+                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity', 'thurai_echo_classification']
     for mykey in radar.fields.keys():
         if mykey not in goodkeys:
             unwanted_keys.append(mykey)

@@ -164,6 +164,51 @@ def liquid_ice_mass(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
     return liquid_water_mass, ice_mass
 
 
+def merhala_class_convstrat(radar, dbz_name="DBZ", rain_name="radar_estimated_rain_rate",
+                            d0_name="D0", nw_name="NW"):
+    """
+    Merhala Thurai's has a criteria for classifying rain either Stratiform
+    Convective or Mixed, based on the D-Zero value and the log10(Nw) value.
+    Merhala's rain classification is 1 for Stratiform, 2 for Convective and 3
+    for Mixed, 0 if no rain.
+
+    """
+    # Extracting data.
+    d0 = radar.fields[d0_name]['data']
+    nw = radar.fields[nw_name]['data']
+    rainrate = radar.fields[rain_name]['data']
+    dbz = radar.fields[dbz_name]['data']
+
+    classification = np.zeros_like(dbz, dtype=int)
+
+    # Invalid data
+    pos0 = (d0 >= -5) & (d0 <= 100)
+    pos1 = (nw >= -10) & (nw <= 100)
+
+    # Classification index.
+    indexa = nw - 6.4 + 1.7 * d0
+
+    # Classifying
+    classification[(indexa > 0.1) & (dbz > 20)] = 2
+    classification[(indexa > 0.1) & (dbz <= 20)] = 1
+    classification[indexa < -0.1] = 1
+    classification[(indexa >= -0.1) & (indexa <= 0.1)] = 3
+
+    # Masking invalid data.
+    classification = np.ma.masked_where(~pos0 | ~pos1 | dbz.mask, classification)
+
+    # Generate metada.
+    class_meta = {'data': classification,
+                  'standard_name': 'echo_classification',
+                  'long_name': 'Merhala Thurai echo classification',
+                  'valid_min': 0,
+                  'valid_max': 3,
+                  'comment_1': 'Convective-stratiform echo classification based on Merhala Thurai',
+                  'comment_2': '0 = Undefined, 1 = Stratiform, 2 = Convective, 3 = Mixed'}
+
+    return class_meta
+
+
 def rainfall_rate(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG', hydro_name='radar_echo_classification'):
     """
     Rainfall rate algorithm from csu_radartools.
