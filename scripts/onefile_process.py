@@ -63,7 +63,7 @@ if __name__ == '__main__':
     """
     # Input directory for Radiosoundings (use my other script, named caprica to
     # download and format these datas).
-    SOUND_DIR = "/g/data2/rr5/vhl548/soudings_netcdf/"
+    SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde/"
     # Output directory for verification figures.
     # Output directory for log files.
     LOG_FILE_PATH = "/short/kl02/vhl548/logfiles/"
