@@ -582,6 +582,6 @@ def velocity_texture(radar, vel_name='VEL'):
         vdop_art = radar.fields[vel_name]['data']
         v_nyq_vel = np.max(np.abs(vdop_art))
 
-    vel_dict = pyart.retrieve.calculate_velocity_texture(radar, vel_name, nyq=velnyq)
+    vel_dict = pyart.retrieve.calculate_velocity_texture(radar, vel_name, nyq=v_nyq_vel)
 
     return vel_dict
