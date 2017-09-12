@@ -58,14 +58,14 @@ def dsd_retrieval(radar, refl_name='DBZ', zdr_name='ZDR', kdp_name='KDP_GG'):
     d0 = np.ma.masked_where(np.isnan(d0), d0)
 
     nw_dict = {'data': Nw,
-               'units': 'unitless (log10)', 'long_name': 'Log10 of the Normalized Intercept Parameter',
-               'standard_name': 'Log10 of the Normalized Intercept Parameter',
-               'description': "NW retrieval based on Bringi et al. (2009). Mu can not be retrieved alongside NW and D0."}
+               'units': 'AU', 'long_name': 'Normalized Intercept Parameter',
+               'standard_name': 'Normalized Intercept Parameter',
+               'description': "Log10 of the NW. Retrieval based on Bringi et al. (2009)."}
 
     d0_dict = {'data': d0,
                'units': 'mm', 'long_name': 'Median Volume Diameter',
                'standard_name': 'Median Volume Diameter',
-               'description': "D0 retrieval based on Bringi et al. (2009). Mu can not be retrieved alongside NW and D0."}
+               'description': "D0 retrieval based on Bringi et al. (2009)."}
 
     return nw_dict, d0_dict
 
