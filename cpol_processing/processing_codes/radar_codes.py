@@ -223,7 +223,7 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
 
 
 def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
-                  vel_texture_name="TVEL", zdr_name="ZDR"):
+                  vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR"):
     """
     Basic filtering
 
@@ -247,6 +247,13 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         tvel = radar.fields[vel_texture_name]['data']
         noise_threshold = _get_noise_threshold(tvel)
         gf.exclude_above(vel_texture_name, noise_threshold)
+    except Exception:
+        pass
+
+    try:
+        tphi = radar.fields[phidp_texture_name]['data']
+        noise_threshold = _get_noise_threshold(tphi)
+        gf.exclude_above(phidp_texture_name, noise_threshold)
     except Exception:
         pass
 
@@ -320,6 +327,33 @@ def get_field_names():
                     ('NCP', 'normalized_coherent_power')]
 
     return fields_names
+
+
+def phidp_texture(radar, phidp_name='PHIDP'):
+    """
+    Compute velocity texture using new Bobby Jackson function in Py-ART.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    vel_name: str
+        Name of the (original) Doppler velocity field.
+
+    Returns:
+    ========
+    vdop_vel: dict
+        Velocity texture.
+    """
+
+    v_nyq_vel = radar.fields[phidp_name]['data'].max()
+
+    tphi_dict = pyart.retrieve.calculate_velocity_texture(radar, phidp_name, nyq=v_nyq_vel, check_nyq_uniform=False)
+    tphi_dict['long_name'] = "Differential phase texture"
+    tphi_dict['standard_name'] = "texture_of_differential_phase"
+    tphi_dict['units'] = "deg"
+
+    return tphi_dict
 
 
 def read_radar(radar_file_name):
