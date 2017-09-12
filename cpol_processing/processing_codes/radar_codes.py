@@ -401,28 +401,6 @@ def read_radar(radar_file_name):
     return radar
 
 
-def refold_velocity(radar, vel_name='VEL', phidp_name="PHIDP"):
-    phi = radar.fields[phidp_name]['data']
-    vel = deepcopy(radar.fields[vel_name]['data'])
-
-    try:
-        v_nyq_vel = radar.instrument_parameters['nyquist_velocity']['data'][0]
-    except (KeyError, IndexError):
-        v_nyq_vel = np.max(np.abs(vel))
-
-    pos = phi < -0.5
-    pos0 = vel > 0
-    pos1 = vel < 0
-    vel[(pos & pos0)] -= v_nyq_vel
-    vel[(pos & pos1)] += v_nyq_vel
-
-    is_refolded = False
-    if (np.sum(pos & pos0) > 0) or (np.sum(pos & pos1) > 0):
-        is_refolded = True
-
-    return vel, is_refolded
-
-
 def rename_radar_fields(radar):
     """
     Rename radar fields from their old name to the Py-ART default name.

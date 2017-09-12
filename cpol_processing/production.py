@@ -316,14 +316,6 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Giangrande estimated.')
 
-    # # Refold VELOCITY using unfolded PHIDP
-    # vel_refolded, is_refolded = radar_codes.refold_velocity(radar)
-    # # Check if velocity was refolded.
-    # if is_refolded:
-    #     logger.info('Doppler velocity has been refolded.')
-    #     radar.add_field_like('VEL', 'VEL_CORR', vel_refolded, replace_existing=True)
-    #     radar.fields['VEL_CORR']['long_name'] = "corrected_velocity_refolded"
-
     # Unfold VELOCITY
     # This function will check if a 'VEL_CORR' field exists anyway.
     vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, bobby_params=True, vel_name='VEL')
