@@ -290,6 +290,10 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
     logger.info('RHOHV corrected.')
 
+    # Correct ZDR
+    corr_zdr = radar_codes.correct_zdr(radar)
+    radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
+
     # Compute velocity texture.
     txt_vel = radar_codes.velocity_texture(radar, "VEL")
     radar.add_field("TVEL", txt_vel, replace_existing=True)
@@ -303,10 +307,6 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     # Get filter
     gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR')
     logger.info('Filter initialized.')
-
-    # Correct ZDR
-    corr_zdr = radar_codes.correct_zdr(radar)
-    radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # Giangrande PHIDP/KDP
     phidp_gg, kdp_gg = phase_codes.phidp_giangrande(radar)
