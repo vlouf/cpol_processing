@@ -223,7 +223,8 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
 
 
 def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
-                  vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR"):
+                  vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR",
+                  is_rhohv_fake=False):
     """
     Basic filtering
 
@@ -268,7 +269,8 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     except KeyError:
         pass
 
-    gf.include_above("RHOHV", 0.8)
+    if not is_rhohv_fake:
+        gf.include_above("RHOHV", 0.8)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
