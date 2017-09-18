@@ -311,7 +311,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     logger.info("PHIDP texture calculated.")
 
     # Get filter
-    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', is_rhohv_fake=fake_rhohv)
+    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', radar_date=None, is_rhohv_fake=fake_rhohv)
     logger.info('Filter initialized.')
 
     # Giangrande PHIDP/KDP
