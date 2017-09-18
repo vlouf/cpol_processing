@@ -209,7 +209,8 @@ def merhala_class_convstrat(radar, dbz_name="DBZ", rain_name="radar_estimated_ra
     return class_meta
 
 
-def rainfall_rate(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG', hydro_name='radar_echo_classification'):
+def rainfall_rate(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG',
+                  hydro_name='radar_echo_classification'):
     """
     Rainfall rate algorithm from csu_radartools.
 

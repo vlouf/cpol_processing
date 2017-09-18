@@ -273,8 +273,8 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     except KeyError:
         pass
 
-    gf.include_above("RHOHV", 0.8)
-    gf.exclude_outside(refl_name, -30, 90)
+    if not is_rhohv_fake:
+        gf.include_above("RHOHV", 0.8)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 

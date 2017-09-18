@@ -126,10 +126,12 @@ def plot_figure_check(radar, gatefilter, outfilename, radar_date, figure_path):
 
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
         gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], gatefilter=gatefilter, vmin=-2, vmax=5, cmap='pyart_Theodore16')
+        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], gatefilter=gatefilter,
+                    vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
         gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-        gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter, cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+        gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter,
+                    cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[11], gatefilter=gatefilter)
 
         gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
@@ -289,9 +291,10 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
         logger.info('SNR calculated.')
 
     # Correct RHOHV
-    rho_corr = radar_codes.correct_rhohv(radar)
-    radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
-    logger.info('RHOHV corrected.')
+    if not fake_rhohv:
+        rho_corr = radar_codes.correct_rhohv(radar)
+        radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
+        logger.info('RHOHV corrected.')
 
     # Correct ZDR
     corr_zdr = radar_codes.correct_zdr(radar)
@@ -308,7 +311,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     logger.info("PHIDP texture calculated.")
 
     # Get filter
-    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', radar_date=radar_start_date)
+    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', is_rhohv_fake=fake_rhohv)
     logger.info('Filter initialized.')
 
     # Giangrande PHIDP/KDP
