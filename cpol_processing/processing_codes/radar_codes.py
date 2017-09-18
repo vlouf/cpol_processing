@@ -223,7 +223,8 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
 
 
 def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
-                  vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR"):
+                  vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR",
+                  radar_date=None):
     """
     Basic filtering
 
@@ -257,9 +258,13 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     except Exception:
         pass
 
-    gf.exclude_outside(refl_name, -30, 90)
-    gf.exclude_below(rhohv_name, 0.5)
     gf.exclude_outside(zdr_name, -3.0, 8.0)
+
+    if radar_date is not None:
+        if radar_date.year not in [2006, 2007]:
+            gf.exclude_below(rhohv_name, 0.5)
+    else:
+        gf.exclude_below(rhohv_name, 0.5)
 
     try:
         # NCP field is not present for older seasons.
@@ -269,6 +274,7 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         pass
 
     gf.include_above("RHOHV", 0.8)
+    gf.exclude_outside(refl_name, -30, 90)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 

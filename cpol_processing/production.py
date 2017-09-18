@@ -134,7 +134,10 @@ def plot_figure_check(radar, gatefilter, outfilename, radar_date, figure_path):
 
         gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
         gr.plot_ppi('NW', ax=the_ax[13], gatefilter=gatefilter, cmap='cubehelix', vmin=0, vmax=8)
-        gr.plot_ppi('thurai_echo_classification', ax=the_ax[14], gatefilter=gatefilter, cmap='jet', vmin=0, vmax=3)
+        try:
+            gr.plot_ppi('thurai_echo_classification', ax=the_ax[14], gatefilter=gatefilter, cmap='jet', vmin=0, vmax=3)
+        except KeyError:
+            pass
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
@@ -305,7 +308,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     logger.info("PHIDP texture calculated.")
 
     # Get filter
-    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR')
+    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', radar_date=radar_start_date)
     logger.info('Filter initialized.')
 
     # Giangrande PHIDP/KDP
@@ -365,6 +368,14 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
 
     # Rename fields to pyart defaults.
     radar = radar_codes.rename_radar_fields(radar)
+
+    # Remove obsolete fields:
+    try:
+        radar.fields['Refl']
+        radar.fields.pop('Refl')
+        logger.info('Obsolete field Refl removed.')
+    except KeyError:
+        pass
 
     # Treatment is finished!
     end_time = time.time()
