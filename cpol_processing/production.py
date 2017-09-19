@@ -9,7 +9,7 @@ CPOL Level 1b main production line.
     :toctree: generated/
 
     correct_output_filename
-    plot_figure_check
+    plot_quicklook
     production_line
 """
 # Python Standard Library
@@ -65,7 +65,7 @@ def correct_output_filename(outfilename):
     return outfilename
 
 
-def plot_figure_check(radar, gatefilter, outfilename, radar_date, figure_path):
+def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
     """
     Plot figure of old/new radar parameters for checking purpose.
 
@@ -135,10 +135,7 @@ def plot_figure_check(radar, gatefilter, outfilename, radar_date, figure_path):
 
         gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
         gr.plot_ppi('NW', ax=the_ax[13], gatefilter=gatefilter, cmap='cubehelix', vmin=0, vmax=8)
-        try:
-            gr.plot_ppi('thurai_echo_classification', ax=the_ax[14], gatefilter=gatefilter, cmap='jet', vmin=0, vmax=3)
-        except KeyError:
-            pass
+        gr.plot_ppi('signal_to_noise_ratio', ax=the_ax[14])
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
@@ -357,8 +354,8 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     logger.info('DSD estimated.')
 
     # Merhala classification
-    strat_class = hydro_codes.merhala_class_convstrat(radar, dbz_name="DBZ_CORR")
-    radar.add_field("thurai_echo_classification", strat_class, replace_existing=True)
+    # strat_class = hydro_codes.merhala_class_convstrat(radar, dbz_name="DBZ_CORR")
+    # radar.add_field("thurai_echo_classification", strat_class, replace_existing=True)
 
     # Removing fake and useless fields.
     if fake_ncp:
@@ -387,7 +384,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     # Plot check figure.
     logger.info('Plotting figure')
     try:
-        plot_figure_check(radar, gatefilter, outfilename, radar_start_date, figure_path)
+        plot_quicklook(radar, gatefilter, outfilename, radar_start_date, figure_path)
     except Exception:
         logger.exception("Problem while trying to plot figure.")
     figure_time = time.time()
@@ -418,7 +415,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
                 'temperature', 'corrected_differential_phase', 'corrected_specific_differential_phase',
                 'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
-                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity', 'thurai_echo_classification']
+                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity']
     for mykey in radar.fields.keys():
         if mykey not in goodkeys:
             unwanted_keys.append(mykey)
