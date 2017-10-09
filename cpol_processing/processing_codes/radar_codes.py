@@ -224,7 +224,7 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
 
 def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
                   vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR",
-                  radar_date=None, is_rhohv_fake=fake_rhohv):
+                  radar_date=None, is_rhohv_fake=False):
     """
     Basic filtering
 
@@ -343,7 +343,7 @@ def get_field_names():
     return fields_names
 
 
-def phidp_giangrande(radar, refl_field='DBZ', ncp_field='NCP',
+def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                      rhv_field='RHOHV', phidp_field='PHIDP'):
     """
     Phase processing using the LP method in Py-ART. A LP solver is required,
@@ -368,10 +368,19 @@ def phidp_giangrande(radar, refl_field='DBZ', ncp_field='NCP',
         kdp_gg: dict
             Field dictionary containing recalculated differential phases.
     """
+    def _phidp_unfold(phidp, gatefilter):
+        phi = np.ma.masked_where(gatefilter.gate_excluded, phidp)
+        if phi.mean() > 0:
+            phidp_unfold = phi
+        else:
+            phidp_unfold = np.ma.masked_where(phi > 0, phi) + 360
+        return phidp_unfold
+
     phi = radar.fields[phidp_field]['data'].copy()
     # Unfolding phidp
-    phi = np.ma.masked_where(phi > 0, phi)
-    radar.add_field_like('PHIDP', "PHI_CORR", 360 + phi, replace_existing=True)
+    phidp_unfold = _phidp_unfold(phi, gatefilter)
+
+    radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
 
     # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,

@@ -311,7 +311,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     logger.info('Filter initialized.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar)
+    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter)
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"

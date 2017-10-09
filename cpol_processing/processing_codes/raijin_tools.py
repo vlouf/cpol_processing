@@ -66,14 +66,10 @@ def get_files(inpath, date=None):
             else:  # If not test next file.
                 continue
 
-            # File does have the supported extension, we keep it for returning
-            # list
+            # File does have the supported extension, we keep it for returninglist
             flist.append(the_path)
 
-    to_return = flist
-    # hello
-
-    return sorted(to_return)  # Type: List[str, ...]
+    return sorted(flist)  # Type: List[str, ...]
 
 
 def get_season(mydate):
