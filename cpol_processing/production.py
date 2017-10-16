@@ -220,10 +220,6 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     # !!! READING THE RADAR !!!
     radar = radar_codes.read_radar(radar_file_name)
 
-    # Check if radar scan is complete.
-    if not radar_codes.check_azimuth(radar):
-        logger.error("MAJOR ERROR: %s does not have a proper azimuth.", radar_file_name)
-        return None
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
         logger.error("MAJOR ERROR: %s reflectivity field is empty.", radar_file_name)
@@ -311,7 +307,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     logger.info('Filter initialized.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter)
+    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar)
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"

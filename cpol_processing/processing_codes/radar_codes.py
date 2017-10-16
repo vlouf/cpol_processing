@@ -112,32 +112,6 @@ def _get_noise_threshold(filtered_data):
     return noise_threshold
 
 
-def check_azimuth(radar):
-    """
-    Checking if radar has a proper azimuth field.  It's a minor problem
-    concerning less than 7 days in the entire dataset.
-
-    Parameter:
-    ===========
-        radar:
-            Py-ART radar structure.
-
-    Return:
-    =======
-        is_good: bool
-            True if radar has a proper azimuth field.
-    """
-    is_good = True
-    azi = radar.azimuth['data']
-    maxazi = np.max(azi)
-    minazi = np.min(azi)
-
-    if np.abs(maxazi - minazi) < 60:
-        is_good = False
-
-    return is_good
-
-
 def check_reflectivity(radar, refl_field_name='DBZ'):
     """
     Checking if radar has a proper reflectivity field.  It's a minor problem
@@ -343,7 +317,7 @@ def get_field_names():
     return fields_names
 
 
-def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
+def phidp_giangrande(radar, refl_field='DBZ', ncp_field='NCP',
                      rhv_field='RHOHV', phidp_field='PHIDP'):
     """
     Phase processing using the LP method in Py-ART. A LP solver is required,
@@ -368,17 +342,18 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         kdp_gg: dict
             Field dictionary containing recalculated differential phases.
     """
-    def _phidp_unfold(phidp, gatefilter):
-        phi = np.ma.masked_where(gatefilter.gate_excluded, phidp)
-        if phi.mean() > 0:
+    def _phidp_unfold(phi, dtime):
+        CPOL_DATE_PHIDP_FOLD = datetime.datetime(2013, 10, 1)
+        if dtime < CPOL_DATE_PHIDP_FOLD:
             phidp_unfold = phi
         else:
             phidp_unfold = np.ma.masked_where(phi > 0, phi) + 360
         return phidp_unfold
 
     phi = radar.fields[phidp_field]['data'].copy()
+    dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
     # Unfolding phidp
-    phidp_unfold = _phidp_unfold(phi, gatefilter)
+    phidp_unfold = _phidp_unfold(phi, dtime)
 
     radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
 
