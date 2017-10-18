@@ -321,7 +321,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     logger.info('Doppler velocity unfolded.')
 
     # Correct Attenuation ZH
-    atten_spec, zh_corr = atten_codes.correct_attenuation_zh_pyart(radar)
+    atten_spec, zh_corr = atten_codes.correct_attenuation_zh(radar)
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
     radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
     logger.info('Attenuation on reflectivity corrected.')
