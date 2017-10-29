@@ -258,6 +258,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
         rho['data'] = np.ones_like(radar.fields['DBZ']['data'])
         rho['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
         radar.add_field('RHOHV', rho)
+        radar.add_field('RHOHV_CORR', rho)
         fake_rhohv = True  # We delete this fake field later.
 
     if fake_rhohv:
