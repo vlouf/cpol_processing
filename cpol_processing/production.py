@@ -224,6 +224,10 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
         logger.error("MAJOR ERROR: %s reflectivity field is empty.", radar_file_name)
         return None
 
+    if not radar_codes.check_azimuth(radar):
+        logger.error("MAJOR ERROR: %s azimuth field is empty.", radar_file_name)
+        return None
+
     # Getting radar's date and time.
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     datestr = radar_start_date.strftime("%Y%m%d_%H%M")

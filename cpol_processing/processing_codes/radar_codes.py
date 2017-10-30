@@ -126,6 +126,31 @@ def _get_noise_threshold(filtered_data):
     return noise_threshold
 
 
+def check_azimuth(radar, refl_field_name='DBZ'):
+    """
+    Checking if radar has a proper reflectivity field.  It's a minor problem
+    concerning a few days in 2011 for CPOL.
+
+    Parameters:
+    ===========
+        radar:
+            Py-ART radar structure.
+        refl_field_name: str
+            Name of the reflectivity field.
+
+    Return:
+    =======
+        is_good: bool
+            True if radar has a proper azimuth field.
+    """
+    is_good = True
+    dbz = radar.fields[refl_field_name]['data']
+
+    if dbz.shape[0] < 360:
+        is_good = False
+
+    return is_good
+
 def check_reflectivity(radar, refl_field_name='DBZ'):
     """
     Checking if radar has a proper reflectivity field.  It's a minor problem
