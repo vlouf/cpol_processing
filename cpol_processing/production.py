@@ -292,15 +292,15 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     corr_zdr = radar_codes.correct_zdr(radar)
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
-    # Compute velocity texture.
-    txt_vel = radar_codes.velocity_texture(radar, "VEL")
-    radar.add_field("TVEL", txt_vel, replace_existing=True)
-    logger.info("Velocity texture calculated.")
-
-    # Compute PHIDP texture.
-    txt_phi = radar_codes.phidp_texture(radar, "PHIDP")
-    radar.add_field("TPHI", txt_phi, replace_existing=True)
-    logger.info("PHIDP texture calculated.")
+    # # Compute velocity texture.
+    # txt_vel = radar_codes.velocity_texture(radar, "VEL")
+    # radar.add_field("TVEL", txt_vel, replace_existing=True)
+    # logger.info("Velocity texture calculated.")
+    #
+    # # Compute PHIDP texture.
+    # txt_phi = radar_codes.phidp_texture(radar, "PHIDP")
+    # radar.add_field("TPHI", txt_phi, replace_existing=True)
+    # logger.info("PHIDP texture calculated.")
 
     # Get filter
     gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', radar_date=radar_start_date, is_rhohv_fake=fake_rhohv)

@@ -233,23 +233,8 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     # For CPOL, there is sometime an issue with older seasons.
     gf = pyart.filters.GateFilter(radar)
 
-    # Filtering using the velocity texture.
-    try:
-        tvel = radar.fields[vel_texture_name]['data']
-        noise_threshold = _get_noise_threshold(tvel)
-        gf.exclude_above(vel_texture_name, noise_threshold)
-    except Exception:
-        pass
-
-    # Filtering using the PHIDP texture.
-    try:
-        tphi = radar.fields[phidp_texture_name]['data']
-        noise_threshold = _get_noise_threshold(tphi)
-        gf.exclude_above(phidp_texture_name, noise_threshold)
-    except Exception:
-        pass
-
     gf.exclude_outside(zdr_name, -3.0, 8.0)
+    gf.exclude_outside(refl_name, -40.0, 80.0)
 
     if not is_rhohv_fake:
         if radar_date.year not in [2006, 2007]:
