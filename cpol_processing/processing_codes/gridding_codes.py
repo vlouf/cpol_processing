@@ -75,16 +75,22 @@ def gridding_radar_150km(radar, radar_date, outpath):
 
     # Output directory
     outdir_150km = os.path.join(outpath, "GRID_150km_2500m")
-    if not os.path.isdir(outdir_150km):
+    try:
         os.mkdir(outdir_150km)
+    except FileExistsError:
+        pass
 
     outdir_150km = os.path.join(outdir_150km, year)
-    if not os.path.isdir(outdir_150km):
+    try:
         os.mkdir(outdir_150km)
+    except FileExistsError:
+        pass
 
     outdir_150km = os.path.join(outdir_150km, datestr)
-    if not os.path.isdir(outdir_150km):
+    try:
         os.mkdir(outdir_150km)
+    except FileExistsError:
+        pass
 
     # Output file name
     outfilename = os.path.join(outdir_150km, fname)
@@ -134,16 +140,22 @@ def gridding_radar_70km(radar, radar_date, outpath):
 
     # Output directory
     outdir_70km = os.path.join(outpath, "GRID_70km_1000m")
-    if not os.path.isdir(outdir_70km):
+    try:
         os.mkdir(outdir_70km)
+    except FileExistsError:
+        pass
 
     outdir_70km = os.path.join(outdir_70km, year)
-    if not os.path.isdir(outdir_70km):
+    try:
         os.mkdir(outdir_70km)
+    except FileExistsError:
+        pass
 
     outdir_70km = os.path.join(outdir_70km, datestr)
-    if not os.path.isdir(outdir_70km):
+    try:
         os.mkdir(outdir_70km)
+    except FileExistsError:
+        pass
 
     # Output file name
     outfilename = os.path.join(outdir_70km, fname)
