@@ -45,6 +45,20 @@ import numpy as np
 from scipy import ndimage, signal
 
 
+def _mask_rhohv(radar, rhohv_name, tight=True):
+    nrays = radar.nrays
+    ngate = radar.ngates
+    if tight:
+        oneray = 1 - np.linspace(0.05, 0.5, ngate)
+    else:
+        oneray = 1 - np.linspace(0.05, 0.7, ngate)
+    emr = np.vstack([oneray for e in range(nrays)])
+    rho = radar.fields[rhohv_name]['data']
+    emr2 = np.zeros(rho.shape)
+    emr2[rho > emr] = 1
+    return emr2
+
+
 def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
     """
     Just in case pyart.retrieve.calculate_snr_from_reflectivity, I can calculate
@@ -216,19 +230,6 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
     """
-    def _mask_rhohv(radar, rhohv_name, tight=True):
-        nrays = radar.nrays
-        ngate = radar.ngates
-        if tight:
-            oneray = 1 - np.linspace(0.05, 0.5, ngate)
-        else:
-            oneray = 1 - np.linspace(0.05, 0.7, ngate)
-        emr = np.vstack([oneray for e in range(nrays)])
-        rho = radar.fields[rhohv_name]['data']
-        emr2 = np.zeros(rho.shape)
-        emr2[rho > emr] = 1
-        return emr2
-
     # For CPOL, there is sometime an issue with older seasons.
     gf = pyart.filters.GateFilter(radar)
 
@@ -364,17 +365,20 @@ def phidp_giangrande(radar, refl_field='DBZ', ncp_field='NCP',
     phidp_unfold = _phidp_unfold(phi, dtime)
 
     radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
+    emr2 = _mask_rhohv(radar, rhv_field, tight=True)
+    radar.add_field_like("NCP", "EMR2", emr2)
 
     # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
                                                    LP_solver='cylp',
                                                    refl_field=refl_field,
-                                                   ncp_field=ncp_field,
+                                                   ncp_field="EMR2",
                                                    rhv_field=rhv_field,
                                                    phidp_field="PHI_CORR")
 
     # Removing tmp field
     radar.fields.pop("PHI_CORR")
+    radar.fields.pop("EMR2")
 
     return phidp_gg, kdp_gg
 
@@ -427,8 +431,7 @@ def read_radar(radar_file_name):
         else:
             radar = pyart.io.read(radar_file_name)
     except Exception:
-        logger.error("MAJOR ERROR: unable to read input file {}".format(radar_file_name))
-        return None
+        raise
 
     # SEAPOL hack change fields key.
     try:
