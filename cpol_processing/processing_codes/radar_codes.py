@@ -237,12 +237,13 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     gf.exclude_outside(zdr_name, -3.0, 8.0)
 
     # For CPOL, there is sometime an issue with older seasons.
-    try:
-        if radar_date.year not in [2006, 2007]:
+    if not is_rhohv_fake:
+        try:
+            if radar_date.year not in [2006, 2007]:
+                gf.exclude_below(rhohv_name, 0.5)
+        except Exception:
+            # In case radar_date is None or not a datetime.
             gf.exclude_below(rhohv_name, 0.5)
-    except Exception:
-        # In case radar_date is None or not a datetime.
-        gf.exclude_below(rhohv_name, 0.5)
 
     try:
         # NCP field is not present for older seasons.
