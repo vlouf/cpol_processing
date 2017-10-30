@@ -350,10 +350,6 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     radar.add_field("NW", nw_dict)
     logger.info('DSD estimated.')
 
-    # Merhala classification
-    # strat_class = hydro_codes.merhala_class_convstrat(radar, dbz_name="DBZ_CORR")
-    # radar.add_field("thurai_echo_classification", strat_class, replace_existing=True)
-
     # Removing fake and useless fields.
     if fake_ncp:
         radar.fields.pop('NCP')
