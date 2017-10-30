@@ -366,7 +366,7 @@ def phidp_giangrande(radar, refl_field='DBZ', ncp_field='NCP',
 
     radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
     emr2 = _mask_rhohv(radar, rhv_field, tight=True)
-    radar.add_field_like("NCP", "EMR2", emr2)
+    radar.add_field_like(ncp_field, "EMR2", emr2)
 
     # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
