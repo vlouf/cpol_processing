@@ -115,7 +115,7 @@ def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
         gr.plot_ppi('corrected_reflectivity', ax=the_ax[1], gatefilter=gatefilter)
         gr.plot_ppi('radar_echo_classification', ax=the_ax[2], gatefilter=gatefilter)
 
-        gr.plot_ppi('differential_reflectivity', ax=the_ax[3])
+        gr.plot_ppi('specific_attenuation_reflectivity', ax=the_ax[3], cmap="pyart_Carbone17", vmin=0, vmax=10)
         gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[4], gatefilter=gatefilter)
         # Seasons 0910: No RHOHV available.
         try:
@@ -125,8 +125,7 @@ def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
 
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
         gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], gatefilter=gatefilter,
-                    vmin=-2, vmax=5, cmap='pyart_Theodore16')
+        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
         gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter,
