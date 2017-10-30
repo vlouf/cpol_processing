@@ -216,6 +216,20 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
     """
+    def _mask_rhohv(radar, rhohv_name, tight=True):
+        nrays = radar.nrays
+        ngate = radar.ngates
+        if tight:
+            oneray = 1 - np.linspace(0.05, 0.5, ngate)
+        else:
+            oneray = 1 - np.linspace(0.05, 0.7, ngate)
+        emr = np.vstack([oneray for e in range(nrays)])
+        rho = radar.fields[rhohv_name]['data']
+        emr2 = np.zeros(rho.shape)
+        emr2[rho > emr] = 1
+        return emr2
+
+    # For CPOL, there is sometime an issue with older seasons.
     gf = pyart.filters.GateFilter(radar)
 
     # Filtering using the velocity texture.
@@ -236,14 +250,14 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
 
     gf.exclude_outside(zdr_name, -3.0, 8.0)
 
-    # For CPOL, there is sometime an issue with older seasons.
     if not is_rhohv_fake:
-        try:
-            if radar_date.year not in [2006, 2007]:
-                gf.exclude_below(rhohv_name, 0.5)
-        except Exception:
-            # In case radar_date is None or not a datetime.
-            gf.exclude_below(rhohv_name, 0.5)
+        if radar_date.year not in [2006, 2007]:
+            emr2 = _mask_rhohv(radar, rhohv_name, True)
+        else:
+            emr2 = _mask_rhohv(radar, rhohv_name, False)
+        radar.add_field_like(rhohv_name, "EMR2", emr2, replace_existing=True)
+        gf.exclude_not_equal("EMR2", 1)
+        radar.fields.pop('EMR2')
 
     try:
         # NCP field is not present for older seasons.
@@ -253,8 +267,8 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         pass
 
     # Checking if RHOHV is fake.
-    if not is_rhohv_fake:
-        gf.include_above("RHOHV", 0.8)
+    # if not is_rhohv_fake:
+    #     gf.include_above("RHOHV", 0.9)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
