@@ -259,13 +259,6 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         gf.exclude_not_equal("EMR2", 1)
         radar.fields.pop('EMR2')
 
-    try:
-        # NCP field is not present for older seasons.
-        radar.fields[ncp_name]
-        gf.exclude_below(ncp_name, 0.3)
-    except KeyError:
-        pass
-
     # Checking if RHOHV is fake.
     # if not is_rhohv_fake:
     #     gf.include_above("RHOHV", 0.9)
