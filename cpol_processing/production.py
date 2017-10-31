@@ -183,7 +183,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         gr.plot_ppi('corrected_reflectivity', ax=the_ax[1], gatefilter=gatefilter)
         gr.plot_ppi('radar_echo_classification', ax=the_ax[2], gatefilter=gatefilter)
 
-        gr.plot_ppi('specific_attenuation_reflectivity', ax=the_ax[3], cmap="pyart_Carbone17", vmin=0, vmax=10)
+        gr.plot_ppi('differential_reflectivity', ax=the_ax[3])
         gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[4], gatefilter=gatefilter)
         # Seasons 0910: No RHOHV available.
         try:
@@ -369,7 +369,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('Filter initialized.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar)
+    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter)
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
