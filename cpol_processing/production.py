@@ -40,7 +40,7 @@ from .processing_codes import hydro_codes
 logger = logging.getLogger()
 
 
-def process_and_save(radar_file_name, sound_dir, outpath, outpath_grid, figure_path):
+def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir):
     """
     Call processing function and write data.
 
