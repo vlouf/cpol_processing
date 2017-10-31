@@ -233,8 +233,15 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     ===========
         radar_file_name: str
             Name of the input radar file.
+        sound_dir: str
+            Path to radiosounding directory.
         figure_path: str
             Path for saving figures.
+
+    Returns:
+    ========
+        radar: Object
+            Py-ART radar structure.
 
     PLAN:
     =====
@@ -381,7 +388,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
         pass
 
     # Correct Attenuation ZH
-    atten_spec, zh_corr = atten_codes.correct_attenuation_zh(radar)
+    atten_spec, zh_corr = atten_codes.correct_attenuation_zh_pyart(radar)
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
     radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
     logger.info('Attenuation on reflectivity corrected.')
