@@ -52,7 +52,7 @@ def main():
     print("")
 
     # Serious stuffs begin here.
-    cpol_processing.production_line(INFILE, OUTPATH, OUTPATH_GRID, FIGURE_CHECK_PATH, SOUND_DIR)
+    cpol_processing.get_processed_radar(INFILE, OUTPATH, OUTPATH_GRID, FIGURE_CHECK_PATH, SOUND_DIR)
 
     return None
 

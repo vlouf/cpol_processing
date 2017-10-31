@@ -136,8 +136,8 @@ def production_line_manager(radar_file_name, outpath, outpath_grid, figure_path,
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(TIME_BEFORE_DEATH)
     try:
-        cpol_processing.production_line(radar_file_name, outpath, outpath_grid,
-                                        figure_path, sound_dir)
+        cpol_processing.get_processed_radar(radar_file_name, outpath, outpath_grid,
+                                            figure_path, sound_dir)
     except TimeoutException:
         # Treatment time was too long.
         logging.error("Too much time taken to treat %s, killing process.", shortname)
