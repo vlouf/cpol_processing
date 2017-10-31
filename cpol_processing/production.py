@@ -91,8 +91,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
 
     # Generate output file name.
+    outfilename = os.path.basename(radar_file_name)
     if "cfrad" in outfilename:
-        outfilename = os.path.basename(radar_file_name)
         outfilename = correct_output_filename(outfilename)
     else:
         outfilename = "cfrad." + radar_start_date.strftime("%Y%m%d_%H%M") + ".nc"
