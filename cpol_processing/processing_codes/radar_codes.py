@@ -371,13 +371,16 @@ def phidp_giangrande(radar, refl_field='DBZ', ncp_field='NCP',
 
     phi = radar.fields[phidp_field]['data'].copy()
     dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-    # Unfolding phidp
-    phidp_unfold = _phidp_unfold(phi, dtime)
 
-    radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
     emr2 = _mask_rhohv(radar, rhv_field, tight=True)
     radar.add_field_like(ncp_field, "EMR2", emr2)
 
+    # Unfolding phidp
+    phidp_unfold = _phidp_unfold(phi, dtime)
+    phidp_unfold[emr2 == 0] = np.NaN
+    phidp_unfold = np.ma.masked_invalid(phidp_unfold)
+
+    radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
     # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
                                                    LP_solver='cylp',
