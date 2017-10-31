@@ -36,36 +36,106 @@ from .processing_codes import gridding_codes
 from .processing_codes import hydro_codes
 
 
-def correct_output_filename(outfilename):
+# Get logger.
+logger = logging.getLogger()
+
+
+def get_processed_radar(radar_file_name, sound_dir, outpath, outpath_grid, figure_path):
     """
-    Some level 0 and/or level 1a treatment did not generate the right file names.
-    Correcting these here.
+    Call processing function and write data.
 
-    Parameter:
-    ==========
-    outfilename: str
-        Output file name.
-
-    Returns:
-    ========
-    outfilename: str
-        Corrected output file name.
+    Parameters:
+    ===========
+        radar_file_name: str
+            Name of the input radar file.
+        outpath: str
+            Path for saving output data.
+        outpath_grid: str
+            Path for saving gridded data.
+        figure_path: str
+            Path for saving figures.
+        sound_dir: str
+            Path to radiosoundings directory.
     """
-    outfilename = outfilename.replace("level1a", "level1b")
+    def correct_output_filename(outfilename):
+        """
+        Some level 0 and/or level 1a treatment did not generate the right file names.
+        Correcting these here.
 
-    # Correct occasional missing suffix.
-    if "level1b" not in outfilename:
-        outfilename = outfilename.replace(".nc", "_level1b.nc")
-    # Correct an occasional mislabelling from RadX.
-    if "SURV" in outfilename:
-        outfilename = outfilename.replace("SURV", "PPI")
-    if "SUR" in outfilename:
-        outfilename = outfilename.replace("SUR", "PPI")
+        Parameter:
+        ==========
+        outfilename: str
+            Output file name.
 
-    return outfilename
+        Returns:
+        ========
+        outfilename: str
+            Corrected output file name.
+        """
+        outfilename = outfilename.replace("level1a", "level1b")
+
+        # Correct occasional missing suffix.
+        if "level1b" not in outfilename:
+            outfilename = outfilename.replace(".nc", "_level1b.nc")
+        # Correct an occasional mislabelling from RadX.
+        if "SURV" in outfilename:
+            outfilename = outfilename.replace("SURV", "PPI")
+        if "SUR" in outfilename:
+            outfilename = outfilename.replace("SUR", "PPI")
+
+        return outfilename
+
+    tick = time.time()
+    radar = production_line(radar_file_name, sound_dir, figure_path)
+
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
+
+    # Generate output file name.
+    if "cfrad" in outfilename:
+        outfilename = os.path.basename(radar_file_name)
+        outfilename = correct_output_filename(outfilename)
+    else:
+        outfilename = "cfrad." + radar_start_date.strftime("%Y%m%d_%H%M") + ".nc"
+
+    outfilename = os.path.join(outpath, outfilename)
+
+    # Check if output file already exists.
+    if os.path.isfile(outfilename):
+        logger.error('Output file already exists for: %s.', outfilename)
+        return None
+
+    # Write results
+    pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
+
+    # Deleting all unwanted keys for gridded product.
+    logger.info("Gridding started.")
+    unwanted_keys = []
+    goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
+                'temperature', 'corrected_differential_phase', 'corrected_specific_differential_phase',
+                'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
+                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity']
+    for mykey in radar.fields.keys():
+        if mykey not in goodkeys:
+            unwanted_keys.append(mykey)
+    for mykey in unwanted_keys:
+        radar.fields.pop(mykey)
+
+    try:
+        # Gridding (and saving)
+        gridding_codes.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
+        gridding_codes.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
+        logger.info('Gridding done.')
+    except Exception:
+        logging.error('Problem while gridding.')
+        raise
+
+    # Processing finished!
+    logger.info('%s processed in  %0.2f s.', os.path.basename(radar_file_name), (time.time() - tick))
+
+    return None
 
 
-def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
+def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     """
     Plot figure of old/new radar parameters for checking purpose.
 
@@ -75,11 +145,12 @@ def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
             Py-ART radar structure.
         gatefilter:
             The Gate filter.
-        outfilename: str
-            Name given to the output netcdf data file.
         radar_date: datetime
             Datetime stucture of the radar data.
     """
+    if figure_path is None:
+        logger.error("No figure plotted.")
+        return None
     # Extracting year and date.
     year = str(radar_date.year)
     datestr = radar_date.strftime("%Y%m%d")
@@ -99,11 +170,8 @@ def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
             pass
 
     # Checking if figure already exists.
-    outfile = os.path.basename(outfilename)
-    outfile = outfile[:-2] + "png"
+    outfile = radar_date.strftime("%Y%m%d_%H%M") + ".png"
     outfile = os.path.join(outfile_path, outfile)
-    # if os.path.isfile(outfile):
-    #     return None
 
     # Initializing figure.
     with pl.style.context('seaborn-paper'):
@@ -127,9 +195,12 @@ def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
         gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
         gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
-        gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-        gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter,
-                    cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+        try:
+            gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter,
+                        cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+        except KeyError:
+            pass
         gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[11], gatefilter=gatefilter)
 
         gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
@@ -151,7 +222,7 @@ def plot_quicklook(radar, gatefilter, outfilename, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_dir):
+def production_line(radar_file_name, sound_dir, figure_path=None):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -162,18 +233,11 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
     ===========
         radar_file_name: str
             Name of the input radar file.
-        outpath: str
-            Path for saving output data.
-        outpath_grid: str
-            Path for saving gridded data.
         figure_path: str
             Path for saving figures.
-        sound_dir: str
-            Path to radiosoundings directory.
 
     PLAN:
     =====
-        01/ Get Logger.
         02/ Generate output file name. Check if output file already exists.
         03/ Read input radar file.
         04/ Check if radar file OK (no problem with azimuth and reflectivity).
@@ -196,23 +260,7 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
         21/ Rename fields to pyart standard names.
         22/ Plotting figure quicklooks.
         23/ Hardcoding gatefilter.
-        24/ Writing output cf/radial file.
-        25/ Writing output gridded data.
     """
-    # Get logger.
-    logger = logging.getLogger()
-    # Generate output file name.
-    outfilename = os.path.basename(radar_file_name)
-    if "cfrad" in outfilename:
-        outfilename = correct_output_filename(outfilename)
-
-    outfilename = os.path.join(outpath, outfilename)
-
-    # Check if output file already exists.
-    if os.path.isfile(outfilename):
-        logger.error('Output file already exists for: %s.', outfilename)
-        return None
-
     # Start chronometer.
     start_time = time.time()
 
@@ -320,9 +368,14 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
 
     # Unfold VELOCITY
     # This function will check if a 'VEL_CORR' field exists anyway.
-    vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, bobby_params=True, vel_name='VEL')
-    radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-    logger.info('Doppler velocity unfolded.')
+    try:
+        radar.fields['VEL']
+        vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, bobby_params=True, vel_name='VEL')
+        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
+        logger.info('Doppler velocity unfolded.')
+    except KeyError:
+        logger.info("No velocity field found.")
+        pass
 
     # Correct Attenuation ZH
     atten_spec, zh_corr = atten_codes.correct_attenuation_zh(radar)
@@ -374,13 +427,13 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
 
     # Treatment is finished!
     end_time = time.time()
-    logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(outfilename),
+    logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name),
                 (end_time - start_time))
 
     # Plot check figure.
     logger.info('Plotting figure')
     try:
-        plot_quicklook(radar, gatefilter, outfilename, radar_start_date, figure_path)
+        plot_quicklook(radar, gatefilter, radar_start_date, figure_path)
     except Exception:
         logger.exception("Problem while trying to plot figure.")
     figure_time = time.time()
@@ -394,40 +447,10 @@ def production_line(radar_file_name, outpath, outpath_grid, figure_path, sound_d
             # Virgin fields that are left untouch.
             continue
         else:
-            radar.fields[mykey]['data'] = radar_codes.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
+            try:
+                radar.fields[mykey]['data'] = radar_codes.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
+            except KeyError:
+                continue
     logger.info('Hardcoding gatefilter to Fields done.')
 
-    # Write results
-    pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
-    save_time = time.time()
-    logger.info('%s saved in %0.2f s.', os.path.basename(outfilename), (save_time - figure_time))
-
-    # Free memory from everything useless before gridding
-    gc.collect()
-
-    # Deleting all unwanted keys for gridded product.
-    logger.info("Gridding started.")
-    unwanted_keys = []
-    goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
-                'temperature', 'corrected_differential_phase', 'corrected_specific_differential_phase',
-                'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
-                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity']
-    for mykey in radar.fields.keys():
-        if mykey not in goodkeys:
-            unwanted_keys.append(mykey)
-    for mykey in unwanted_keys:
-        radar.fields.pop(mykey)
-
-    try:
-        # Gridding (and saving)
-        gridding_codes.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
-        gridding_codes.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
-        logger.info('Gridding done in %0.2f s.', (time.time() - save_time))
-    except Exception:
-        logging.error('Problem while gridding.')
-        raise
-
-    # Processing finished!
-    logger.info('%s processed in  %0.2f s.', os.path.basename(outfilename), (time.time() - start_time))
-
-    return None
+    return radar

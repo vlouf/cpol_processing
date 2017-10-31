@@ -48,10 +48,9 @@ from scipy import ndimage, signal
 def _mask_rhohv(radar, rhohv_name, tight=True):
     nrays = radar.nrays
     ngate = radar.ngates
-    if tight:
-        oneray = 1 - np.linspace(0.05, 0.5, ngate)
-    else:
-        oneray = 1 - np.linspace(0.05, 0.7, ngate)
+    oneray = np.zeros((ngate))
+    oneray[:(ngate // 2)] = 1 - np.linspace(0.05, 0.5, ngate // 2)
+    oneray[(ngate // 2):] = 0.5
     emr = np.vstack([oneray for e in range(nrays)])
     rho = radar.fields[rhohv_name]['data']
     emr2 = np.zeros(rho.shape)
@@ -150,6 +149,7 @@ def check_azimuth(radar, refl_field_name='DBZ'):
         is_good = False
 
     return is_good
+
 
 def check_reflectivity(radar, refl_field_name='DBZ'):
     """
@@ -448,10 +448,18 @@ def read_radar(radar_file_name):
         radar.fields['DBZ']
     except KeyError:
         myfields = [('NCPH', "NCP"),
+                    ('normalized_coherent_power', "NCP"),
                     ('DBZH', "DBZ"),
+                    ('reflectivity', "DBZ"),
                     ('WIDTHH', "WIDTH"),
+                    ('sprectrum_width', "WIDTH"),
                     ('UH', "DBZ"),
-                    ('VELH', "VEL")]
+                    ('total_power', "DBZ"),
+                    ('VELH', "VEL"),
+                    ('velocity', "VEL"),
+                    ("cross_correlation_ratio", "RHOHV"),
+                    ("differential_phase", "PHIDP"),
+                    ("specific_differential_phase", "KDP")]
         for mykey, newkey in myfields:
             try:
                 radar.add_field(newkey, radar.fields.pop(mykey))
