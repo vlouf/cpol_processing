@@ -8,7 +8,7 @@ CPOL Level 1b main production line.
 .. autosummary::
     :toctree: generated/
 
-    correct_output_filename
+    process_and_save
     plot_quicklook
     production_line
 """
