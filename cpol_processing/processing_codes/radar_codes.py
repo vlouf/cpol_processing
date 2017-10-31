@@ -366,17 +366,17 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         if dtime < CPOL_DATE_PHIDP_FOLD:
             phidp_unfold = phi
         else:
-            phidp_unfold = np.ma.masked_where(phi > 0, phi) + 360
+            phidp_unfold = np.ma.masked_where(phi > 0, phi) + 180
         return phidp_unfold
 
     # Extract data from radar.
     phi = radar.fields[phidp_field]['data'].copy()
-    dbz = radar.fields[refl_field]['data'].copy()
+    # dbz = radar.fields[refl_field]['data'].copy()
     dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
 
     # Mask invalid dbz value.
-    dbz = np.ma.masked_where(gatefilter.gate_excluded, dbz).filled(np.NaN)
-    radar.add_field_like(refl_field, "DBZ_TMP", dbz)
+    # dbz = np.ma.masked_where(gatefilter.gate_excluded, dbz).filled(np.NaN)
+    # radar.add_field_like(refl_field, "DBZ_TMP", dbz)
 
     # Create mask of rhohv values and pass it as NCP.
     emr2 = _mask_rhohv(radar, rhv_field, tight=True)
@@ -384,20 +384,21 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
 
     # Unfolding phidp
     phidp_unfold = _phidp_unfold(phi, dtime)
-    phidp_unfold[emr2 == 0] = np.NaN
-    phidp_unfold = np.ma.masked_invalid(phidp_unfold)
+    # phidp_unfold[emr2 == 0] = np.NaN
+    # phidp_unfold = np.ma.masked_invalid(phidp_unfold)
 
     radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
     # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
+                                                   min_phidp=1,
                                                    LP_solver='cylp',
-                                                   refl_field="DBZ_TMP",
+                                                   refl_field=refl_field,
                                                    ncp_field="EMR2",
                                                    rhv_field=rhv_field,
                                                    phidp_field="PHI_CORR")
 
     # Removing tmp fields
-    radar.fields.pop("DBZ_TMP")
+    # radar.fields.pop("DBZ_TMP")
     radar.fields.pop("PHI_CORR")
     radar.fields.pop("EMR2")
 
