@@ -40,7 +40,7 @@ from .processing_codes import hydro_codes
 logger = logging.getLogger()
 
 
-def get_processed_radar(radar_file_name, sound_dir, outpath, outpath_grid, figure_path):
+def process_and_save(radar_file_name, sound_dir, outpath, outpath_grid, figure_path):
     """
     Call processing function and write data.
 
@@ -283,8 +283,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Correct Doppler velocity units.
-    radar.fields['VEL']['units'] = "m/s"
-    radar.fields['VEL']['standard_name'] = "radial_velocity"
+    try:
+        radar.fields['VEL']['units'] = "m/s"
+        radar.fields['VEL']['standard_name'] = "radial_velocity"
+    except KeyError:
+        pass
 
     # Looking for NCP field
     try:
