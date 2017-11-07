@@ -326,6 +326,7 @@ def get_field_names():
                     ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
                     ('PHIDP', 'differential_phase'),
+                    ('PHIDP_CORR', 'raw_unfolded_differential_phase'),
                     ('PHIDP_GG', 'corrected_differential_phase'),
                     ('KDP', 'specific_differential_phase'),
                     ('KDP_GG', 'corrected_specific_differential_phase'),
@@ -361,31 +362,27 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         kdp_gg: dict
             Field dictionary containing recalculated differential phases.
     """
-    def _phidp_unfold(phi, dtime):
+    def _true_phidp(phi, gatefilter, dtime):
         CPOL_DATE_PHIDP_FOLD = datetime.datetime(2003, 10, 1)
         if dtime < CPOL_DATE_PHIDP_FOLD:
-            phidp_unfold = phi
+            tru_phi = phi
         else:
-            phidp_unfold = np.ma.masked_where(phi > 0, phi) + 180
-        return phidp_unfold
+            phidp_unfold = np.ma.masked_where(gatefilter.gate_excluded, phi) + 180
+            pmin = np.min(np.min(phidp_unfold, axis=1))
+            tru_phi = phidp_unfold - pmin
+
+        return tru_phi
 
     # Extract data from radar.
     phi = radar.fields[phidp_field]['data'].copy()
-    # dbz = radar.fields[refl_field]['data'].copy()
     dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-
-    # Mask invalid dbz value.
-    # dbz = np.ma.masked_where(gatefilter.gate_excluded, dbz).filled(np.NaN)
-    # radar.add_field_like(refl_field, "DBZ_TMP", dbz)
 
     # Create mask of rhohv values and pass it as NCP.
     emr2 = _mask_rhohv(radar, rhv_field, tight=True)
-    radar.add_field_like(ncp_field, "EMR2", emr2)
+    radar.add_field_like(ncp_field, "EMR2", emr2, replace_existing=True)
 
     # Unfolding phidp
-    phidp_unfold = _phidp_unfold(phi, dtime)
-    # phidp_unfold[emr2 == 0] = np.NaN
-    # phidp_unfold = np.ma.masked_invalid(phidp_unfold)
+    tru_phi = _true_phidp(phi, gatefilter, dtime)
 
     radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
     # Processing PHIDP
@@ -398,8 +395,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                    phidp_field="PHI_CORR")
 
     # Removing tmp fields
-    # radar.fields.pop("DBZ_TMP")
-    radar.fields.pop("PHI_CORR")
+    # radar.fields.pop("PHI_CORR")
     radar.fields.pop("EMR2")
 
     return phidp_gg, kdp_gg
