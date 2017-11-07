@@ -384,7 +384,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     # Unfolding phidp
     tru_phi = _true_phidp(phi, gatefilter, dtime)
 
-    radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
+    radar.add_field_like('PHIDP', "PHI_CORR", tru_phi, replace_existing=True)
     # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
                                                    min_phidp=1,

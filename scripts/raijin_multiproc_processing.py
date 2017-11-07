@@ -116,6 +116,24 @@ def get_files(inpath, date=None):
     return sorted(to_return)  # Type: List[str, ...]
 
 
+def make_dir(input_dir):
+    """
+    Make directory.
+
+    Parameter:
+    ==========
+    input_dir: str
+        Input directory name.
+    """
+    try:
+        os.mkdir(input_dir)
+        print("%s created." % (input_dir))
+    except FileExistsError:
+        pass
+
+    return None
+
+
 def production_line_manager(radar_file_name, outpath, outpath_grid, figure_path, sound_dir):
     """
     The production line manager calls the production line and manages it ;-).
@@ -180,15 +198,9 @@ def production_line_multiproc(mydate):
 
     # Checking if output directory exists. Creating them otherwise.
     outdir = os.path.join(OUTPATH, year)
-    try:
-        os.mkdir(outdir)
-    except FileExistsError:
-        pass
+    make_dir(outdir)  # Function handles itself.
     outdir = os.path.join(outdir, datestr)
-    try:
-        os.mkdir(outdir)
-    except FileExistsError:
-        pass
+    make_dir(outdir)  # Function handles itself.
 
     # List netcdf files in directory.
     flist = get_files(indir, mydate)
@@ -272,21 +284,16 @@ if __name__ == '__main__':
         print("Creating PPI files directory: {}.".format(OUTPATH))
         os.mkdir(OUTPATH)
 
-    if not os.path.isdir(LOG_FILE_PATH):
-        print("Creating log files directory: {}.".format(LOG_FILE_PATH))
-        os.mkdir(LOG_FILE_PATH)
-    if not os.path.isdir(OUTPATH_GRID):
-        print("Creating output figures directory: {}.".format(OUTPATH_GRID))
-        os.mkdir(OUTPATH_GRID)
-    if not os.path.isdir(FIGURE_CHECK_PATH):
-        print("Creating output figures directory: {}.".format(FIGURE_CHECK_PATH))
-        os.mkdir(FIGURE_CHECK_PATH)
+    # Create input directory.
+    make_dir(LOG_FILE_PATH)
+    make_dir(OUTPATH_GRID)
+    make_dir(FIGURE_CHECK_PATH)
+
     if not os.path.isdir(SOUND_DIR):
-        print("Radiosoundings directory does not exist (or invalid): {}.".format(SOUND_DIR))
-        sys.exit()
+        raise FileNotFoundError("Radiosoundings directory does not exist (or invalid): {}.".format(SOUND_DIR))
+
     if not os.path.isdir(INPATH):
-        print("Input data directory does not exist (or invalid): {}.".format(INPATH))
-        sys.exit()
+        raise FileNotFoundError("Input data directory does not exist (or invalid): {}.".format(INPATH))
 
     # Parse arguments
     parser_description = "Leveling treatment of CPOL data from level 1a to level 1b."
@@ -304,22 +311,21 @@ if __name__ == '__main__':
         dest='start_date',
         default=None,
         type=str,
-        help='Starting date.')
+        help='Starting date.',
+        required=True)
     parser.add_argument(
         '-e',
         '--end-date',
         dest='end_date',
         default=None,
         type=str,
-        help='Ending date.')
+        help='Ending date.',
+        required=True)
 
     args = parser.parse_args()
     NCPU = args.ncpu
     START_DATE = args.start_date
     END_DATE = args.end_date
-
-    if not (START_DATE and END_DATE):
-        parser.error("Starting and ending date required.")
 
     # Checking that dates are recognize.
     try:
