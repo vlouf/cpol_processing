@@ -365,8 +365,23 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     # logger.info("PHIDP texture calculated.")
 
     # Get filter
-    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', radar_date=radar_start_date, is_rhohv_fake=fake_rhohv)
+    gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', is_rhohv_fake=fake_rhohv)
     logger.info('Filter initialized.')
+
+    # Unfold PHIDP:
+    phi_unfold = unfold_raw_phidp(radar, gatefilter)
+    radar.add_field_like("PHIDP", "PHI_CORR", phi_unfold, replace_existing=True)
+
+    # Bringi unfolding.
+    phimeta, kdpmeta = phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR")
+    radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
+    radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
+    radar.fields['PHIDP_BRINGI']['long_name'] = "bringi_corrected_differential_phase"
+    radar.fields['KDP_BRINGI']['long_name'] = "bringi_corrected_specific_differential_phase"
+    logger.info('KDP/PHIDP Bringi estimated.')
+
+    # Correct spider webs on phidp.
+    # phidp
 
     # Giangrande PHIDP/KDP
     phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter)

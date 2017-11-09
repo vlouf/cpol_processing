@@ -42,14 +42,130 @@ import scipy
 import netCDF4
 import numpy as np
 
-from scipy import ndimage, signal
+from scipy import ndimage, signal, integrate
+from csu_radartools import csu_kdp
+
+
+def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHIDP_BRINGI"):
+    """
+    Correct PHIDP and KDP from spider webs.
+
+    Parameters
+    ==========
+    radar:
+        Py-ART radar data structure.
+    gatefilter:
+        Gate filter.
+    kdp_name: str
+        Differential phase key name.
+    phidp_name: str
+        Differential phase key name.
+
+    Returns:
+    ========
+    phidp: ndarray
+        Differential phase array.
+    """
+    kdp = radar.fields[kdp_name]['data'].copy()
+    phidp = radar.fields[phidp_name]['data'].copy()
+    kdp[gatefilter.gate_excluded] = 0
+    kdp[(kdp > 15) | (kdp < -2)] = 0
+    # kdp[kdp > 10] = 10
+    interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
+
+    phidp[:, :-1] = interg / (len(radar.range['data']))
+    return phidp
+
+
+
+
+def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR", refl_field='DBZ'):
+    """
+    Compute PHIDP and KDP Bringi.
+
+    Parameters
+    ==========
+    radar:
+        Py-ART radar data structure.
+    gatefilter:
+        Gate filter.
+    unfold_phidp_name: str
+        Differential phase key name.
+    refl_field: str
+        Reflectivity key name.
+
+    Returns:
+    ========
+    phidpb: ndarray
+        Bringi differential phase array.
+    kdpb: ndarray
+        Bringi specific differential phase array.
+    """
+    # Extract data
+    dp = radar.fields[unfold_phidp_name]['data'].filled(-9999)
+    dz = radar.fields[refl_field]['data']
+    dz = np.ma.masked_where(gatefilter.gate_excluded, dz).filled(-9999)
+
+    # Extract dimensions
+    rng = radar.range['data']
+    azi = radar.azimuth['data']
+    dgate = rng[1] - rng[0]
+    [R, A] = np.meshgrid(rng, azi)
+
+    # Compute KDP bringi.
+    kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999)
+
+    # Mask array
+    phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
+    kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
+
+    # Get metadata.
+    phimeta = pyart.config.get_metadata("differential_phase")
+    phimeta['data'] = phidpb
+    kdpmeta = pyart.config.get_metadata("specific_differential_phase")
+    kdpmeta['data'] = kdpb
+
+    return phimeta, kdpmeta
+
+
+def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
+    """
+    Unfold raw PHIDP
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    gatefilter:
+        Gate filter.
+    phi_name: str
+        Name of the PHIDP field.
+
+    Returns:
+    ========
+    tru_phi: ndarray
+        Unfolded raw PHIDP.
+    """
+    # Extract data
+    phi = radar.fields[phi_name]['data'].copy()
+    # For CPOL, PHIDP is properly unfolded before season 2003/2004
+    CPOL_DATE_PHIDP_FOLD = datetime.datetime(2003, 10, 1)
+    dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+    if dtime < CPOL_DATE_PHIDP_FOLD:
+        tru_phi = phi
+    else:
+        phidp_unfold = np.ma.masked_where(gatefilter.gate_excluded, phi) + 180
+        pmin = np.min(np.min(phidp_unfold, axis=1))
+        tru_phi = phidp_unfold - pmin
+
+    return tru_phi
 
 
 def _mask_rhohv(radar, rhohv_name, tight=True):
     nrays = radar.nrays
     ngate = radar.ngates
     oneray = np.zeros((ngate))
-    oneray[:(ngate // 2)] = 1 - np.linspace(0.05, 0.5, ngate // 2)
+    oneray[:(ngate // 2)] = 1 - np.linspace(0.1, 0.5, ngate // 2)
     oneray[(ngate // 2):] = 0.5
     emr = np.vstack([oneray for e in range(nrays)])
     rho = radar.fields[rhohv_name]['data']
@@ -237,7 +353,7 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
 
 def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
                   vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR",
-                  radar_date=None, is_rhohv_fake=False):
+                  is_rhohv_fake=False):
     """
     Basic filtering
 
@@ -261,6 +377,8 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     gf.exclude_outside(zdr_name, -3.0, 8.0)
     gf.exclude_outside(refl_name, -40.0, 80.0)
 
+    radar_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+
     if not is_rhohv_fake:
         if radar_date.year not in [2006, 2007]:
             emr2 = _mask_rhohv(radar, rhohv_name, True)
@@ -273,6 +391,8 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     # Checking if RHOHV is fake.
     # if not is_rhohv_fake:
     #     gf.include_above("RHOHV", 0.9)
+
+    gf.include_above("DBZ", 25)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
