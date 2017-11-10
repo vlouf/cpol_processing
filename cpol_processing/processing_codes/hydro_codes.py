@@ -22,7 +22,7 @@ import numpy as np
 from csu_radartools import csu_liquid_ice_mass, csu_fhc, csu_blended_rain, csu_dsd
 
 
-def dsd_retrieval(radar, refl_name='DBZ', zdr_name='ZDR', kdp_name='KDP_GG'):
+def dsd_retrieval(radar, refl_name='DBZ', zdr_name='ZDR_CORR', kdp_name='KDP_GG'):
     """
     Compute the DSD retrieval using the csu library.
 

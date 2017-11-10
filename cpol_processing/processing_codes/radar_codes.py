@@ -178,16 +178,15 @@ def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
     it 'by hand'.
     Parameter:
     ===========
-        radar:
-            Py-ART radar structure.
-        refl_field_name: str
-            Name of the reflectivity field.
+    radar:
+        Py-ART radar structure.
+    refl_field_name: str
+        Name of the reflectivity field.
 
     Return:
     =======
-        snr: dict
-            Signal to noise ratio.
-
+    snr: dict
+        Signal to noise ratio.
     """
     range_grid, azi_grid = np.meshgrid(radar.range['data'], radar.azimuth['data'])
     range_grid += 1  # Cause of 0
