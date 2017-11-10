@@ -140,7 +140,7 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
     zh_corr: array
         Attenuation corrected reflectivity.
     """
-    emr2 = np.zeros_like(radar.fields[refl_field['data']]) + 1.0
+    emr2 = np.zeros_like(radar.fields[refl_field]['data']) + 1.0
     radar.add_field_like(ncp_field, "EMR2", emr2)
 
     atten_meta, zh_corr = pyart.correct.calculate_attenuation(radar, 0,
