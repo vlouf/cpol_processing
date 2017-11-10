@@ -397,10 +397,10 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
 
     gf.include_above("DBZ", 25)
 
-    rho = radar.fields[rhohv_name]['data'].copy()
-    mymask = np.zeros_like(rho) + 1.0
-    r = radar.range['data']
-    sweep = radar.get_sweep(0)
+    # rho = radar.fields[rhohv_name]['data'].copy()
+    # mymask = np.zeros_like(rho) + 1.0
+    # r = radar.range['data']
+    # sweep = radar.get_sweep(0)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
