@@ -120,7 +120,7 @@ def correct_attenuation_zh(radar, dbz_name='DBZ', kdp_name='KDP_GG', alpha=0.08)
 
 
 def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
-                                 rhv_field='RHOHV', phidp_field='PHIDP_GG'):
+                                 rhv_field='RHOHV_CORR', phidp_field='PHIDP_GG'):
     """
     Correct attenuation on reflectivity using Py-ART tool.
 
@@ -140,23 +140,11 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
     zh_corr: array
         Attenuation corrected reflectivity.
     """
-    def _mask_rhohv(radar, rhohv_name, tight=True):
-        nrays = radar.nrays
-        ngate = radar.ngates
-        oneray = np.zeros((ngate))
-        oneray[:(ngate // 2)] = 1 - np.linspace(0.05, 0.5, ngate // 2)
-        oneray[(ngate // 2):] = 0.5
-        emr = np.vstack([oneray for e in range(nrays)])
-        rho = radar.fields[rhohv_name]['data']
-        emr2 = np.zeros(rho.shape)
-        emr2[rho > emr] = 1
-        return emr2
-
-    emr2 = _mask_rhohv(radar, rhv_field, tight=True)
+    emr2 = np.zeros_like(radar.fields[refl_field['data']]) + 1.0
     radar.add_field_like(ncp_field, "EMR2", emr2)
 
     atten_meta, zh_corr = pyart.correct.calculate_attenuation(radar, 0,
-                                                              rhv_min=0.5,
+                                                              rhv_min=0.3,
                                                               refl_field=refl_field,
                                                               ncp_field="EMR2",
                                                               rhv_field=rhv_field,
