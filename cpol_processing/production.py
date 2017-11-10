@@ -111,7 +111,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     logger.info("Gridding started.")
     unwanted_keys = []
     goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
-                'temperature', 'corrected_differential_phase', 'corrected_specific_differential_phase',
+                'temperature', 'giangrande_differential_phase', 'giangrande_specific_differential_phase',
                 'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
                 'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity']
     for mykey in radar.fields.keys():
@@ -193,19 +193,19 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
 
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
         gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+        gr.plot_ppi('giangrande_differential_phase', ax=the_ax[8], vmin=-180, vmax=180, cmap='pyart_Wild25')
 
+        gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[9], vmin=-2, vmax=5, cmap='pyart_Theodore16')
         try:
-            gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter,
+            gr.plot_ppi('velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
                         cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
             pass
-        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[11], gatefilter=gatefilter)
 
         gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
         gr.plot_ppi('NW', ax=the_ax[13], gatefilter=gatefilter, cmap='cubehelix', vmin=0, vmax=8)
-        gr.plot_ppi('signal_to_noise_ratio', ax=the_ax[14])
+        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[14], gatefilter=gatefilter)
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
@@ -296,18 +296,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     except KeyError:
         pass
 
-    # Looking for NCP field
-    try:
-        radar.fields['NCP']
-        fake_ncp = False
-    except KeyError:
-        # Creating a fake NCP field.
-        ncp = pyart.config.get_metadata('normalized_coherent_power')
-        ncp['data'] = np.ones_like(radar.fields['DBZ']['data'])
-        ncp['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
-        radar.add_field('NCP', ncp)
-        fake_ncp = True
-
     # Looking for RHOHV field
     # For CPOL, season 09/10, there are no RHOHV fields before March!!!!
     try:
@@ -350,19 +338,22 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
         radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
         logger.info('RHOHV corrected.')
 
+    # Looking for NCP field
+    try:
+        radar.fields['NCP']
+        fake_ncp = False
+    except KeyError:
+        # Creating a fake NCP field.
+        ncp = pyart.config.get_metadata('normalized_coherent_power')
+        emr2 = radar_codes._mask_rhohv(radar, "RHOHV_CORR", tight=True)
+        ncp['data'] = emr2
+        ncp['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
+        radar.add_field('NCP', ncp)
+        fake_ncp = True
+
     # Correct ZDR
     corr_zdr = radar_codes.correct_zdr(radar)
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
-
-    # # Compute velocity texture.
-    # txt_vel = radar_codes.velocity_texture(radar, "VEL")
-    # radar.add_field("TVEL", txt_vel, replace_existing=True)
-    # logger.info("Velocity texture calculated.")
-    #
-    # # Compute PHIDP texture.
-    # txt_phi = radar_codes.phidp_texture(radar, "PHIDP")
-    # radar.add_field("TPHI", txt_phi, replace_existing=True)
-    # logger.info("PHIDP texture calculated.")
 
     # Get filter
     gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', is_rhohv_fake=fake_rhohv)
@@ -370,10 +361,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
 
     # Unfold PHIDP:
     phi_unfold = unfold_raw_phidp(radar, gatefilter)
-    radar.add_field_like("PHIDP", "PHI_CORR", phi_unfold, replace_existing=True)
+    radar.add_field_like("PHIDP", "PHI_UNF", phi_unfold, replace_existing=True)
+    logger.info('Raw PHIDP unfolded.')
 
     # Bringi unfolding.
-    phimeta, kdpmeta = phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR")
+    phimeta, kdpmeta = phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
     radar.fields['PHIDP_BRINGI']['long_name'] = "bringi_corrected_differential_phase"
@@ -381,7 +373,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('KDP/PHIDP Bringi estimated.')
 
     # Correct spider webs on phidp.
-    # phidp
+    phidp = fix_phidp_from_kdp(radar, gatefilter)
+    radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
+    logger.info('PHIDP spider webs removed.')
 
     # Giangrande PHIDP/KDP
     phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter)
@@ -468,7 +462,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     for mykey in radar.fields:
         if mykey in ['temperature', 'height', 'signal_to_noise_ratio', "differential_reflectivity",
                      'normalized_coherent_power', 'spectrum_width', 'total_power', "velocity",
-                     'corrected_differential_phase', 'corrected_specific_differential_phase']:
+                     'corrected_differential_phase', 'corrected_specific_differential_phase',
+                     "differential_phase", "raw_unfolded_differential_phase", "bringi_differential_phase",
+                     "giangrande_differential_phase", "specific_differential_phase", "bringi_specific_differential_phase",
+                     "giangrande_specific_differential_phase"]:
             # Virgin fields that are left untouch.
             continue
         else:

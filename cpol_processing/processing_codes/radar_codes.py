@@ -77,8 +77,6 @@ def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHI
     return phidp
 
 
-
-
 def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR", refl_field='DBZ'):
     """
     Compute PHIDP and KDP Bringi.
@@ -388,10 +386,6 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         gf.exclude_not_equal("EMR2", 1)
         radar.fields.pop('EMR2')
 
-    # Checking if RHOHV is fake.
-    # if not is_rhohv_fake:
-    #     gf.include_above("RHOHV", 0.9)
-
     gf.include_above("DBZ", 25)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
@@ -446,10 +440,13 @@ def get_field_names():
                     ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
                     ('PHIDP', 'differential_phase'),
-                    ('PHIDP_CORR', 'raw_unfolded_differential_phase'),
-                    ('PHIDP_GG', 'corrected_differential_phase'),
+                    ('PHI_UNF', 'raw_unfolded_differential_phase'),
+                    ('PHIDP_BRINGI', 'bringi_differential_phase'),
+                    ('PHI_CORR', 'corrected_differential_phase'),
+                    ('PHIDP_GG', 'giangrande_differential_phase'),
                     ('KDP', 'specific_differential_phase'),
-                    ('KDP_GG', 'corrected_specific_differential_phase'),
+                    ('KDP_BRINGI', 'bringi_specific_differential_phase'),
+                    ('KDP_GG', 'giangrande_specific_differential_phase'),
                     ('WIDTH', 'spectrum_width'),
                     ('SNR', 'signal_to_noise_ratio'),
                     ('NCP', 'normalized_coherent_power')]
@@ -458,7 +455,7 @@ def get_field_names():
 
 
 def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
-                     rhv_field='RHOHV_CORR', phidp_field='PHIDP'):
+                     rhv_field='RHOHV_CORR', phidp_field='PHI_CORR'):
     """
     Phase processing using the LP method in Py-ART. A LP solver is required,
 
@@ -482,41 +479,13 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         kdp_gg: dict
             Field dictionary containing recalculated differential phases.
     """
-    def _true_phidp(phi, gatefilter, dtime):
-        CPOL_DATE_PHIDP_FOLD = datetime.datetime(2003, 10, 1)
-        if dtime < CPOL_DATE_PHIDP_FOLD:
-            tru_phi = phi
-        else:
-            phidp_unfold = np.ma.masked_where(gatefilter.gate_excluded, phi) + 180
-            pmin = np.min(np.min(phidp_unfold, axis=1))
-            tru_phi = phidp_unfold - pmin
-
-        return tru_phi
-
-    # Extract data from radar.
-    phi = radar.fields[phidp_field]['data'].copy()
-    dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-
-    # Create mask of rhohv values and pass it as NCP.
-    emr2 = _mask_rhohv(radar, rhv_field, tight=True)
-    radar.add_field_like(ncp_field, "EMR2", emr2, replace_existing=True)
-
-    # Unfolding phidp
-    tru_phi = _true_phidp(phi, gatefilter, dtime)
-
-    radar.add_field_like('PHIDP', "PHI_CORR", tru_phi, replace_existing=True)
-    # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
                                                    min_phidp=1,
                                                    LP_solver='cylp',
                                                    refl_field=refl_field,
-                                                   ncp_field="EMR2",
+                                                   ncp_field=ncp_field,
                                                    rhv_field=rhv_field,
-                                                   phidp_field="PHI_CORR")
-
-    # Removing tmp fields
-    # radar.fields.pop("PHI_CORR")
-    radar.fields.pop("EMR2")
+                                                   phidp_field=phidp_field)
 
     return phidp_gg, kdp_gg
 
