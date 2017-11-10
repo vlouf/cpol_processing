@@ -360,12 +360,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('Filter initialized.')
 
     # Unfold PHIDP:
-    phi_unfold = unfold_raw_phidp(radar, gatefilter)
+    phi_unfold = radar_codes.unfold_raw_phidp(radar, gatefilter)
     radar.add_field_like("PHIDP", "PHI_UNF", phi_unfold, replace_existing=True)
     logger.info('Raw PHIDP unfolded.')
 
     # Bringi unfolding.
-    phimeta, kdpmeta = phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
+    phimeta, kdpmeta = radar_codes.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
     radar.fields['PHIDP_BRINGI']['long_name'] = "bringi_corrected_differential_phase"
@@ -373,12 +373,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('KDP/PHIDP Bringi estimated.')
 
     # Correct spider webs on phidp.
-    phidp = fix_phidp_from_kdp(radar, gatefilter)
+    phidp = radar_codes.fix_phidp_from_kdp(radar, gatefilter)
     radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
     logger.info('PHIDP spider webs removed.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter)
+    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter, phidp_field='PHI_CORR')
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
