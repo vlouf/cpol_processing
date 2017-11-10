@@ -312,12 +312,22 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
         rho_corr: array
             Corrected cross correlation ratio.
     """
-    rhohv = radar.fields[rhohv_name]['data']
+    rhohv = radar.fields[rhohv_name]['data'].copy()
+    try:
+        rhohv = rhohv.filled(0)
+    except Exception:
+        pass
+
+    rhohv[rhohv < 0] = 0
+
     snr = radar.fields[snr_name]['data']
     natural_snr = 10**(0.1 * snr)
     rho_corr = rhohv / (1 + 1 / natural_snr)
 
-    return rho_corr
+    rhosmooth = pyart.correct.phase_proc.smooth_and_trim_scan(rho_corr)
+    rhosmooth[:, -11:] = rho_corr[:, -11:]
+
+    return rhosmooth
 
 
 def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
@@ -350,8 +360,7 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
 
 
 def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
-                  vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR",
-                  is_rhohv_fake=False):
+                  zdr_name="ZDR", is_rhohv_fake=False):
     """
     Basic filtering
 
@@ -387,6 +396,11 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         radar.fields.pop('EMR2')
 
     gf.include_above("DBZ", 25)
+
+    rho = radar.fields[rhohv_name]['data'].copy()
+    mymask = np.zeros_like(rho) + 1.0
+    r = radar.range['data']
+    sweep = radar.get_sweep(0)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
