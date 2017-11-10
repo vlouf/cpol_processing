@@ -548,6 +548,8 @@ def read_radar(radar_file_name):
     try:
         if ".h5" in radar_file_name:
             radar = pyart.aux_io.read_odim_h5(radar_file_name)
+        if ".hdf" in radar_file_name:
+            radar = pyart.aux_io.read_odim_h5(radar_file_name)
         else:
             radar = pyart.io.read(radar_file_name)
     except Exception:
