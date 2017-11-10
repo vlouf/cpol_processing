@@ -95,6 +95,7 @@ def correct_attenuation_zh(radar, dbz_name='DBZ', kdp_name='KDP_GG', alpha=0.08)
     r = radar.range['data']
     zh = deepcopy(radar.fields[dbz_name]['data'])
     kdp = deepcopy(radar.fields[kdp_name]['data'])
+    kdp[:, -35:] = 0  # Window problem
 
     dr = (r[1] - r[0]) / 1000  # km
 
