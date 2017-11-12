@@ -40,7 +40,7 @@ from .processing_codes import hydro_codes
 logger = logging.getLogger()
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir):
+def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_seapol=False):
     """
     Call processing function and write data.
 
@@ -86,7 +86,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         return outfilename
 
     tick = time.time()
-    radar = production_line(radar_file_name, sound_dir, figure_path)
+    radar = production_line(radar_file_name, sound_dir, figure_path, is_seapol)
 
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
 
@@ -222,7 +222,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None):
+def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=False):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -273,6 +273,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
 
     # !!! READING THE RADAR !!!
     radar = radar_codes.read_radar(radar_file_name)
+
+    # Correct SEAPOL PHIDP
+    if is_seapol:
+        phi = radar.fieds['PHIDP']['data']
+        radar.add_field_like("PHIDP", "PHIDP", -phi, replace_existing=True)
+        print("SEAPOL PHIDP corrected.")
 
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):

@@ -48,11 +48,13 @@ def main():
     print("- Output data directory path is: " + crayons.yellow(OUTPATH))
     print("- Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
     print("- Figures will be saved in: " + crayons.yellow(FIGURE_CHECK_PATH))
+    if IS_SEAPOL:
+        print("This is the Seapol radar. PHIDP is going to be corrected.")
     print("#" * 79)
     print("")
 
     # Serious stuffs begin here.
-    cpol_processing.process_and_save(INFILE, OUTPATH, OUTPATH_GRID, FIGURE_CHECK_PATH, SOUND_DIR)
+    cpol_processing.process_and_save(INFILE, OUTPATH, OUTPATH_GRID, FIGURE_CHECK_PATH, SOUND_DIR, IS_SEAPOL)
 
     return None
 
@@ -85,10 +87,14 @@ if __name__ == '__main__':
         type=str,
         help='Output directory.',
         required=True)
+    parser.add_argument('--seapol', dest='seapol', action='store_true')
+    parser.add_argument('--no-seapol', dest='seapol', action='store_false')
+    parser.set_defaults(seapol=False)
 
     args = parser.parse_args()
     INFILE = args.infile
     OUTPATH = args.outdir
+    IS_SEAPOL = args.seapol
 
     if not os.path.isfile(INFILE):
         parser.error("Invalid input file.")
