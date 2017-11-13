@@ -29,35 +29,21 @@ Codes for correcting and estimating various radar and meteorological parameters.
 """
 # Python Standard Library
 import os
-import re
 import glob
 import time
+import copy
 import fnmatch
 import datetime
+from copy import deepcopy
 
 # Other Libraries
 import pyart
 import scipy
 import netCDF4
 import numpy as np
-import wradlib
 
-from scipy import ndimage, signal, integrate
-from csu_radartools import csu_kdp
-
-
-def _mask_rhohv(radar, rhohv_name, tight=True):
-    nrays = radar.nrays
-    ngate = radar.ngates
-    oneray = np.zeros((ngate))
-    oneray[:(ngate // 2)] = 1 - np.linspace(0.1, 0.7, ngate // 2)
-    oneray[(ngate // 2):] = 0.3
-    emr = np.vstack([oneray for e in range(nrays)])
-    rho = radar.fields[rhohv_name]['data']
-    emr2 = np.zeros(rho.shape)
-    emr2[rho > emr] = 1
-    return emr2
-
+from scipy import ndimage, signal
+from scipy.optimize import fmin_l_bfgs_b
 
 def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
     """
@@ -65,15 +51,16 @@ def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
     it 'by hand'.
     Parameter:
     ===========
-    radar:
-        Py-ART radar structure.
-    refl_field_name: str
-        Name of the reflectivity field.
+        radar:
+            Py-ART radar structure.
+        refl_field_name: str
+            Name of the reflectivity field.
 
     Return:
     =======
-    snr: dict
-        Signal to noise ratio.
+        snr: dict
+            Signal to noise ratio.
+
     """
     range_grid, azi_grid = np.meshgrid(radar.range['data'], radar.azimuth['data'])
     range_grid += 1  # Cause of 0
@@ -125,32 +112,6 @@ def _get_noise_threshold(filtered_data):
     return noise_threshold
 
 
-def check_azimuth(radar, refl_field_name='DBZ'):
-    """
-    Checking if radar has a proper reflectivity field.  It's a minor problem
-    concerning a few days in 2011 for CPOL.
-
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        refl_field_name: str
-            Name of the reflectivity field.
-
-    Return:
-    =======
-        is_good: bool
-            True if radar has a proper azimuth field.
-    """
-    is_good = True
-    dbz = radar.fields[refl_field_name]['data']
-
-    if dbz.shape[0] < 360:
-        is_good = False
-
-    return is_good
-
-
 def check_reflectivity(radar, refl_field_name='DBZ'):
     """
     Checking if radar has a proper reflectivity field.  It's a minor problem
@@ -198,22 +159,12 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
         rho_corr: array
             Corrected cross correlation ratio.
     """
-    rhohv = radar.fields[rhohv_name]['data'].copy()
-    try:
-        rhohv = rhohv.filled(0)
-    except Exception:
-        pass
-
-    rhohv[rhohv < 0] = 0
-
+    rhohv = radar.fields[rhohv_name]['data']
     snr = radar.fields[snr_name]['data']
     natural_snr = 10**(0.1 * snr)
     rho_corr = rhohv / (1 + 1 / natural_snr)
 
-    rhosmooth = pyart.correct.phase_proc.smooth_and_trim_scan(rho_corr)
-    rhosmooth[:, -11:] = rho_corr[:, -11:]
-
-    return rhosmooth
+    return rho_corr
 
 
 def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
@@ -246,7 +197,8 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
 
 
 def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
-                  zdr_name="ZDR", is_rhohv_fake=False):
+                  vel_texture_name="TVEL", phidp_texture_name="TPHI", zdr_name="ZDR",
+                  radar_date=None, is_rhohv_fake=False):
     """
     Basic filtering
 
@@ -264,76 +216,48 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
     """
-    # For CPOL, there is sometime an issue with older seasons.
     gf = pyart.filters.GateFilter(radar)
 
+    # Filtering using the velocity texture.
+    try:
+        tvel = radar.fields[vel_texture_name]['data']
+        noise_threshold = _get_noise_threshold(tvel)
+        gf.exclude_above(vel_texture_name, noise_threshold)
+    except Exception:
+        pass
+
+    # Filtering using the PHIDP texture.
+    try:
+        tphi = radar.fields[phidp_texture_name]['data']
+        noise_threshold = _get_noise_threshold(tphi)
+        gf.exclude_above(phidp_texture_name, noise_threshold)
+    except Exception:
+        pass
+
     gf.exclude_outside(zdr_name, -3.0, 8.0)
-    gf.exclude_outside(refl_name, -40.0, 80.0)
 
-    radar_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-
-    if not is_rhohv_fake:
+    # For CPOL, there is sometime an issue with older seasons.
+    try:
         if radar_date.year not in [2006, 2007]:
-            emr2 = _mask_rhohv(radar, rhohv_name, True)
-        else:
-            emr2 = _mask_rhohv(radar, rhohv_name, False)
-        radar.add_field_like(rhohv_name, "EMR2", emr2, replace_existing=True)
-        gf.exclude_not_equal("EMR2", 1)
-        radar.fields.pop('EMR2')
+            gf.exclude_below(rhohv_name, 0.5)
+    except Exception:
+        # In case radar_date is None or not a datetime.
+        gf.exclude_below(rhohv_name, 0.5)
 
-    gf.include_above("DBZ", 25)
+    try:
+        # NCP field is not present for older seasons.
+        radar.fields[ncp_name]
+        gf.exclude_below(ncp_name, 0.3)
+    except KeyError:
+        pass
 
-    # rho = radar.fields[rhohv_name]['data'].copy()
-    # mymask = np.zeros_like(rho) + 1.0
-    # r = radar.range['data']
-    # sweep = radar.get_sweep(0)
+    # Checking if RHOHV is fake.
+    if not is_rhohv_fake:
+        gf.include_above("RHOHV", 0.8)
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
     return gf_despeckeld
-
-
-def do_wrd_gatefilter(radar, rhohv_name="RHOHV_CORR", phidp_name="PHIDP", refl_name="DBZ", vel_name="VEL", zdr_name="ZDR"):
-    """
-    Create gatefilter using wradlib fuzzy echo classification.
-
-    Parameters:
-    ===========
-    radar:
-        Py-ART radar structure.
-    refl_name: str
-        Reflectivity field name.
-    rhohv_name: str
-        Cross correlation ratio field name.
-
-    Return:
-    =======
-    gf: GateFilter
-    """
-    rho = radar.fields[rhohv_name]['data']
-    nmap = np.zeros_like(rho)
-    nmap[rho < 0.3] = 1
-
-    dat = {}
-    dat["rho"] = radar.fields[rhohv_name]['data']
-    dat["phi"] = radar.fields[phidp_name]['data']
-    dat["ref"] = radar.fields[refl_name]['data']
-    dat["dop"] = radar.fields[vel_name]['data']
-    dat["zdr"] = radar.fields[zdr_name]['data']
-    dat["map"] = nmap
-
-    weights = {"zdr": 0.4, "rho": 0.4, "rho2": 0.4, "phi": 0.1, "dop": 0.1, "map": 0.5}
-
-    cmap, nanmask = wradlib.clutter.classify_echo_fuzzy(dat, weights=weights, thresh=0.5)
-    radar.add_field_like("DBZ", "CLUT_TMP", cmap, replace_existing=True)
-
-    gf = pyart.filters.GateFilter(radar)
-    gf.exclude_equal("CLUT_TMP", 1)
-    gf = pyart.correct.despeckle_field(radar, "DBZ", gatefilter=gf)
-
-    radar.fields.pop("CLUT_TMP")
-
-    return gf
 
 
 def filter_hardcoding(my_array, nuke_filter, bad=-9999):
@@ -362,37 +286,6 @@ def filter_hardcoding(my_array, nuke_filter, bad=-9999):
     return to_return
 
 
-def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHIDP_BRINGI"):
-    """
-    Correct PHIDP and KDP from spider webs.
-
-    Parameters
-    ==========
-    radar:
-        Py-ART radar data structure.
-    gatefilter:
-        Gate filter.
-    kdp_name: str
-        Differential phase key name.
-    phidp_name: str
-        Differential phase key name.
-
-    Returns:
-    ========
-    phidp: ndarray
-        Differential phase array.
-    """
-    kdp = radar.fields[kdp_name]['data'].copy()
-    phidp = radar.fields[phidp_name]['data'].copy()
-    kdp[gatefilter.gate_excluded] = 0
-    kdp[(kdp > 15) | (kdp < -2)] = 0
-    # kdp[kdp > 10] = 10
-    interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
-
-    phidp[:, :-1] = interg / (len(radar.range['data']))
-    return phidp
-
-
 def get_field_names():
     """
     Fields name definition.
@@ -414,13 +307,9 @@ def get_field_names():
                     ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
                     ('PHIDP', 'differential_phase'),
-                    ('PHI_UNF', 'raw_unfolded_differential_phase'),
-                    ('PHIDP_BRINGI', 'bringi_differential_phase'),
-                    ('PHI_CORR', 'corrected_differential_phase'),
-                    ('PHIDP_GG', 'giangrande_differential_phase'),
+                    ('PHIDP_GG', 'corrected_differential_phase'),
                     ('KDP', 'specific_differential_phase'),
-                    ('KDP_BRINGI', 'bringi_specific_differential_phase'),
-                    ('KDP_GG', 'giangrande_specific_differential_phase'),
+                    ('KDP_GG', 'corrected_specific_differential_phase'),
                     ('WIDTH', 'spectrum_width'),
                     ('SNR', 'signal_to_noise_ratio'),
                     ('NCP', 'normalized_coherent_power')]
@@ -428,57 +317,8 @@ def get_field_names():
     return fields_names
 
 
-def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR", refl_field='DBZ'):
-    """
-    Compute PHIDP and KDP Bringi.
-
-    Parameters
-    ==========
-    radar:
-        Py-ART radar data structure.
-    gatefilter:
-        Gate filter.
-    unfold_phidp_name: str
-        Differential phase key name.
-    refl_field: str
-        Reflectivity key name.
-
-    Returns:
-    ========
-    phidpb: ndarray
-        Bringi differential phase array.
-    kdpb: ndarray
-        Bringi specific differential phase array.
-    """
-    # Extract data
-    dp = radar.fields[unfold_phidp_name]['data'].filled(-9999)
-    dz = radar.fields[refl_field]['data']
-    dz = np.ma.masked_where(gatefilter.gate_excluded, dz).filled(-9999)
-
-    # Extract dimensions
-    rng = radar.range['data']
-    azi = radar.azimuth['data']
-    dgate = rng[1] - rng[0]
-    [R, A] = np.meshgrid(rng, azi)
-
-    # Compute KDP bringi.
-    kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999)
-
-    # Mask array
-    phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
-    kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
-
-    # Get metadata.
-    phimeta = pyart.config.get_metadata("differential_phase")
-    phimeta['data'] = phidpb
-    kdpmeta = pyart.config.get_metadata("specific_differential_phase")
-    kdpmeta['data'] = kdpb
-
-    return phimeta, kdpmeta
-
-
-def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
-                     rhv_field='RHOHV_CORR', phidp_field='PHI_CORR'):
+def phidp_giangrande(radar, refl_field='DBZ', ncp_field='NCP',
+                     rhv_field='RHOHV', phidp_field='PHIDP'):
     """
     Phase processing using the LP method in Py-ART. A LP solver is required,
 
@@ -502,13 +342,31 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         kdp_gg: dict
             Field dictionary containing recalculated differential phases.
     """
+    def _phidp_unfold(phi, dtime):
+        CPOL_DATE_PHIDP_FOLD = datetime.datetime(2013, 10, 1)
+        if dtime < CPOL_DATE_PHIDP_FOLD:
+            phidp_unfold = phi
+        else:
+            phidp_unfold = np.ma.masked_where(phi > 0, phi) + 360
+        return phidp_unfold
+
+    phi = radar.fields[phidp_field]['data'].copy()
+    dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+    # Unfolding phidp
+    phidp_unfold = _phidp_unfold(phi, dtime)
+
+    radar.add_field_like('PHIDP', "PHI_CORR", phidp_unfold, replace_existing=True)
+
+    # Processing PHIDP
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
-                                                   min_phidp=1,
                                                    LP_solver='cylp',
                                                    refl_field=refl_field,
                                                    ncp_field=ncp_field,
                                                    rhv_field=rhv_field,
-                                                   phidp_field=phidp_field)
+                                                   phidp_field="PHI_CORR")
+
+    # Removing tmp field
+    radar.fields.pop("PHI_CORR")
 
     return phidp_gg, kdp_gg
 
@@ -557,34 +415,22 @@ def read_radar(radar_file_name):
     # Read the input radar file.
     try:
         if ".h5" in radar_file_name:
-            radar = pyart.aux_io.read_odim_h5(radar_file_name, file_field_names=True)
-        elif ".hdf" in radar_file_name:
-            radar = pyart.aux_io.read_odim_h5(radar_file_name, file_field_names=True)
+            radar = pyart.aux_io.read_odim_h5(radar_file_name)
         else:
             radar = pyart.io.read(radar_file_name)
     except Exception:
-        raise
+        logger.error("MAJOR ERROR: unable to read input file {}".format(radar_file_name))
+        return None
 
     # SEAPOL hack change fields key.
     try:
         radar.fields['DBZ']
     except KeyError:
         myfields = [('NCPH', "NCP"),
-                    ('normalized_coherent_power', "NCP"),
                     ('DBZH', "DBZ"),
-                    ("DBZH_CLEAN", "DBZ"),
-                    ('reflectivity', "DBZ"),
                     ('WIDTHH', "WIDTH"),
-                    ('sprectrum_width', "WIDTH"),
                     ('UH', "DBZ"),
-                    ('total_power', "DBZ"),
-                    ("differential_reflectivity", "ZDR"),
-                    ("VRADH", "VEL"),
-                    ('VELH', "VEL"),
-                    ('velocity', "VEL"),
-                    ("cross_correlation_ratio", "RHOHV"),
-                    ("differential_phase", "PHIDP"),
-                    ("specific_differential_phase", "KDP")]
+                    ('VELH', "VEL")]
         for mykey, newkey in myfields:
             try:
                 radar.add_field(newkey, radar.fields.pop(mykey))
@@ -627,7 +473,7 @@ def rename_radar_fields(radar):
     return radar
 
 
-def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DBZ', temp_field_name="temp"):
+def snr_and_sounding(radar, soundings_dir=None, refl_field_name='DBZ'):
     """
     Compute the signal-to-noise ratio as well as interpolating the radiosounding
     temperature on to the radar grid. The function looks for the radiosoundings
@@ -637,7 +483,6 @@ def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DB
     Parameters:
     ===========
         radar:
-        radar_start_date: datetime
         soundings_dir: str
             Path to the radiosoundings directory.
         refl_field_name: str
@@ -653,25 +498,32 @@ def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DB
             Signal to noise ratio.
     """
     # Altitude hack.
-    true_alt = radar.altitude['data'].copy()
+    true_alt = deepcopy(radar.altitude['data'])
     radar.altitude['data'] = np.array([0])
 
+    if soundings_dir is None:
+        soundings_dir = "/g/data2/rr5/vhl548/soudings_netcdf/"
+
+    # Getting radar date.
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
+
     # Listing radiosounding files.
+    sonde_pattern = datetime.datetime.strftime(radar_start_date, 'YPDN_%Y%m%d*')
     all_sonde_files = sorted(os.listdir(soundings_dir))
 
-    pos = [cnt for cnt, f in enumerate(all_sonde_files) if fnmatch.fnmatch(f, "*" + radar_start_date.strftime("%Y%m%d") + "*")]
-    if len(pos) > 0:
-        # Looking for the exact date.
-        sonde_name = all_sonde_files[pos[0]]
-    else:
-        # Looking for the closest date.
-        dtime = [datetime.datetime.strptime(re.findall("[0-9]{8}", f)[0], "%Y%m%d") for f in all_sonde_files]
+    try:
+        # The radiosoundings for the exact date exists.
+        sonde_name = fnmatch.filter(all_sonde_files, sonde_pattern)[0]
+    except IndexError:
+        # The radiosoundings for the exact date does not exist, looking for the closest date.
+        # print("Sounding file not found, looking for the nearest date.")
+        dtime = [datetime.datetime.strptime(dt, 'YPDN_%Y%m%d_%H.nc') for dt in all_sonde_files]
         closest_date = _nearest(dtime, radar_start_date)
-        sonde_name = glob.glob(os.path.join(soundings_dir, "*" + closest_date.strftime("%Y%m%d") + "*"))[0]
+        sonde_name = os.path.join(soundings_dir, "YPDN_{}.nc".format(closest_date.strftime("%Y%m%d_%H")))
 
     # print("Reading radiosounding %s" % (sonde_name))
     interp_sonde = netCDF4.Dataset(os.path.join(soundings_dir, sonde_name))
-    temperatures = interp_sonde.variables[temp_field_name][:]
+    temperatures = interp_sonde.variables['temp'][:]
     temperatures[(temperatures < -100) | (temperatures > 100)] = np.NaN
     times = interp_sonde.variables['time'][:]
     heights = interp_sonde.variables['height'][:]
@@ -711,40 +563,8 @@ def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DB
     return z_dict, temp_info_dict, snr
 
 
-def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
-    """
-    Unfold raw PHIDP
-
-    Parameters:
-    ===========
-    radar:
-        Py-ART radar structure.
-    gatefilter:
-        Gate filter.
-    phi_name: str
-        Name of the PHIDP field.
-
-    Returns:
-    ========
-    tru_phi: ndarray
-        Unfolded raw PHIDP.
-    """
-    # Extract data
-    phi = radar.fields[phi_name]['data'].copy()
-    # For CPOL, PHIDP is properly unfolded before season 2003/2004
-    CPOL_DATE_PHIDP_FOLD = datetime.datetime(2003, 10, 1)
-    dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-    if dtime < CPOL_DATE_PHIDP_FOLD:
-        tru_phi = phi
-    else:
-        phidp_unfold = np.ma.masked_where(gatefilter.gate_excluded, phi) + 180
-        pmin = np.min(np.min(phidp_unfold, axis=1))
-        tru_phi = phidp_unfold - pmin
-
-    return tru_phi
-
-
-def unfold_velocity(radar, my_gatefilter, bobby_params=False, vel_name='VEL', rhohv_name='RHOHV_CORR'):
+def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding=False, vel_name='VEL', rhohv_name='RHOHV_CORR',
+                    sounding_name='sim_velocity'):
     """
     Unfold Doppler velocity using Py-ART region based algorithm. Automatically
     searches for a folding-corrected velocity field.
@@ -758,14 +578,20 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, vel_name='VEL', rh
         bobby_params: bool
             Using dealiasing parameters from Bobby Jackson. Otherwise using
             defaults configuration.
+        constrain_sounding: bool
+            Use optimization to constrain wind field according to a sounding. Useful if
+            radar scan has regions overcorrected by a Nyquist interval.
         vel_name: str
             Name of the (original) Doppler velocity field.
+        sounding_name: str
+            Name of the wind field derived from a sounding
 
     Returns:
     ========
         vdop_vel: dict
             Unfolded Doppler velocity.
     """
+    gf = deepcopy(my_gatefilter)
     # Trying to determine Nyquist velocity
     try:
         v_nyq_vel = radar.instrument_parameters['nyquist_velocity']['data'][0]
@@ -777,15 +603,71 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, vel_name='VEL', rh
     if bobby_params:
         vdop_vel = pyart.correct.dealias_region_based(radar,
                                                       vel_field=vel_name,
-                                                      gatefilter=my_gatefilter,
+                                                      gatefilter=gf,
                                                       nyquist_vel=v_nyq_vel,
                                                       skip_between_rays=2000)
-    else:
+    else:                    
         vdop_vel = pyart.correct.dealias_region_based(radar,
                                                       vel_field=vel_name,
-                                                      gatefilter=my_gatefilter,
+                                                      gatefilter=gf,
                                                       nyquist_vel=v_nyq_vel)
+    
+    if constrain_sounding:
+        gfilter = gf.gate_excluded
+        vels = deepcopy(vdop_vel['data'])
+        vels_uncorr = radar.fields[vel_name]['data']
+        sim_vels = radar.fields[sounding_name]['data']
+        diff = (sim_vels-vels)/v_nyq_vel
+        region_means = []
+        regions = np.zeros(vels.shape)
+        for nsweep, sweep_slice in enumerate(radar.iter_slice()):
+            sfilter = gfilter[sweep_slice]
+            diffs_slice = diff[sweep_slice]
+            vels_slice = vels[sweep_slice]
+            svels_slice = sim_vels[sweep_slice]
+            vels_uncorrs = vels_uncorr[sweep_slice]
+            valid_sdata = vels_uncorrs[~sfilter]
+            int_splits = pyart.correct.region_dealias._find_sweep_interval_splits(
+                v_nyq_vel, 3, valid_sdata, nsweep)
+            regions[sweep_slice], nfeatures = pyart.correct.region_dealias._find_regions(vels_uncorrs, sfilter, 
+                                                                                         limits=int_splits)
+            ## Minimize cost function that is sum of difference between regions and
+            def cost_function(nyq_vector):
+                cost = 0
+                i = 0
+                for reg in np.unique(regions[sweep_slice]):
+                   add_value = np.abs(np.ma.mean(vels_slice[regions[sweep_slice] == reg]) + nyq_vector[i]*v_nyq_vel
+                      - np.ma.mean(svels_slice[regions[sweep_slice] == reg])) 
 
+                   if(np.isfinite(add_value)):
+                        cost += add_value
+                   i = i + 1
+                return cost
+    
+            def gradient(nyq_vector):
+                gradient_vector = np.zeros(len(nyq_vector))
+                i = 0
+                for reg in np.unique(regions[sweep_slice]):
+                    add_value = (np.ma.mean(vels_slice[regions[sweep_slice] == reg]) + nyq_vector[i]*v_nyq_vel
+                        - np.ma.mean(svels_slice[regions[sweep_slice] == reg])) 
+                    if(add_value > 0):
+                        gradient_vector[i] = v_nyq_vel
+                    else:
+                        gradient_vector[i] = -v_nyq_vel
+                    i = i + 1
+                return gradient_vector
+      
+        bounds_list = [(x,y) for (x,y) in zip(-5*np.ones(nfeatures+1), 5*np.ones(nfeatures+1))]
+        nyq_adjustments = fmin_l_bfgs_b(cost_function, np.zeros((nfeatures+1)), disp=True, fprime=gradient,
+                                    bounds=bounds_list, maxiter=20)
+        i = 0
+        for reg in np.unique(regions[sweep_slice]):
+            reg_mean = np.mean(diffs_slice[regions[sweep_slice] == reg])
+            region_means.append(reg_mean)
+            vels_slice[regions[sweep_slice] == reg] += v_nyq_vel*np.round(nyq_adjustments[0][i])
+            i = i + 1
+        vels[sweep_slice] = vels_slice
+        vdop_vel['data'] = vels
     vdop_vel['units'] = "m/s"
     vdop_vel['standard_name'] = "corrected_radial_velocity"
     vdop_vel['description'] = "Velocity unfolded using Py-ART region based dealiasing algorithm."
@@ -819,3 +701,4 @@ def velocity_texture(radar, vel_name='VEL'):
     vel_dict = pyart.retrieve.calculate_velocity_texture(radar, vel_name, nyq=v_nyq_vel)
 
     return vel_dict
+
