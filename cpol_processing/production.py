@@ -406,6 +406,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     except KeyError:
         logger.info("No velocity field found.")
         pass
+    except TypeError:
+        print("Problem with velocity.")
+        pass
 
     # Correct Attenuation ZH
     atten_spec, zh_corr = atten_codes.correct_attenuation_zh(radar)
