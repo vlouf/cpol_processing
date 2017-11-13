@@ -281,7 +281,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Correct SEAPOL PHIDP
     if is_seapol:
-        phi = radar.fieds['PHIDP']['data']
+        phi = radar.fields['PHIDP']['data']
         radar.add_field_like("PHIDP", "PHIDP", -phi, replace_existing=True)
         print("SEAPOL PHIDP corrected.")
 
