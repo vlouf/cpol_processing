@@ -29,12 +29,11 @@ Codes for correcting and estimating various radar and meteorological parameters.
 """
 # Python Standard Library
 import os
+import re
 import glob
 import time
-import copy
 import fnmatch
 import datetime
-from copy import deepcopy
 
 # Other Libraries
 import pyart
@@ -615,7 +614,7 @@ def rename_radar_fields(radar):
     return radar
 
 
-def snr_and_sounding(radar, soundings_dir=None, refl_field_name='DBZ'):
+def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DBZ', temp_field_name="temp"):
     """
     Compute the signal-to-noise ratio as well as interpolating the radiosounding
     temperature on to the radar grid. The function looks for the radiosoundings
@@ -625,6 +624,7 @@ def snr_and_sounding(radar, soundings_dir=None, refl_field_name='DBZ'):
     Parameters:
     ===========
         radar:
+        radar_start_date: datetime
         soundings_dir: str
             Path to the radiosoundings directory.
         refl_field_name: str
@@ -640,32 +640,25 @@ def snr_and_sounding(radar, soundings_dir=None, refl_field_name='DBZ'):
             Signal to noise ratio.
     """
     # Altitude hack.
-    true_alt = deepcopy(radar.altitude['data'])
+    true_alt = radar.altitude['data'].copy()
     radar.altitude['data'] = np.array([0])
 
-    if soundings_dir is None:
-        soundings_dir = "/g/data2/rr5/vhl548/soudings_netcdf/"
-
-    # Getting radar date.
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
-
     # Listing radiosounding files.
-    sonde_pattern = datetime.datetime.strftime(radar_start_date, 'YPDN_%Y%m%d*')
     all_sonde_files = sorted(os.listdir(soundings_dir))
 
-    try:
-        # The radiosoundings for the exact date exists.
-        sonde_name = fnmatch.filter(all_sonde_files, sonde_pattern)[0]
-    except IndexError:
-        # The radiosoundings for the exact date does not exist, looking for the closest date.
-        # print("Sounding file not found, looking for the nearest date.")
-        dtime = [datetime.datetime.strptime(dt, 'YPDN_%Y%m%d_%H.nc') for dt in all_sonde_files]
+    pos = [cnt for cnt, f in enumerate(all_sonde_files) if fnmatch.fnmatch(f, "*" + mydate.strftime("%Y%m%d") + "*")]
+    if len(pos) > 0:
+        # Looking for the exact date.
+        sonde_name = all_sonde_files[pos[0]]
+    else:
+        # Looking for the closest date.
+        dtime = [datetime.datetime.strptime(re.findall("[0-9]{8}", f)[0], "%Y%m%d") for f in all_sonde_files]
         closest_date = _nearest(dtime, radar_start_date)
-        sonde_name = os.path.join(soundings_dir, "YPDN_{}.nc".format(closest_date.strftime("%Y%m%d_%H")))
+        sonde_name = glob.glob(os.path.join(soundings_dir, "*" + closest_date.strftime("%Y%m%d") + "*"))[0]
 
     # print("Reading radiosounding %s" % (sonde_name))
     interp_sonde = netCDF4.Dataset(os.path.join(soundings_dir, sonde_name))
-    temperatures = interp_sonde.variables['temp'][:]
+    temperatures = interp_sonde.variables[temp_field_name][:]
     temperatures[(temperatures < -100) | (temperatures > 100)] = np.NaN
     times = interp_sonde.variables['time'][:]
     heights = interp_sonde.variables['height'][:]
@@ -727,7 +720,6 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, vel_name='VEL', rh
         vdop_vel: dict
             Unfolded Doppler velocity.
     """
-    gf = deepcopy(my_gatefilter)
     # Trying to determine Nyquist velocity
     try:
         v_nyq_vel = radar.instrument_parameters['nyquist_velocity']['data'][0]
@@ -739,13 +731,13 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, vel_name='VEL', rh
     if bobby_params:
         vdop_vel = pyart.correct.dealias_region_based(radar,
                                                       vel_field=vel_name,
-                                                      gatefilter=gf,
+                                                      gatefilter=my_gatefilter,
                                                       nyquist_vel=v_nyq_vel,
                                                       skip_between_rays=2000)
     else:
         vdop_vel = pyart.correct.dealias_region_based(radar,
                                                       vel_field=vel_name,
-                                                      gatefilter=gf,
+                                                      gatefilter=my_gatefilter,
                                                       nyquist_vel=v_nyq_vel)
 
     vdop_vel['units'] = "m/s"
