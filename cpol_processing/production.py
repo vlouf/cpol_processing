@@ -95,7 +95,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     if "cfrad" in outfilename:
         outfilename = correct_output_filename(outfilename)
     else:
-        outfilename = "cfrad." + radar_start_date.strftime("%Y%m%d_%H%M") + ".nc"
+        outfilename = "cfrad." + radar_start_date.strftime("%Y%m%d_%H%M%S") + ".nc"
 
     outfilename = os.path.join(outpath, outfilename)
 

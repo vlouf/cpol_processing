@@ -561,12 +561,14 @@ def read_radar(radar_file_name):
         myfields = [('NCPH', "NCP"),
                     ('normalized_coherent_power', "NCP"),
                     ('DBZH', "DBZ"),
+                    ("DBZH_CLEAN", "DBZ"),
                     ('reflectivity', "DBZ"),
                     ('WIDTHH', "WIDTH"),
                     ('sprectrum_width', "WIDTH"),
                     ('UH', "DBZ"),
                     ('total_power', "DBZ"),
                     ("differential_reflectivity", "ZDR"),
+                    ("VRADH", "VEL")
                     ('VELH', "VEL"),
                     ('velocity', "VEL"),
                     ("cross_correlation_ratio", "RHOHV"),
@@ -646,7 +648,7 @@ def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DB
     # Listing radiosounding files.
     all_sonde_files = sorted(os.listdir(soundings_dir))
 
-    pos = [cnt for cnt, f in enumerate(all_sonde_files) if fnmatch.fnmatch(f, "*" + mydate.strftime("%Y%m%d") + "*")]
+    pos = [cnt for cnt, f in enumerate(all_sonde_files) if fnmatch.fnmatch(f, "*" + radar_start_date.strftime("%Y%m%d") + "*")]
     if len(pos) > 0:
         # Looking for the exact date.
         sonde_name = all_sonde_files[pos[0]]
