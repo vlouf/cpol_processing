@@ -471,7 +471,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
                      'corrected_differential_phase', 'corrected_specific_differential_phase',
                      "differential_phase", "raw_unfolded_differential_phase", "bringi_differential_phase",
                      "giangrande_differential_phase", "specific_differential_phase", "bringi_specific_differential_phase",
-                     "giangrande_specific_differential_phase"]:
+                     "giangrande_specific_differential_phase", "VRADH", "VRADV", "WRADH", "WRADV"]:
             # Virgin fields that are left untouch.
             continue
         else:
