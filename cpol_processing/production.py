@@ -201,7 +201,12 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
                         cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
-            pass
+            try:
+                gr.plot_ppi('VRADH', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+                gr.plot_ppi('WRADH', ax=the_ax[11], gatefilter=gatefilter,
+                            cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            except Exception:
+                pass
 
         gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
         gr.plot_ppi('NW', ax=the_ax[13], gatefilter=gatefilter, cmap='cubehelix', vmin=0, vmax=8)
