@@ -40,6 +40,7 @@ import pyart
 import scipy
 import netCDF4
 import numpy as np
+import wradlib
 
 from scipy import ndimage, signal, integrate
 from csu_radartools import csu_kdp
@@ -290,6 +291,49 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
     return gf_despeckeld
+
+
+def do_wrd_gatefilter(radar, rhohv_name="RHOHV_CORR", phidp_name="PHIDP", refl_name="DBZ", vel_name="VEL", zdr_name="ZDR"):
+    """
+    Create gatefilter using wradlib fuzzy echo classification.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    refl_name: str
+        Reflectivity field name.
+    rhohv_name: str
+        Cross correlation ratio field name.
+
+    Return:
+    =======
+    gf: GateFilter
+    """
+    rho = radar.fields[rhohv_name]['data']
+    nmap = np.zeros_like(rho)
+    nmap[rho < 0.3] = 1
+
+    dat = {}
+    dat["rho"] = radar.fields[rhohv_name]['data']
+    dat["phi"] = radar.fields[phidp_name]['data']
+    dat["ref"] = radar.fields[refl_name]['data']
+    dat["dop"] = radar.fields[vel_name]['data']
+    dat["zdr"] = radar.fields[zdr_name]['data']
+    dat["map"] = nmap
+
+    weights = {"zdr": 0.4, "rho": 0.4, "rho2": 0.4, "phi": 0.1, "dop": 0.1, "map": 0.5}
+
+    cmap, nanmask = wradlib.clutter.classify_echo_fuzzy(dat, weights=weights, thresh=0.5)
+    radar.add_field_like("DBZ", "CLUT_TMP", cmap, replace_existing=True)
+
+    gf = pyart.filters.GateFilter(radar)
+    gf.exclude_equal("CLUT", 1)
+    gf = pyart.correct.despeckle_field(radar, "DBZ", gatefilter=gf)
+
+    radar.fields.pop("CLUT_TMP")
+
+    return gf
 
 
 def filter_hardcoding(my_array, nuke_filter, bad=-9999):
