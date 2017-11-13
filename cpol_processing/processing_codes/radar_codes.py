@@ -568,7 +568,7 @@ def read_radar(radar_file_name):
                     ('UH', "DBZ"),
                     ('total_power', "DBZ"),
                     ("differential_reflectivity", "ZDR"),
-                    ("VRADH", "VEL")
+                    ("VRADH", "VEL"),
                     ('VELH', "VEL"),
                     ('velocity', "VEL"),
                     ("cross_correlation_ratio", "RHOHV"),
