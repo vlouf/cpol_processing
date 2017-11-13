@@ -2,20 +2,19 @@ cpol_processing
 ===============
 
 Radar processing script. This script processes raw radar files using various tools like [Py-ART][1], [csu_radartools][2], as well as some custom function.
-It computes the signal to noise ratio (in case it doesn't exist),
 
->- Compute SNR using radiosoundings and map the temperature to all radar gates.
->- Correct RHOHV from range dependancy using Ryzhkov algorithm.
->- Correct ZDR using Ryzhkov algorithm.
->- Create a filter to remove noise and incorrect data.
->- Process and unfold raw PHIDP using Bringi's technique and Giangrande's LP processing.
->- Compute KDP.
->- Unfold velocity using [Py-ART][1].
->- Correct reflectivity attenuation (C-band only).
->- Correct differential reflectivity attenuation (C-band only).
->- Estimate Hydrometeors classification using [csu_radartools][2].
->- Estimate Rainfall rate using [csu_radartools][2].
->- Estimate DSD retrieval using [csu_radartools][2].
+- Compute SNR using radiosoundings and map the temperature to all radar gates.
+- Correct RHOHV from range dependancy using Ryzhkov algorithm.
+- Correct ZDR using Ryzhkov algorithm.
+- Create a filter to remove noise and incorrect data.
+- Process and unfold raw PHIDP using Bringi's technique and Giangrande's LP processing.
+- Compute KDP.
+- Unfold velocity using [Py-ART][1].
+- Correct reflectivity attenuation (C-band only).
+- Correct differential reflectivity attenuation (C-band only).
+- Estimate Hydrometeors classification using [csu_radartools][2].
+- Estimate Rainfall rate using [csu_radartools][2].
+- Estimate DSD retrieval using [csu_radartools][2].
 
 # Install
 
