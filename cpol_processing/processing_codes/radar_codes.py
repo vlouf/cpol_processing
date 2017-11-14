@@ -837,7 +837,7 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding
     # Trying to determine Nyquist velocity
     try:
         v_nyq_vel = radar.instrument_parameters['nyquist_velocity']['data'][0]
-    except (KeyError, IndexError):
+    except Exception:
         vdop_art = radar.fields[vel_name]['data']
         v_nyq_vel = np.max(np.abs(vdop_art))
 
