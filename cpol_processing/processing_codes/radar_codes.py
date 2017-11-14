@@ -332,6 +332,9 @@ def do_wrd_gatefilter(radar, rhohv_name="RHOHV_CORR", phidp_name="PHIDP", refl_n
 
     gf = pyart.filters.GateFilter(radar)
     gf.exclude_equal("CLUT_TMP", 1)
+
+    gf.include_above("DBZ", 25)
+
     gf = pyart.correct.despeckle_field(radar, "DBZ", gatefilter=gf)
 
     radar.fields.pop("CLUT_TMP")
