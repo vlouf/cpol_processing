@@ -35,6 +35,8 @@ import time
 import fnmatch
 import datetime
 
+from copy import deepcopy
+
 # Other Libraries
 import pyart
 import scipy
