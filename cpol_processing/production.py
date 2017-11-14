@@ -300,6 +300,13 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     logger.info("%s read.", radar_file_name)
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
+    # Get radiosoundings:
+    radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)
+
+    # Simulate wind profile
+    sim_vel = radar_codes.get_simulated_wind_profile(radar, radiosonde_fname)
+    radar.add_field("sim_velocity", sim_vel)
+
     # Correct Doppler velocity units.
     try:
         radar.fields['VEL']['units'] = "m/s"
@@ -329,7 +336,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Compute SNR and extract radiosounding temperature.
     try:
-        height, temperature, snr = radar_codes.snr_and_sounding(radar, radar_start_date, sound_dir)
+        height, temperature, snr = radar_codes.snr_and_sounding(radar, radar_start_date, radiosonde_fname)
         radar.add_field('temperature', temperature, replace_existing=True)
         radar.add_field('height', height, replace_existing=True)
     except ValueError:
@@ -405,7 +412,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     # This function will check if a 'VEL_CORR' field exists anyway.
     try:
         radar.fields['VEL']
-        vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, bobby_params=False, vel_name='VEL')
+        vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, bobby_params=False, constrain_sounding=True)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
         logger.info('Doppler velocity unfolded.')
     except KeyError:

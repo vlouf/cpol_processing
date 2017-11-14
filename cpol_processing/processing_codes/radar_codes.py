@@ -429,6 +429,47 @@ def get_field_names():
     return fields_names
 
 
+def get_radiosoundings(sound_dir, radar_start_date):
+    # Looking for radiosoundings:
+    all_sonde_files = sorted(os.listdir(sound_dir))
+
+    pos = [cnt for cnt, f in enumerate(all_sonde_files) if fnmatch.fnmatch(f, "*" + radar_start_date.strftime("%Y%m%d") + "*")]
+    if len(pos) > 0:
+        # Looking for the exact date.
+        sonde_name = all_sonde_files[pos[0]]
+        sonde_name = os.path.join(sound_dir, sonde_name)
+    else:
+        # Looking for the closest date.
+        dtime = [datetime.datetime.strptime(re.findall("[0-9]{8}", f)[0], "%Y%m%d") for f in all_sonde_files]
+        closest_date = _nearest(dtime, radar_start_date)
+        sonde_name = glob.glob(os.path.join(soundings_dir, "*" + closest_date.strftime("%Y%m%d") + "*"))[0]
+
+    return sonde_name
+
+
+def get_simulated_wind_profile(radar, radiosonde_fname, height_name="height", speed_name="wspeed", wdir_name="wdir"):
+    """
+    Simulate the horizontal wind profile for the radar.
+
+    Parameters
+    ==========
+    radar:
+        Py-ART radar data structure.
+    radiosonde_fname: str
+        Radiosonde file name.
+
+    Returns:
+    ========
+    sim_vel: dict
+        Simulated velocity.
+    """
+    interp_sonde = netCDF4.Dataset(radiosonde_fname)
+    hwind_prof = pyart.core.HorizontalWindProfile(interp_sonde[height_name], interp_sonde[speed_name], interp_sonde[wdir_name],)
+    sim_vel = pyart.util.simulated_vel_from_profile(radar, hwind_prof)
+
+    return sim_vel
+
+
 def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR", refl_field='DBZ'):
     """
     Compute PHIDP and KDP Bringi.
@@ -628,7 +669,7 @@ def rename_radar_fields(radar):
     return radar
 
 
-def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DBZ', temp_field_name="temp"):
+def snr_and_sounding(radar, radar_start_date, sonde_name, refl_field_name='DBZ', temp_field_name="temp"):
     """
     Compute the signal-to-noise ratio as well as interpolating the radiosounding
     temperature on to the radar grid. The function looks for the radiosoundings
@@ -639,8 +680,8 @@ def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DB
     ===========
         radar:
         radar_start_date: datetime
-        soundings_dir: str
-            Path to the radiosoundings directory.
+        sonde_name: str
+            Path to the radiosoundings.
         refl_field_name: str
             Name of the reflectivity field.
 
@@ -657,21 +698,8 @@ def snr_and_sounding(radar, radar_start_date, soundings_dir, refl_field_name='DB
     true_alt = radar.altitude['data'].copy()
     radar.altitude['data'] = np.array([0])
 
-    # Listing radiosounding files.
-    all_sonde_files = sorted(os.listdir(soundings_dir))
-
-    pos = [cnt for cnt, f in enumerate(all_sonde_files) if fnmatch.fnmatch(f, "*" + radar_start_date.strftime("%Y%m%d") + "*")]
-    if len(pos) > 0:
-        # Looking for the exact date.
-        sonde_name = all_sonde_files[pos[0]]
-    else:
-        # Looking for the closest date.
-        dtime = [datetime.datetime.strptime(re.findall("[0-9]{8}", f)[0], "%Y%m%d") for f in all_sonde_files]
-        closest_date = _nearest(dtime, radar_start_date)
-        sonde_name = glob.glob(os.path.join(soundings_dir, "*" + closest_date.strftime("%Y%m%d") + "*"))[0]
-
     # print("Reading radiosounding %s" % (sonde_name))
-    interp_sonde = netCDF4.Dataset(os.path.join(soundings_dir, sonde_name))
+    interp_sonde = netCDF4.Dataset(sonde_name)
     temperatures = interp_sonde.variables[temp_field_name][:]
     temperatures[(temperatures < -100) | (temperatures > 100)] = np.NaN
     times = interp_sonde.variables['time'][:]
