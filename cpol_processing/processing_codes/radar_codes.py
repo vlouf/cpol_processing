@@ -284,7 +284,7 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         gf.exclude_not_equal("EMR2", 1)
         radar.fields.pop('EMR2')
 
-    gf.include_above("DBZ", 25)
+    gf.include_above("DBZ", 15)
 
     # rho = radar.fields[rhohv_name]['data'].copy()
     # mymask = np.zeros_like(rho) + 1.0
@@ -333,7 +333,7 @@ def do_wrd_gatefilter(radar, rhohv_name="RHOHV_CORR", phidp_name="PHIDP", refl_n
     gf = pyart.filters.GateFilter(radar)
     gf.exclude_equal("CLUT_TMP", 1)
 
-    gf.include_above("DBZ", 25)
+    gf.include_above("DBZ", 15)
 
     gf = pyart.correct.despeckle_field(radar, "DBZ", gatefilter=gf)
 
@@ -806,6 +806,33 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding
         vdop_vel: dict
             Unfolded Doppler velocity.
     """
+    # Minimize cost function that is sum of difference between regions and
+    def cost_function(nyq_vector):
+        cost = 0
+        i = 0
+        for reg in np.unique(regions[sweep_slice]):
+            add_value = np.abs(np.ma.mean(vels_slice[regions[sweep_slice] == reg]) + nyq_vector[i] * v_nyq_vel -
+                               np.ma.mean(svels_slice[regions[sweep_slice] == reg]))
+
+            if np.isfinite(add_value):
+                cost += add_value
+            i = i + 1
+        return cost
+
+    def gradient(nyq_vector):
+        gradient_vector = np.zeros(len(nyq_vector))
+        i = 0
+
+        for reg in np.unique(regions[sweep_slice]):
+            add_value = (np.ma.mean(vels_slice[regions[sweep_slice] == reg]) + nyq_vector[i] * v_nyq_vel -
+                         np.ma.mean(svels_slice[regions[sweep_slice] == reg]))
+            if(add_value > 0):
+                gradient_vector[i] = v_nyq_vel
+            else:
+                gradient_vector[i] = -v_nyq_vel
+            i = i + 1
+        return gradient_vector
+
     gf = deepcopy(my_gatefilter)
     # Trying to determine Nyquist velocity
     try:
@@ -814,18 +841,25 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding
         vdop_art = radar.fields[vel_name]['data']
         v_nyq_vel = np.max(np.abs(vdop_art))
 
-    # Cf. mail from Bobby Jackson for skip_between_rays parameters.
-    if bobby_params:
-        vdop_vel = pyart.correct.dealias_region_based(radar,
-                                                      vel_field=vel_name,
-                                                      gatefilter=gf,
-                                                      nyquist_vel=v_nyq_vel,
-                                                      skip_between_rays=2000)
-    else:
-        vdop_vel = pyart.correct.dealias_region_based(radar,
-                                                      vel_field=vel_name,
-                                                      gatefilter=gf,
-                                                      nyquist_vel=v_nyq_vel)
+    try:
+        vdop_vel = pyart.correct.dealias_region_based(radar, vel_field=vel_name, rays_wrap_around=True,
+                                                      gatefilter=gf, skip_between_rays=2000)
+    except Exception:
+        vdop_vel = pyart.correct.dealias_region_based(radar, vel_field=vel_name,
+                                                      gatefilter=gf, nyquist_vel=v_nyq_vel)
+
+    # # Cf. mail from Bobby Jackson for skip_between_rays parameters.
+    # if bobby_params:
+    #     vdop_vel = pyart.correct.dealias_region_based(radar,
+    #                                                   vel_field=vel_name,
+    #                                                   gatefilter=gf,
+    #                                                   nyquist_vel=v_nyq_vel,
+    #                                                   skip_between_rays=2000)
+    # else:
+    #     vdop_vel = pyart.correct.dealias_region_based(radar,
+    #                                                   vel_field=vel_name,
+    #                                                   gatefilter=gf,
+    #                                                   nyquist_vel=v_nyq_vel)
 
     if constrain_sounding:
         gfilter = gf.gate_excluded
@@ -847,33 +881,6 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding
                 v_nyq_vel, 3, valid_sdata, nsweep)
             regions[sweep_slice], nfeatures = pyart.correct.region_dealias._find_regions(vels_uncorrs, sfilter,
                                                                                          limits=int_splits)
-
-            # Minimize cost function that is sum of difference between regions and
-            def cost_function(nyq_vector):
-                cost = 0
-                i = 0
-                for reg in np.unique(regions[sweep_slice]):
-                    add_value = np.abs(np.ma.mean(vels_slice[regions[sweep_slice] == reg]) + nyq_vector[i] * v_nyq_vel -
-                                       np.ma.mean(svels_slice[regions[sweep_slice] == reg]))
-
-                    if np.isfinite(add_value):
-                        cost += add_value
-                    i = i + 1
-                return cost
-
-            def gradient(nyq_vector):
-                gradient_vector = np.zeros(len(nyq_vector))
-                i = 0
-
-                for reg in np.unique(regions[sweep_slice]):
-                    add_value = (np.ma.mean(vels_slice[regions[sweep_slice] == reg]) + nyq_vector[i] * v_nyq_vel -
-                                 np.ma.mean(svels_slice[regions[sweep_slice] == reg]))
-                    if(add_value > 0):
-                        gradient_vector[i] = v_nyq_vel
-                    else:
-                        gradient_vector[i] = -v_nyq_vel
-                    i = i + 1
-                return gradient_vector
 
         bounds_list = [(x, y) for (x, y) in zip(-5 * np.ones(nfeatures + 1), 5 * np.ones(nfeatures + 1))]
         nyq_adjustments = fmin_l_bfgs_b(cost_function, np.zeros((nfeatures + 1)), disp=True, fprime=gradient,

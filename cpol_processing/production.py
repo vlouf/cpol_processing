@@ -412,7 +412,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     # This function will check if a 'VEL_CORR' field exists anyway.
     try:
         radar.fields['VEL']
-        vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, bobby_params=False, constrain_sounding=False)
+        vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, constrain_sounding=False)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
         logger.info('Doppler velocity unfolded.')
     except KeyError:
