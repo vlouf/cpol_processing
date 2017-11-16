@@ -553,7 +553,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     """
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
                                                    min_phidp=1,
-                                                   min_rhohv=0.95,
+                                                   min_rhv=0.95,
                                                    LP_solver='cylp',
                                                    refl_field=refl_field,
                                                    ncp_field=ncp_field,
