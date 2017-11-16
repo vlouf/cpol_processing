@@ -42,7 +42,6 @@ import pyart
 import scipy
 import netCDF4
 import numpy as np
-import wradlib
 
 from scipy import ndimage, signal, integrate
 from csu_radartools import csu_kdp
