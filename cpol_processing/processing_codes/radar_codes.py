@@ -211,10 +211,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
 
     snr = radar.fields[snr_name]['data']
     natural_snr = 10**(0.1 * snr)
-    rho_corr = rhohv / (1 + 1 / natural_snr)
-
-    rhosmooth = pyart.correct.phase_proc.smooth_and_trim_scan(rho_corr)
-    rhosmooth[:, -11:] = rho_corr[:, -11:]
+    rho_corr = rhohv * (1 + 1 / natural_snr)
 
     return rhosmooth
 
@@ -284,19 +281,12 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
         gf.exclude_not_equal("EMR2", 1)
         radar.fields.pop('EMR2')
 
-    gf.include_above("DBZ", 15)
-
-    # rho = radar.fields[rhohv_name]['data'].copy()
-    # mymask = np.zeros_like(rho) + 1.0
-    # r = radar.range['data']
-    # sweep = radar.get_sweep(0)
-
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
     return gf_despeckeld
 
 
-def do_wrd_gatefilter(radar, rhohv_name="RHOHV_CORR", phidp_name="PHIDP", refl_name="DBZ", vel_name="VEL", zdr_name="ZDR"):
+def do_txt_gatefilter(radar, radar_start_date, phidp_name="PHIDP", refl_name="DBZ", rhohv_name="RHOHV_CORR", is_rhohv_fake=False):
     """
     Create gatefilter using wradlib fuzzy echo classification.
 
@@ -304,6 +294,7 @@ def do_wrd_gatefilter(radar, rhohv_name="RHOHV_CORR", phidp_name="PHIDP", refl_n
     ===========
     radar:
         Py-ART radar structure.
+    radar_start_date: datetime
     refl_name: str
         Reflectivity field name.
     rhohv_name: str
@@ -312,32 +303,44 @@ def do_wrd_gatefilter(radar, rhohv_name="RHOHV_CORR", phidp_name="PHIDP", refl_n
     Return:
     =======
     gf: GateFilter
+        Gate filter (excluding all bad data).
     """
-    rho = radar.fields[rhohv_name]['data']
-    nmap = np.zeros_like(rho)
-    nmap[rho < 0.3] = 1
+    def noise_th(x, max_range=90):
+        n, bins = np.histogram(x.flatten(), bins=150, range=(5, max_range))
+        cnt = 10
+        peaks = []
+        while (len(peaks) < 1) or (cnt == 0):
+            peaks = scipy.signal.find_peaks_cwt(n, [cnt])
+            cnt - 1
 
-    dat = {}
-    dat["rho"] = radar.fields[rhohv_name]['data']
-    dat["phi"] = radar.fields[phidp_name]['data']
-    dat["ref"] = radar.fields[refl_name]['data']
-    dat["dop"] = radar.fields[vel_name]['data']
-    dat["zdr"] = radar.fields[zdr_name]['data']
-    dat["map"] = nmap
+        centers = bins[0:-1] + (bins[1] - bins[0])
+        search_data = n[peaks[0]:peaks[1]]
+        search_centers = centers[peaks[0]:peaks[1]]
+        locs = search_data.argsort()
+        noise_threshold = search_centers[locs[0]]
 
-    weights = {"zdr": 0.4, "rho": 0.4, "rho2": 0.4, "phi": 0.1, "dop": 0.1, "map": 0.5}
+        return noise_threshold
 
-    cmap, nanmask = wradlib.clutter.classify_echo_fuzzy(dat, weights=weights, thresh=0.5)
-    radar.add_field_like("DBZ", "CLUT_TMP", cmap, replace_existing=True)
+    phi = radar.fields[phidp_name]['data'].copy()
+    vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
+
+    try:
+        noise_threshold = noise_th(vel_dict)
+    except Exception:
+        print("ERROR NOISE threshold for %s. Probably only noise in volume." % (radar_start_date.isoformat()))
+        gf = do_gatefilter(radar, is_rhohv_fake)
+        return gf
+
+    radar.add_field_like(phidp_name, "TPHI", vel_dict, replace_existing=True)
 
     gf = pyart.filters.GateFilter(radar)
-    gf.exclude_equal("CLUT_TMP", 1)
+    gf.exclude_above("TPHI", noise_threshold * 1.25)
 
-    gf.include_above("DBZ", 15)
+    if radar_start_date.year > 2011:
+        gf.include_above(rhohv_name, 0.8)
 
     gf = pyart.correct.despeckle_field(radar, "DBZ", gatefilter=gf)
-
-    radar.fields.pop("CLUT_TMP")
+    radar.fields.pop('TPHI')
 
     return gf
 
@@ -551,6 +554,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     """
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
                                                    min_phidp=1,
+                                                   min_rhohv=0.95,
                                                    LP_solver='cylp',
                                                    refl_field=refl_field,
                                                    ncp_field=ncp_field,

@@ -376,10 +376,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # Get filter
-    if fake_rhohv or vel_missing:
-        gatefilter = radar_codes.do_gatefilter(radar, rhohv_name='RHOHV_CORR', is_rhohv_fake=fake_rhohv)
-    else:
-        gatefilter = radar_codes.do_wrd_gatefilter(radar)
+    gatefilter = radar_codes.do_txt_gatefilter(radar, is_rhohv_fake=fake_rhohv)
     logger.info('Filter initialized.')
 
     # Unfold PHIDP:
