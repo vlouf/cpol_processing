@@ -213,7 +213,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     natural_snr = 10**(0.1 * snr)
     rho_corr = rhohv * (1 + 1 / natural_snr)
 
-    return rhosmooth
+    return rho_corr
 
 
 def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
