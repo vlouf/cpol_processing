@@ -176,13 +176,15 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     rhohv[rhohv < 0] = 0
 
     snr = radar.fields[snr_name]['data']
+    try:
+        snr = snr.filled(-9999)
+    except Exception:
+        pass
+
     natural_snr = 10**(0.1 * snr)
     rho_corr = rhohv * (1 + 1 / natural_snr)
     rho_corr[np.isnan(rho_corr)] = 1  # Happen when natural snr breaks
-
-    # Not allowing correction to decrease the actual RHOHV
-    pos = rho_corr < rhohv
-    rho_corr[pos] = rhohv[pos]
+    rho_corr[rho_corr > 1] = 1
 
     return rho_corr
 
