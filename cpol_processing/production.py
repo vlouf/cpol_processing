@@ -376,11 +376,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # GateFilter
-    gatefilter = None
-    gatefilter = filtering.do_txt_gatefilter(radar, phidp_name="PHIDP", rhohv_name="RHOHV_CORR")
-    if gatefilter is None:
-        gatefilter = filtering.do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
-                                             zdr_name="ZDR")
+    gatefilter = filtering.do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR', zdr_name="ZDR")
     logger.info('Filter initialized.')
 
     # Check PHIDP:
@@ -408,15 +404,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     logger.info('KDP/PHIDP Bringi estimated.')
 
     # Correct spider webs on phidp.
-    # phidp = phase.fix_phidp_from_kdp(radar, gatefilter)
-    # radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
-    # logger.info('PHIDP spider webs removed.')
+    phidp = phase.fix_phidp_from_kdp(radar, gatefilter)
+    radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
+    logger.info('PHIDP spider webs removed.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF')
-    if half_phi:
-        phidp_gg['data'] /= 2
-        kdp_gg['data'] /= 2
+    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_CORR')
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
@@ -505,7 +498,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Hardcode mask
     for mykey in radar.fields:
-        if mykey in ['temperature', 'height', 'signal_to_noise_ratio', "differential_reflectivity",
+        if mykey in ['temperature', 'height', 'signal_to_noise_ratio', "differential_reflectivity", "cross_correlation_ratio",
                      'normalized_coherent_power', 'spectrum_width', 'total_power', "velocity",
                      'corrected_differential_phase', 'corrected_specific_differential_phase',
                      "differential_phase", "raw_unfolded_differential_phase", "bringi_differential_phase",

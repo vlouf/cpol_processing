@@ -32,7 +32,7 @@ def _mask_rhohv(radar, rhohv_name, tight=True):
     nrays = radar.nrays
     ngate = radar.ngates
     oneray = np.zeros((ngate))
-    oneray[:(ngate // 2)] = 1 - np.linspace(0.1, 0.7, ngate // 2)
+    oneray[:(ngate // 2)] = 1 - np.linspace(0.05, 0.4, ngate // 2)
     oneray[(ngate // 2):] = 0.3
     emr = np.vstack([oneray for e in range(nrays)])
     rho = radar.fields[rhohv_name]['data']
@@ -58,7 +58,7 @@ def _noise_th(x, max_range=90):
     return noise_threshold
 
 
-def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP', zdr_name="ZDR"):
+def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR', zdr_name="ZDR"):
     """
     Basic filtering
 
@@ -83,62 +83,27 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
     # For CPOL, there is sometime an issue with older seasons.
     gf = pyart.filters.GateFilter(radar)
 
-    gf.exclude_outside(zdr_name, -3.0, 8.0)
+    gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -40.0, 80.0)
+    gf.exclude_below(rhohv_name, 0.5)
 
-    radar_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-
-    emr2 = _mask_rhohv(radar, rhohv_name, False)
-    radar.add_field_like(rhohv_name, "EMR2", emr2, replace_existing=True)
-    gf.exclude_not_equal("EMR2", 1)
-    radar.fields.pop('EMR2')
-
-    gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
-
-    return gf_despeckeld
-
-
-def do_txt_gatefilter(radar, phidp_name="PHIDP", rhohv_name="RHOHV_CORR"):
-    """
-    Create gatefilter using wradlib fuzzy echo classification.
-
-    Parameters:
-    ===========
-    radar:
-        Py-ART radar structure.
-    refl_name: str
-        Reflectivity field name.
-    rhohv_name: str
-        Cross correlation ratio field name.
-
-    Return:
-    =======
-    gf: GateFilter
-        Gate filter (excluding all bad data).
-    """
     phi = radar.fields[phidp_name]['data'].copy()
     vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
-
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-
     try:
         noise_threshold = _noise_th(vel_dict)
     except Exception:
         print("Only noise in volume")
-        return None
+        gf.exclude_below(rhohv_name, 0.8)
+        noise_threshold = None
 
-    radar.add_field_like(phidp_name, "TPHI", vel_dict, replace_existing=True)
+    if noise_threshold is not None:
+        radar.add_field_like(phidp_name, "TPHI", vel_dict, replace_existing=True)
+        gf.include_below("TPHI", noise_threshold * 1.25)
+        radar.fields.pop('TPHI')
 
-    gf = pyart.filters.GateFilter(radar)
-    gf.exclude_above("TPHI", noise_threshold * 1.25)
+    gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
-    if radar_start_date.year > 2011:
-        gf.include_above(rhohv_name, 0.8)
-
-    gf = pyart.correct.despeckle_field(radar, "DBZ", gatefilter=gf)
-    radar.fields.pop('TPHI')
-
-    return gf
+    return gf_despeckeld
 
 
 def filter_hardcoding(my_array, nuke_filter, bad=-9999):
