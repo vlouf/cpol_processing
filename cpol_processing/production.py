@@ -30,10 +30,11 @@ import matplotlib.pyplot as pl
 import pyart
 
 # Custom modules.
-from .processing_codes import radar_codes
 from .processing_codes import atten_codes
 from .processing_codes import gridding_codes
 from .processing_codes import hydro_codes
+from .processing_codes import phase_codes
+from .processing_codes import radar_codes
 
 
 # Get logger.
@@ -384,7 +385,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     logger.info('Filter initialized.')
 
     # Check PHIDP:
-    half_phi = radar_codes.check_phidp(radar)
+    half_phi = phase_codes.check_phidp(radar)
     if half_phi:
         phi = radar.fields['PHIDP']['data'].copy()
         phi *= 2
@@ -392,12 +393,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
-    phi_unfold = radar_codes.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP_CORR")
+    phi_unfold = phase_codes.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP_CORR")
     radar.add_field_like("PHIDP", "PHI_UNF", phi_unfold, replace_existing=True)
     logger.info('Raw PHIDP unfolded.')
 
     # Bringi unfolding.
-    phimeta, kdpmeta = radar_codes.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
+    phimeta, kdpmeta = phase_codes.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
     if half_phi:
         phimeta['data'] /= 2
         kdpmeta['data'] /= 2
@@ -408,12 +409,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     logger.info('KDP/PHIDP Bringi estimated.')
 
     # Correct spider webs on phidp.
-    # phidp = radar_codes.fix_phidp_from_kdp(radar, gatefilter)
+    # phidp = phase_codes.fix_phidp_from_kdp(radar, gatefilter)
     # radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
     # logger.info('PHIDP spider webs removed.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF')
+    phidp_gg, kdp_gg = phase_codes.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF')
     if half_phi:
         phidp_gg['data'] /= 2
         kdp_gg['data'] /= 2
