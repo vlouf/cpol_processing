@@ -30,15 +30,11 @@ import matplotlib.pyplot as pl
 import pyart
 
 # Custom modules.
-from .processing import atten_codes
-from .processing import gridding_codes
-from .processing import hydro_codes
-from .processing import phase_codes
+from .processing import attenuation
+from .processing import gridding
+from .processing import hydrometeors
+from .processing import phase
 from .processing import radar_codes
-
-
-# Get logger.
-logger = logging.getLogger()
 
 
 def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_seapol=False):
@@ -86,6 +82,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
 
         return outfilename
 
+    # Get logger.
+    logger = logging.getLogger()
     tick = time.time()
     radar = production_line(radar_file_name, sound_dir, figure_path, is_seapol)
 
@@ -123,8 +121,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
 
     try:
         # Gridding (and saving)
-        gridding_codes.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
-        gridding_codes.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
+        gridding.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
+        gridding.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
         logger.info('Gridding done.')
     except Exception:
         logging.error('Problem while gridding.')
@@ -274,6 +272,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         22/ Plotting figure quicklooks.
         23/ Hardcoding gatefilter.
     """
+    # Get logger.
+    logger = logging.getLogger()
+
     # Start chronometer.
     start_time = time.time()
 
@@ -385,7 +386,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     logger.info('Filter initialized.')
 
     # Check PHIDP:
-    half_phi = phase_codes.check_phidp(radar)
+    half_phi = phase.check_phidp(radar)
     if half_phi:
         phi = radar.fields['PHIDP']['data'].copy()
         phi *= 2
@@ -393,12 +394,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
-    phi_unfold = phase_codes.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP_CORR")
+    phi_unfold = phase.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP_CORR")
     radar.add_field_like("PHIDP", "PHI_UNF", phi_unfold, replace_existing=True)
     logger.info('Raw PHIDP unfolded.')
 
     # Bringi unfolding.
-    phimeta, kdpmeta = phase_codes.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
+    phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
     if half_phi:
         phimeta['data'] /= 2
         kdpmeta['data'] /= 2
@@ -409,12 +410,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     logger.info('KDP/PHIDP Bringi estimated.')
 
     # Correct spider webs on phidp.
-    # phidp = phase_codes.fix_phidp_from_kdp(radar, gatefilter)
+    # phidp = phase.fix_phidp_from_kdp(radar, gatefilter)
     # radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
     # logger.info('PHIDP spider webs removed.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = phase_codes.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF')
+    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF')
     if half_phi:
         phidp_gg['data'] /= 2
         kdp_gg['data'] /= 2
@@ -439,30 +440,30 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         pass
 
     # Correct Attenuation ZH
-    atten_spec, zh_corr = atten_codes.correct_attenuation_zh(radar)
+    atten_spec, zh_corr = attenuation.correct_attenuation_zh(radar)
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
     radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
     logger.info('Attenuation on reflectivity corrected.')
 
     # Correct Attenuation ZDR
-    atten_spec_zdr, zdr_corr = atten_codes.correct_attenuation_zdr(radar)
+    atten_spec_zdr, zdr_corr = attenuation.correct_attenuation_zdr(radar)
     radar.add_field_like('ZDR', 'ZDR_CORR', zdr_corr, replace_existing=True)
     radar.add_field('specific_attenuation_differential_reflectivity', atten_spec_zdr,
                     replace_existing=True)
     logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification
-    hydro_class = hydro_codes.hydrometeor_classification(radar)
+    hydro_class = hydrometeors.hydrometeor_classification(radar)
     radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
     logger.info('Hydrometeors classification estimated.')
 
     # Rainfall rate
-    rainfall = hydro_codes.rainfall_rate(radar)
+    rainfall = hydrometeors.rainfall_rate(radar)
     radar.add_field("radar_estimated_rain_rate", rainfall)
     logger.info('Rainfall rate estimated.')
 
     # DSD retrieval
-    nw_dict, d0_dict = hydro_codes.dsd_retrieval(radar)
+    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar)
     radar.add_field("D0", d0_dict)
     radar.add_field("NW", nw_dict)
     logger.info('DSD estimated.')
