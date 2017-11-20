@@ -376,8 +376,20 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # Get filter
-    gatefilter = radar_codes.do_txt_gatefilter(radar, radar_start_date, is_rhohv_fake=fake_rhohv)
+    gatefilter = None
+    if (radar_start_date.year <= 2007) or fake_rhohv:
+        gatefilter = radar_codes.do_txt_gatefilter(radar, radar_start_date, is_rhohv_fake=fake_rhohv)
+    if gatefilter is None:
+        gatefilter = radar_codes.do_gatefilter(radar, is_rhohv_fake=fake_rhohv)
     logger.info('Filter initialized.')
+
+    # Check PHIDP:
+    half_phi = radar_codes.check_phidp(radar)
+    if half_phi:
+        phi = radar.fields['PHIDP']['data'].copy()
+        phi *= 2
+        radar.add_field_like("PHIDP", "PHIDP", phi, replace_existing=True)
+        logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
     phi_unfold = radar_codes.unfold_raw_phidp(radar, gatefilter)
@@ -386,6 +398,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Bringi unfolding.
     phimeta, kdpmeta = radar_codes.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
+    if half_phi:
+        phimeta['data'] /= 2
+        kdpmeta['data'] /= 2
     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
     radar.fields['PHIDP_BRINGI']['long_name'] = "bringi_corrected_differential_phase"
@@ -393,12 +408,15 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     logger.info('KDP/PHIDP Bringi estimated.')
 
     # Correct spider webs on phidp.
-    phidp = radar_codes.fix_phidp_from_kdp(radar, gatefilter)
-    radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
-    logger.info('PHIDP spider webs removed.')
+    # phidp = radar_codes.fix_phidp_from_kdp(radar, gatefilter)
+    # radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
+    # logger.info('PHIDP spider webs removed.')
 
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter, phidp_field='PHI_CORR')
+    phidp_gg, kdp_gg = radar_codes.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF')
+    if half_phi:
+        phidp_gg['data'] /= 2
+        kdp_gg['data'] /= 2
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"

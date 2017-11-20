@@ -153,6 +153,30 @@ def check_azimuth(radar, refl_field_name='DBZ'):
     return is_good
 
 
+def check_phidp(radar, phi_name="PHIDP"):
+    """
+    Check if PHIDP range is 180 degrees (half-circle) or 360 degrees.
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    phi_name: str
+        Name of the PHIDP field.
+
+    Return:
+    =======
+    half_phi: bool
+        Is PHIDP range is half circle.
+    """
+    phi = radar.fields[phi_name]['data']
+    if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
+        half_phi = True
+    else:
+        half_phi = False
+
+    return half_phi
+
+
 def check_reflectivity(radar, refl_field_name='DBZ'):
     """
     Checking if radar has a proper reflectivity field.  It's a minor problem
@@ -327,8 +351,7 @@ def do_txt_gatefilter(radar, radar_start_date, phidp_name="PHIDP", refl_name="DB
         noise_threshold = noise_th(vel_dict)
     except Exception:
         print("ERROR NOISE threshold for %s. Probably only noise in volume." % (radar_start_date.isoformat()))
-        gf = do_gatefilter(radar, is_rhohv_fake)
-        return gf
+        return None
 
     radar.add_field_like(phidp_name, "TPHI", vel_dict, replace_existing=True)
 
@@ -552,7 +575,6 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
             Field dictionary containing recalculated differential phases.
     """
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
-                                                   min_phidp=1,
                                                    min_rhv=0.95,
                                                    LP_solver='cylp',
                                                    refl_field=refl_field,
@@ -777,6 +799,9 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
         phidp_unfold = np.ma.masked_where(gatefilter.gate_excluded, phi) + 180
         pmin = np.min(np.min(phidp_unfold, axis=1))
         tru_phi = phidp_unfold - pmin
+
+    tru_phi += 45
+    tru_phi[tru_phi > 360] -= 360
 
     return tru_phi
 
