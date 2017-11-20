@@ -388,11 +388,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     if half_phi:
         phi = radar.fields['PHIDP']['data'].copy()
         phi *= 2
-        radar.add_field_like("PHIDP", "PHIDP", phi, replace_existing=True)
+        radar.add_field_like("PHIDP", "PHIDP_CORR", phi, replace_existing=True)
         logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
-    phi_unfold = radar_codes.unfold_raw_phidp(radar, gatefilter)
+    phi_unfold = radar_codes.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP_CORR")
     radar.add_field_like("PHIDP", "PHI_UNF", phi_unfold, replace_existing=True)
     logger.info('Raw PHIDP unfolded.')
 

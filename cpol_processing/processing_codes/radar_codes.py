@@ -500,7 +500,7 @@ def get_simulated_wind_profile(radar, radiosonde_fname, height_name="height", sp
     return sim_vel
 
 
-def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR", refl_field='DBZ'):
+def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", refl_field='DBZ'):
     """
     Compute PHIDP and KDP Bringi.
 
@@ -550,7 +550,7 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_CORR", refl_field='DB
 
 
 def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
-                     rhv_field='RHOHV_CORR', phidp_field='PHI_CORR'):
+                     rhv_field='RHOHV_CORR', phidp_field='PHI_UNF'):
     """
     Phase processing using the LP method in Py-ART. A LP solver is required,
 
