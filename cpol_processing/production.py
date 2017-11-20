@@ -192,7 +192,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('bringi_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
         gr.plot_ppi('giangrande_differential_phase', ax=the_ax[8], vmin=-180, vmax=180, cmap='pyart_Wild25')
 
         gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[9], vmin=-2, vmax=5, cmap='pyart_Theodore16')
@@ -250,28 +250,27 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     PLAN:
     =====
-        02/ Generate output file name. Check if output file already exists.
-        03/ Read input radar file.
-        04/ Check if radar file OK (no problem with azimuth and reflectivity).
-        05/ Get radar date.
-        06/ Check if NCP field exists (creating a fake one if it doesn't)
-        07/ Check if RHOHV field exists (creating a fake one if it doesn't)
-        08/ Compute SNR and temperature using radiosoundings.
-        09/ Correct RHOHV using Ryzhkov algorithm.
-        10/ Create gatefilter (remove noise and incorrect data).
-        11/ Correct ZDR using Ryzhkov algorithm.
-        12/ Process and unfold raw PHIDP using wradlib and Vulpiani algorithm.
-        13/ Compute Giangrande's PHIDP using pyart.
-        14/ Unfold velocity using pyart.
-        15/ Compute attenuation for ZH
-        16/ Compute attenuation for ZDR
-        17/ Estimate Hydrometeors classification using csu toolbox.
-        18/ Estimate Rainfall rate using csu toolbox.
-        19/ Estimate DSD retrieval using csu toolbox.
-        20/ Removing fake/temporary fieds.
-        21/ Rename fields to pyart standard names.
-        22/ Plotting figure quicklooks.
-        23/ Hardcoding gatefilter.
+        01/ Read input radar file.
+        02/ Check if radar file OK (no problem with azimuth and reflectivity).
+        03/ Get radar date.
+        04/ Check if NCP field exists (creating a fake one if it doesn't)
+        05/ Check if RHOHV field exists (creating a fake one if it doesn't)
+        06/ Compute SNR and temperature using radiosoundings.
+        07/ Correct RHOHV using Ryzhkov algorithm.
+        08/ Create gatefilter (remove noise and incorrect data).
+        09/ Correct ZDR using Ryzhkov algorithm.
+        10/ Process and unfold raw PHIDP using wradlib and Vulpiani algorithm.
+        11/ Compute Giangrande's PHIDP using pyart.
+        12/ Unfold velocity using pyart.
+        13/ Compute attenuation for ZH
+        14/ Compute attenuation for ZDR
+        15/ Estimate Hydrometeors classification using csu toolbox.
+        16/ Estimate Rainfall rate using csu toolbox.
+        17/ Estimate DSD retrieval using csu toolbox.
+        18/ Removing fake/temporary fieds.
+        19/ Rename fields to pyart standard names.
+        20/ Plotting figure quicklooks.
+        21/ Hardcoding gatefilter.
     """
     # Get logger.
     logger = logging.getLogger()
@@ -331,10 +330,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         rho['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
         radar.add_field('RHOHV', rho)
         radar.add_field('RHOHV_CORR', rho)
-        fake_rhohv = True  # We delete this fake field later.
-
-    if fake_rhohv:
         radar.metadata['debug_info'] = 'RHOHV field does not exist in RAW data. I had to use a fake RHOHV.'
+        fake_rhohv = True  # We delete this fake field later.
         logger.critical("RHOHV field not found, creating a fake RHOHV")
 
     # Compute SNR and extract radiosounding temperature.
@@ -426,6 +423,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
     radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Giangrande estimated.')
+
+    # Resetting PHIDP.
+    if half_phi:
+        radar.fields['PHI_UNF'] /= 2
 
     # Unfold VELOCITY
     # This function will check if a 'VEL_CORR' field exists anyway.
