@@ -31,6 +31,7 @@ import pyart
 
 # Custom modules.
 from .processing import attenuation
+from .processing import filtering
 from .processing import gridding
 from .processing import hydrometeors
 from .processing import phase
@@ -367,7 +368,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     except KeyError:
         # Creating a fake NCP field.
         ncp = pyart.config.get_metadata('normalized_coherent_power')
-        emr2 = radar_codes._mask_rhohv(radar, "RHOHV_CORR", tight=True)
+        emr2 = filtering._mask_rhohv(radar, "RHOHV_CORR", tight=True)
         ncp['data'] = emr2
         ncp['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
         radar.add_field('NCP', ncp)
@@ -380,9 +381,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     # Get filter
     gatefilter = None
     if (radar_start_date.year <= 2007) or fake_rhohv:
-        gatefilter = radar_codes.do_txt_gatefilter(radar, radar_start_date, is_rhohv_fake=fake_rhohv)
+        gatefilter = filtering.do_txt_gatefilter(radar, radar_start_date, is_rhohv_fake=fake_rhohv)
     if gatefilter is None:
-        gatefilter = radar_codes.do_gatefilter(radar, is_rhohv_fake=fake_rhohv)
+        gatefilter = filtering.do_gatefilter(radar, is_rhohv_fake=fake_rhohv)
     logger.info('Filter initialized.')
 
     # Check PHIDP:
@@ -513,7 +514,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
             continue
         else:
             try:
-                radar.fields[mykey]['data'] = radar_codes.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
+                radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
             except KeyError:
                 continue
     logger.info('Hardcoding gatefilter to Fields done.')
