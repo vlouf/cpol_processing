@@ -178,6 +178,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     snr = radar.fields[snr_name]['data']
     natural_snr = 10**(0.1 * snr)
     rho_corr = rhohv * (1 + 1 / natural_snr)
+    rho_corr[np.isnan(rho_corr)] = 1  # Happen when natural snr breaks
 
     # Not allowing correction to decrease the actual RHOHV
     pos = rho_corr < rhohv
@@ -381,7 +382,7 @@ def rename_radar_fields(radar):
     return radar
 
 
-def snr_and_sounding(radar, radar_start_date, sonde_name, refl_field_name='DBZ', temp_field_name="temp"):
+def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="temp"):
     """
     Compute the signal-to-noise ratio as well as interpolating the radiosounding
     temperature on to the radar grid. The function looks for the radiosoundings
@@ -391,7 +392,6 @@ def snr_and_sounding(radar, radar_start_date, sonde_name, refl_field_name='DBZ',
     Parameters:
     ===========
         radar:
-        radar_start_date: datetime
         sonde_name: str
             Path to the radiosoundings.
         refl_field_name: str
@@ -406,6 +406,7 @@ def snr_and_sounding(radar, radar_start_date, sonde_name, refl_field_name='DBZ',
         snr: dict
             Signal to noise ratio.
     """
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
     # Altitude hack.
     true_alt = radar.altitude['data'].copy()
     radar.altitude['data'] = np.array([0])

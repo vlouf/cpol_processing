@@ -336,7 +336,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Compute SNR and extract radiosounding temperature.
     try:
-        height, temperature, snr = radar_codes.snr_and_sounding(radar, radar_start_date, radiosonde_fname)
+        height, temperature, snr = radar_codes.snr_and_sounding(radar, radiosonde_fname)
         radar.add_field('temperature', temperature, replace_existing=True)
         radar.add_field('height', height, replace_existing=True)
     except ValueError:
