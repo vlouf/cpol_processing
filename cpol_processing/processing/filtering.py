@@ -10,6 +10,7 @@ Codes for creating and manipulating gate filters.
     :toctree: generated/
 
     _mask_rhohv
+    _noise_th
     do_gatefilter
     do_txt_gatefilter
     filter_hardcoding
@@ -40,8 +41,24 @@ def _mask_rhohv(radar, rhohv_name, tight=True):
     return emr2
 
 
-def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
-                  zdr_name="ZDR", is_rhohv_fake=False):
+def _noise_th(x, max_range=90):
+    n, bins = np.histogram(x.flatten(), bins=150, range=(5, max_range))
+    cnt = 10
+    peaks = []
+    while (len(peaks) < 1) or (cnt == 0):
+        peaks = scipy.signal.find_peaks_cwt(n, [cnt])
+        cnt - 1
+
+    centers = bins[0:-1] + (bins[1] - bins[0])
+    search_data = n[peaks[0]:peaks[1]]
+    search_centers = centers[peaks[0]:peaks[1]]
+    locs = search_data.argsort()
+    noise_threshold = search_centers[locs[0]]
+
+    return noise_threshold
+
+
+def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP', zdr_name="ZDR"):
     """
     Basic filtering
 
@@ -53,6 +70,10 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
             Reflectivity field name.
         rhohv_name: str
             Cross correlation ratio field name.
+        ncp_name: str
+            Name of the normalized_coherent_power field.
+        zdr_name: str
+            Name of the differential_reflectivity field.
 
     Returns:
     ========
@@ -67,21 +88,17 @@ def do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP
 
     radar_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
 
-    if not is_rhohv_fake:
-        if radar_date.year not in [2006, 2007]:
-            emr2 = _mask_rhohv(radar, rhohv_name, True)
-        else:
-            emr2 = _mask_rhohv(radar, rhohv_name, False)
-        radar.add_field_like(rhohv_name, "EMR2", emr2, replace_existing=True)
-        gf.exclude_not_equal("EMR2", 1)
-        radar.fields.pop('EMR2')
+    emr2 = _mask_rhohv(radar, rhohv_name, False)
+    radar.add_field_like(rhohv_name, "EMR2", emr2, replace_existing=True)
+    gf.exclude_not_equal("EMR2", 1)
+    radar.fields.pop('EMR2')
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
     return gf_despeckeld
 
 
-def do_txt_gatefilter(radar, radar_start_date, phidp_name="PHIDP", refl_name="DBZ", rhohv_name="RHOHV_CORR", is_rhohv_fake=False):
+def do_txt_gatefilter(radar, phidp_name="PHIDP", rhohv_name="RHOHV_CORR"):
     """
     Create gatefilter using wradlib fuzzy echo classification.
 
@@ -89,7 +106,6 @@ def do_txt_gatefilter(radar, radar_start_date, phidp_name="PHIDP", refl_name="DB
     ===========
     radar:
         Py-ART radar structure.
-    radar_start_date: datetime
     refl_name: str
         Reflectivity field name.
     rhohv_name: str
@@ -100,29 +116,15 @@ def do_txt_gatefilter(radar, radar_start_date, phidp_name="PHIDP", refl_name="DB
     gf: GateFilter
         Gate filter (excluding all bad data).
     """
-    def noise_th(x, max_range=90):
-        n, bins = np.histogram(x.flatten(), bins=150, range=(5, max_range))
-        cnt = 10
-        peaks = []
-        while (len(peaks) < 1) or (cnt == 0):
-            peaks = scipy.signal.find_peaks_cwt(n, [cnt])
-            cnt - 1
-
-        centers = bins[0:-1] + (bins[1] - bins[0])
-        search_data = n[peaks[0]:peaks[1]]
-        search_centers = centers[peaks[0]:peaks[1]]
-        locs = search_data.argsort()
-        noise_threshold = search_centers[locs[0]]
-
-        return noise_threshold
-
     phi = radar.fields[phidp_name]['data'].copy()
     vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
 
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+
     try:
-        noise_threshold = noise_th(vel_dict)
+        noise_threshold = _noise_th(vel_dict)
     except Exception:
-        print("ERROR NOISE threshold for %s. Probably only noise in volume." % (radar_start_date.isoformat()))
+        print("Only noise in volume")
         return None
 
     radar.add_field_like(phidp_name, "TPHI", vel_dict, replace_existing=True)

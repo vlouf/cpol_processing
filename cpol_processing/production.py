@@ -378,12 +378,13 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     corr_zdr = radar_codes.correct_zdr(radar)
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
-    # Get filter
+    # GateFilter
     gatefilter = None
     if (radar_start_date.year <= 2007) or fake_rhohv:
-        gatefilter = filtering.do_txt_gatefilter(radar, radar_start_date, is_rhohv_fake=fake_rhohv)
+        gatefilter = filtering.do_txt_gatefilter(radar, phidp_name="PHIDP", rhohv_name="RHOHV_CORR")
     if gatefilter is None:
-        gatefilter = filtering.do_gatefilter(radar, is_rhohv_fake=fake_rhohv)
+        gatefilter = filtering.do_gatefilter(radar, refl_name='DBZ', rhohv_name='RHOHV_CORR', ncp_name='NCP',
+                                             zdr_name="ZDR")
     logger.info('Filter initialized.')
 
     # Check PHIDP:
