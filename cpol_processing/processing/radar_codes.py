@@ -168,23 +168,15 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
             Corrected cross correlation ratio.
     """
     rhohv = radar.fields[rhohv_name]['data'].copy()
-    try:
-        rhohv = rhohv.filled(0)
-    except Exception:
-        pass
-
-    rhohv[rhohv < 0] = 0
-
-    snr = radar.fields[snr_name]['data']
-    try:
-        snr = snr.filled(-9999)
-    except Exception:
-        pass
+    snr = radar.fields[snr_name]['data'].copy()
 
     natural_snr = 10**(0.1 * snr)
+    natural_snr = natural_snr.filled(-9999)
     rho_corr = rhohv * (1 + 1 / natural_snr)
-    rho_corr[np.isnan(rho_corr)] = 1  # Happen when natural snr breaks
-    rho_corr[rho_corr > 1] = 1
+
+    # Not allowing the corrected RHOHV to be lower than the raw rhohv
+    pos = rho_corr < rhohv
+    rho_corr[pos] = rhohv[pos]
 
     return rho_corr
 
