@@ -1,10 +1,10 @@
 """
 Codes for gridding radar data using Py-ART.
 
-@title: gridding_codes
+@title: gridding
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 15/08/2017
+@date: 20/11/2017
 
 .. autosummary::
     :toctree: generated/

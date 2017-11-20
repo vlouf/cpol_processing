@@ -1,11 +1,11 @@
 """
 Codes for estimating various parameters related to Hydrometeors.
 
-@title: radar_codes
+@title: hydrometeors
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 04/04/2017
-@date: 15/05/2017
+@date: 20/11/2017
 
 .. autosummary::
     :toctree: generated/
@@ -13,6 +13,7 @@ Codes for estimating various parameters related to Hydrometeors.
     dsd_retrieval
     hydrometeor_classification
     liquid_ice_mass
+    merhala_class_convstrat
     rainfall_rate
 """
 # Other Libraries

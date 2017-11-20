@@ -1,15 +1,16 @@
 """
 Codes for correcting and estimating attenuation on ZH and ZDR.
 
-@title: atten_codes
+@title: attenuation
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 15/08/2017
+@date: 20/11/2017
 
 .. autosummary::
     :toctree: generated/
 
     correct_attenuation_zdr
+    correct_attenuation_zh
     correct_attenuation_zh_pyart
 """
 

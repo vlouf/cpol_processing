@@ -1,3 +1,20 @@
+"""
+Codes for correcting the differential phase and estimating KDP.
+
+@title: phase
+@author: Valentin Louf <valentin.louf@monash.edu>
+@institutions: Monash University and the Australian Bureau of Meteorology
+@date: 20/11/2017
+
+.. autosummary::
+    :toctree: generated/
+
+    check_phidp
+    fix_phidp_from_kdp
+    phidp_bringi
+    phidp_giangrande
+    unfold_raw_phidp
+"""
 # Python Standard Library
 import time
 import datetime

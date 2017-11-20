@@ -1,3 +1,21 @@
+"""
+Codes for creating and manipulating gate filters.
+
+@title: filtering
+@author: Valentin Louf <valentin.louf@monash.edu>
+@institutions: Monash University and the Australian Bureau of Meteorology
+@date: 20/11/2017
+
+.. autosummary::
+    :toctree: generated/
+
+    _mask_rhohv
+    do_gatefilter
+    do_txt_gatefilter
+    filter_hardcoding
+    phidp_texture
+    velocity_texture
+"""
 # Python Standard Library
 import time
 import datetime

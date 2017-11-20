@@ -12,17 +12,14 @@ Codes for correcting and estimating various radar and meteorological parameters.
 
     _my_snr_from_reflectivity
     _nearest
-    _get_noise_threshold
     check_azimuth
     check_reflectivity
     correct_rhohv
     correct_zdr
-    do_gatefilter
-    get_texture
-    filter_hardcoding
     get_field_names
+    get_radiosoundings
+    get_simulated_wind_profile
     read_radar
-    refold_velocity
     rename_radar_fields
     snr_and_sounding
     unfold_velocity
