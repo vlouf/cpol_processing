@@ -426,7 +426,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Resetting PHIDP.
     if half_phi:
-        radar.fields['PHI_UNF'] /= 2
+        radar.fields['PHI_UNF']['data'] /= 2
 
     # Unfold VELOCITY
     # This function will check if a 'VEL_CORR' field exists anyway.
