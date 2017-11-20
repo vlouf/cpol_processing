@@ -124,6 +124,9 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", refl_field='DBZ
     phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
 
+    phi_off = np.min(np.min(phidpb, axis=1))
+    phidpb -= phi_off
+
     # Get metadata.
     phimeta = pyart.config.get_metadata("differential_phase")
     phimeta['data'] = phidpb

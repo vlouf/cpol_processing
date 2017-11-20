@@ -187,7 +187,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[4], gatefilter=gatefilter)
         # Seasons 0910: No RHOHV available.
         try:
-            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[5], norm=colors.LogNorm(vmin=0.5, vmax=1.05))
+            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[5], vmin=0.5, vmax=1.05)
         except KeyError:
             pass
 
