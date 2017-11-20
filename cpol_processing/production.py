@@ -30,11 +30,11 @@ import matplotlib.pyplot as pl
 import pyart
 
 # Custom modules.
-from .processing_codes import atten_codes
-from .processing_codes import gridding_codes
-from .processing_codes import hydro_codes
-from .processing_codes import phase_codes
-from .processing_codes import radar_codes
+from .processing import atten_codes
+from .processing import gridding_codes
+from .processing import hydro_codes
+from .processing import phase_codes
+from .processing import radar_codes
 
 
 # Get logger.
