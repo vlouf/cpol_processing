@@ -384,11 +384,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     if half_phi:
         phi = radar.fields['PHIDP']['data'].copy()
         phi *= 2
-        radar.add_field_like("PHIDP", "PHIDP_CORR", phi, replace_existing=True)
+        radar.add_field_like("PHIDP", "PHIDP", phi, replace_existing=True)
         logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
-    phi_unfold = phase.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP_CORR")
+    phi_unfold = phase.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP")
     radar.add_field_like("PHIDP", "PHI_UNF", phi_unfold, replace_existing=True)
     logger.info('Raw PHIDP unfolded.')
 
@@ -419,6 +419,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     # Resetting PHIDP.
     if half_phi:
         radar.fields['PHI_UNF']['data'] /= 2
+        radar.fields['PHIDP']['data'] /= 2
 
     # Unfold VELOCITY
     # This function will check if a 'VEL_CORR' field exists anyway.
