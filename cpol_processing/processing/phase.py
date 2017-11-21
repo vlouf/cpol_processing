@@ -76,8 +76,8 @@ def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHI
     kdp = radar.fields[kdp_name]['data'].copy()
     phidp = radar.fields[phidp_name]['data'].copy()
     kdp[gatefilter.gate_excluded] = 0
-    kdp[(kdp > 15) | (kdp < -2)] = 0
-    # kdp[kdp > 10] = 10
+    kdp[(kdp < -2)] = 0
+    kdp[kdp > 10] = 10
     interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
 
     phidp[:, :-1] = interg / (len(radar.range['data']))
@@ -106,8 +106,7 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     kdpb: ndarray
         Bringi specific differential phase array.
     """
-    dp = pyart.correct.phase_proc.get_phidp_unf(radar, rhohv_lev=0.4, doc=None, refl_field=refl_field,
-                                                ncp_field=ncp_name, rhv_field=rhohv_name, phidp_field=unfold_phidp_name)
+    dp = radar.fieds[unfold_phidp_name]['data'].copy()
     # Extract data
     try:
         dp = dp.filled(-9999)
