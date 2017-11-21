@@ -382,9 +382,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     # Check PHIDP:
     half_phi = phase.check_phidp(radar)
     if half_phi:
-        phi = radar.fields['PHIDP']['data'].copy()
-        phi *= 2
-        radar.add_field_like("PHIDP", "PHIDP", phi, replace_existing=True)
+        radar.fields['PHIDP']['data'] *= 2
         logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
