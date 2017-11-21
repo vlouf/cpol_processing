@@ -149,7 +149,6 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             Datetime stucture of the radar data.
     """
     if figure_path is None:
-        logger.error("No figure plotted.")
         return None
     # Extracting year and date.
     year = str(radar_date.year)
