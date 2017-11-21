@@ -475,12 +475,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar = radar_codes.rename_radar_fields(radar)
 
     # Remove obsolete fields:
-    try:
-        radar.fields['Refl']
-        radar.fields.pop('Refl')
-        logger.info('Obsolete field Refl removed.')
-    except KeyError:
-        pass
+    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height"]:
+        try:
+            radar.fields.pop(obsolete_key)
+        except KeyError:
+            continue
 
     # Treatment is finished!
     end_time = time.time()
