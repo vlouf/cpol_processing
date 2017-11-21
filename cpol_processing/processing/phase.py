@@ -106,7 +106,7 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     kdpb: ndarray
         Bringi specific differential phase array.
     """
-    dp = radar.fieds[unfold_phidp_name]['data'].copy()
+    dp = radar.fields[unfold_phidp_name]['data'].copy()
     # Extract data
     try:
         dp = dp.filled(-9999)
