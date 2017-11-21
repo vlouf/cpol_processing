@@ -109,10 +109,12 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     dp = pyart.correct.phase_proc.get_phidp_unf(radar, rhohv_lev=0.4, doc=None, refl_field=refl_field,
                                                 ncp_field=ncp_name, rhv_field=rhohv_name, phidp_field=unfold_phidp_name)
     # Extract data
+    dp += 45
     try:
         dp = dp.filled(-9999)
     except Exception:
         pass
+
     dz = radar.fields[refl_field]['data'].copy()
     dz = np.ma.masked_where(gatefilter.gate_excluded, dz).filled(-9999)
 
@@ -128,6 +130,8 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     # Mask array
     phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
+
+    phidpb -= 45
 
     phi_off = np.min(np.min(phidpb, axis=1))
     phidpb -= phi_off
