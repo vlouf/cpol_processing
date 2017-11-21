@@ -84,7 +84,7 @@ def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHI
     return phidp
 
 
-def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", refl_field='DBZ'):
+def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP", rhohv_name="RHOHV_CORR", refl_field='DBZ'):
     """
     Compute PHIDP and KDP Bringi.
 
@@ -106,9 +106,14 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", refl_field='DBZ
     kdpb: ndarray
         Bringi specific differential phase array.
     """
+    dp = pyart.correct.phase_proc.get_phidp_unf(radar, rhohv_lev=0.4, doc=None, refl_field=refl_field,
+                                                ncp_field=ncp_name, rhv_field=rhohv_name, phidp_field=unfold_phidp_name)
     # Extract data
-    dp = radar.fields[unfold_phidp_name]['data'].filled(-9999)
-    dz = radar.fields[refl_field]['data']
+    try:
+        dp = dp.filled(-9999)
+    except Exception:
+        pass
+    dz = radar.fields[refl_field]['data'].copy()
     dz = np.ma.masked_where(gatefilter.gate_excluded, dz).filled(-9999)
 
     # Extract dimensions
