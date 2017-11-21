@@ -265,7 +265,8 @@ def get_radiosoundings(sound_dir, radar_start_date):
         sonde_name = os.path.join(sound_dir, sonde_name)
     else:
         # Looking for the closest date.
-        dtime = _fdate(all_sonde_files)
+        dtime_none = _fdate(all_sonde_files)
+        dtime = [d for d in dtime if d is not None]
         closest_date = _nearest(dtime, radar_start_date)
         sonde_name = [e for e in all_sonde_files if closest_date.strftime("%Y%m%d") in e]
         if len(sonde_name) == 0:
