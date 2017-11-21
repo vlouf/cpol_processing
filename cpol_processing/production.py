@@ -496,21 +496,13 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     figure_time = time.time()
     logger.info('Figure saved in %0.2fs.', (figure_time - end_time))
 
-    # Hardcode mask
-    for mykey in radar.fields:
-        if mykey in ['temperature', 'height', 'signal_to_noise_ratio', "differential_reflectivity", "cross_correlation_ratio",
-                     'normalized_coherent_power', 'spectrum_width', 'total_power', "velocity",
-                     'corrected_differential_phase', 'corrected_specific_differential_phase',
-                     "differential_phase", "raw_unfolded_differential_phase", "bringi_differential_phase",
-                     "giangrande_differential_phase", "specific_differential_phase", "bringi_specific_differential_phase",
-                     "giangrande_specific_differential_phase", "VRADH", "VRADV", "WRADH", "WRADV"]:
-            # Virgin fields that are left untouch.
+    hardcode_keys = ["corrected_reflectivity", "radar_echo_classification", "corrected_differential_reflectivity",
+                     "region_dealias_velocity", "D0", "NW", "radar_estimated_rain_rate", ]
+    for mykey in hardcode_keys:
+        try:
+            radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
+        except KeyError:
             continue
-        else:
-            try:
-                radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
-            except KeyError:
-                continue
     logger.info('Hardcoding gatefilter to Fields done.')
 
     return radar

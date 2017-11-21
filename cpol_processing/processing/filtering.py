@@ -125,8 +125,7 @@ def filter_hardcoding(my_array, nuke_filter, bad=-9999):
             Same as my_array but with all data corresponding to a gate filter
             excluded.
     """
-    filt_array = np.ma.masked_where(nuke_filter.gate_excluded, my_array)
-    filt_array.set_fill_value(bad)
+    filt_array = np.ma.masked_where(nuke_filter.gate_excluded, my_array.copy())
     filt_array = filt_array.filled(fill_value=bad)
     to_return = np.ma.masked_where(filt_array == bad, filt_array)
     return to_return

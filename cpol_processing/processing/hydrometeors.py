@@ -45,12 +45,12 @@ def dsd_retrieval(radar, refl_name='DBZ', zdr_name='ZDR_CORR', kdp_name='KDP_GG'
         d0_dict: dict
             Median Volume Diameter.
     """
-    dbz = radar.fields[refl_name]['data'].filled(np.NaN)
-    zdr = radar.fields[zdr_name]['data']
+    dbz = radar.fields[refl_name]['data'].copy().filled(np.NaN)
+    zdr = radar.fields[zdr_name]['data'].copy()
     try:
-        kdp = radar.fields[kdp_name]['data'].filled(np.NaN)
+        kdp = radar.fields[kdp_name]['data'].copy().filled(np.NaN)
     except AttributeError:
-        kdp = radar.fields[kdp_name]['data']
+        kdp = radar.fields[kdp_name]['data'].copy()
 
     d0, Nw, mu = csu_dsd.calc_dsd(dz=dbz, zdr=zdr, kdp=kdp, band='C')
 
@@ -100,12 +100,12 @@ def hydrometeor_classification(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
         hydro_meta: dict
             Hydrometeor classification.
     """
-    refl = radar.fields[refl_name]['data']
-    zdr = radar.fields[zdr_name]['data']
-    kdp = radar.fields[kdp_name]['data']
-    rhohv = radar.fields[rhohv_name]['data']
-    radar_T = radar.fields[temperature_name]['data']
-    radar_z = radar.fields[height_name]['data']
+    refl = radar.fields[refl_name]['data'].copy()
+    zdr = radar.fields[zdr_name]['data'].copy()
+    kdp = radar.fields[kdp_name]['data'].copy()
+    rhohv = radar.fields[rhohv_name]['data'].copy()
+    radar_T = radar.fields[temperature_name]['data'].copy()
+    radar_z = radar.fields[height_name]['data'].copy()
 
     scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=True, band='C', T=radar_T)
 
@@ -147,10 +147,10 @@ def liquid_ice_mass(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
         ice_mass: dict
             Ice water content.
     """
-    refl = radar.fields[refl_name]['data']
-    zdr = radar.fields[zdr_name]['data']
-    radar_T = radar.fields[temperature_name]['data']
-    radar_z = radar.fields[height_name]['data']
+    refl = radar.fields[refl_name]['data'].copy()
+    zdr = radar.fields[zdr_name]['data'].copy()
+    radar_T = radar.fields[temperature_name]['data'].copy()
+    radar_z = radar.fields[height_name]['data'].copy()
 
     liquid_water_mass, ice_mass = csu_liquid_ice_mass.calc_liquid_ice_mass(refl, zdr, radar_z / 1000.0, T=radar_T)
 
