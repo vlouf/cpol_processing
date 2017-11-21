@@ -247,6 +247,14 @@ def get_radiosoundings(sound_dir, radar_start_date):
     """
     Find the radiosoundings
     """
+    def _fdate(flist):
+        rslt = [None] * len(flist)
+        for cnt, f in enumerate(flist):
+            try:
+                rslt[cnt] = datetime.datetime.strptime(re.findall("[0-9]{8}", f)[0], "%Y%m%d")
+            except Exception:
+                continue
+        return rslt
     # Looking for radiosoundings:
     all_sonde_files = sorted(os.listdir(sound_dir))
 
@@ -257,7 +265,7 @@ def get_radiosoundings(sound_dir, radar_start_date):
         sonde_name = os.path.join(sound_dir, sonde_name)
     else:
         # Looking for the closest date.
-        dtime = [datetime.datetime.strptime(re.findall("[0-9]{8}", f)[0], "%Y%m%d") for f in all_sonde_files]
+        dtime = _fdate(all_sonde_files)
         closest_date = _nearest(dtime, radar_start_date)
         sonde_name = [e for e in all_sonde_files if closest_date.strftime("%Y%m%d") in e]
         if len(sonde_name) == 0:
