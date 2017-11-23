@@ -27,6 +27,8 @@ import scipy
 import netCDF4
 import numpy as np
 
+from .phase import unfold_raw_phidp
+
 
 def _mask_rhohv(radar, rhohv_name, tight=True):
     nrays = radar.nrays
@@ -81,6 +83,11 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
             Gate filter (excluding all bad data).
     """
     # For CPOL, there is sometime an issue with older seasons.
+    dbz = radar.fields[refl_name]['data']
+    rhohv = radar.fields[rhohv_name]['data']
+    r = radar.range['data']
+    azi = radar.azimuth['data']
+    [R, A] = np.meshgrid(r, azi)
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     gf = pyart.filters.GateFilter(radar)
 
@@ -88,9 +95,12 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     gf.exclude_outside(refl_name, -40.0, 80.0)
     gf.exclude_below(rhohv_name, 0.6)
 
-    phi = radar.fields[phidp_name]['data'].copy()
-    vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
+    if radar_start_date.year > 2004:
+        phi = unfold_raw_phidp(radar, gf)
+    else:
+        phi = radar.fields[phidp_name]['data'].copy()
 
+    vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
     try:
         noise_threshold = _noise_th(vel_dict)
     except Exception:
@@ -98,16 +108,18 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         gf.exclude_below(rhohv_name, 0.8)
         noise_threshold = None
 
+    emr4 = np.zeros_like(vel_dict)
+    emr4[rhohv > 0.8] = 1
+    emr4[(R > 40e3) & (dbz > 30)] = 1
     if noise_threshold is not None:
-        radar.add_field_like(phidp_name, "TPHI", vel_dict, replace_existing=True)
-        gf.include_below("TPHI", noise_threshold * 1.15)
-        radar.fields.pop('TPHI')
+        emr4[vel_dict < noise_threshold * 1.15] = 1
+
+    radar.add_field_like(phidp_name, "TPHI", emr4, replace_existing=True)
+    gf.include_equal("TPHI", 1)
+    radar.fields.pop('TPHI')
 
     if radar_start_date.year < 2006:
-        dbz = radar.fields[refl_name]['data']
-        rhohv = radar.fields[rhohv_name]['data']
         posi, posj = np.where((dbz < 20) & (rhohv < 0.8))
-
         nar = np.zeros_like(dbz) + 1
         nar[posi, posj] = 0
         radar.add_field_like("NCP", "EMR3", nar, replace_existing=True)
