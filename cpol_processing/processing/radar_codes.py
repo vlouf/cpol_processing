@@ -163,7 +163,10 @@ def correct_azimuth(radar):
                     if azi[cnt] != 0:
                         break
                 for cnt2 in range(0, cnt):
-                    azi[cnt2] = azi[cnt] - (cnt - cnt2)
+                    val = azi[cnt] - (cnt - cnt2)
+                    if val < 0:
+                        val += 360
+                    azi[cnt2] = val
             except Exception:
                 continue
     return None
