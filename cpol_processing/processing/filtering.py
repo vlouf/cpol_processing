@@ -108,7 +108,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     #     gf.exclude_below(rhohv_name, 0.8)
     #     noise_threshold = None
 
-    emr4 = np.zeros_like(vel_dict)
+    emr4 = np.zeros_like(dbz)
     emr4[rhohv > 0.8] = 1
     emr4[(rhohv > 0.5) & (R > 100e3)] = 1
     emr4[(R > 20e3) & (dbz > 15)] = 1
