@@ -305,8 +305,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)
 
     # Simulate wind profile
-    sim_vel = radar_codes.get_simulated_wind_profile(radar, radiosonde_fname)
-    radar.add_field("sim_velocity", sim_vel)
+    # sim_vel = radar_codes.get_simulated_wind_profile(radar, radiosonde_fname)
+    # radar.add_field("sim_velocity", sim_vel)
 
     # Correct Doppler velocity units.
     try:
