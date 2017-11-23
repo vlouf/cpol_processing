@@ -94,8 +94,8 @@ def correct_attenuation_zh(radar, dbz_name='DBZ', kdp_name='KDP_GG', alpha=0.08)
             Attenuation corrected differential reflectivity.
     """
     r = radar.range['data']
-    zh = deepcopy(radar.fields[dbz_name]['data'])
-    kdp = deepcopy(radar.fields[kdp_name]['data'])
+    zh = radar.fields[dbz_name]['data'].copy()
+    kdp = radar.fields[kdp_name]['data'].copy()
     kdp[:, -35:] = 0  # Window problem
 
     dr = (r[1] - r[0]) / 1000  # km
@@ -104,7 +104,7 @@ def correct_attenuation_zh(radar, dbz_name='DBZ', kdp_name='KDP_GG', alpha=0.08)
     # kdp = np.ma.masked_where((kdp < 0) | np.isnan(kdp), kdp).filled(0)
 
     atten_specific = alpha * kdp  # Bringi relationship
-    atten_specific = np.ma.masked_where((atten_specific < 0) | (atten_specific > 1), atten_specific)
+    atten_specific = np.ma.masked_where((atten_specific < 0) | (atten_specific > 1), atten_specific).filled(0)
     # Path integrated attenuation
     atten = 2 * np.cumsum(atten_specific, axis=1) * dr
 
