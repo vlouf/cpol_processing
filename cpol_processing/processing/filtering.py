@@ -117,7 +117,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     if radar_start_date.year >= 2009:
         emr4[1080:, :] = 1
 
-    radar.add_field_like(phidp_name, "TPHI", emr4, replace_existing=True)
+    radar.add_field_like(refl_name, "TPHI", emr4, replace_existing=True)
     gf.include_equal("TPHI", 1)
     radar.fields.pop('TPHI')
 
