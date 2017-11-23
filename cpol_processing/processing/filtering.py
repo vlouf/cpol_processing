@@ -87,7 +87,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     rhohv = radar.fields[rhohv_name]['data']
     r = radar.range['data']
     azi = radar.azimuth['data']
-    [R, A] = np.meshgrid(r, azi)    
+    [R, A] = np.meshgrid(r, azi)
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     gf = pyart.filters.GateFilter(radar)
 
@@ -95,25 +95,25 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     gf.exclude_outside(refl_name, -40.0, 80.0)
     gf.exclude_below(rhohv_name, 0.6)
 
-    if radar_start_date.year > 2004:
-        phi = unfold_raw_phidp(radar, gf)
-    else:
-        phi = radar.fields[phidp_name]['data'].copy()
-
-    vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
-    try:
-        noise_threshold = _noise_th(vel_dict)
-    except Exception:
-        print("Only noise in volume")
-        gf.exclude_below(rhohv_name, 0.8)
-        noise_threshold = None
+    # if radar_start_date.year > 2004:
+    #     phi = unfold_raw_phidp(radar, gf)
+    # else:
+    #     phi = radar.fields[phidp_name]['data'].copy()
+    #
+    # vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
+    # try:
+    #     noise_threshold = _noise_th(vel_dict)
+    # except Exception:
+    #     print("Only noise in volume")
+    #     gf.exclude_below(rhohv_name, 0.8)
+    #     noise_threshold = None
 
     emr4 = np.zeros_like(vel_dict)
     emr4[rhohv > 0.8] = 1
-    emr4[(rhohv > 0.5) & (R > 100)] = 1
+    emr4[(rhohv > 0.5) & (R > 100e3)] = 1
     emr4[(R > 20e3) & (dbz > 15)] = 1
-    if noise_threshold is not None:
-        emr4[vel_dict < noise_threshold * 1.15] = 1
+    # if noise_threshold is not None:
+    #     emr4[vel_dict < noise_threshold * 1.15] = 1
     if radar_start_date.year >= 2009:
         emr4[1080:, :] = 1
 
