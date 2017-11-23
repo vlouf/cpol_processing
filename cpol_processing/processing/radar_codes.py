@@ -150,19 +150,22 @@ def check_reflectivity(radar, refl_field_name='DBZ'):
 
 def correct_azimuth(radar):
     """
-    Correct from wrong azimuth
+    Sometimes, rapic files have multiple zeros. This corrects from wrong azimuths.
     """
     for sl in radar.iter_slice():
         azi = radar.azimuth['data'][sl]
         if azi[0] != 0:
-            break
+            continue
         n0 = np.sum(azi == 0)
         if n0 > 1:
-            for cnt in range(0, n0 + 2):
-                if azi[cnt] != 0:
-                    break
-            for cnt2 in range(0, cnt):
-                azi[cnt2] = azi[cnt] - (cnt - cnt2)
+            try:
+                for cnt in range(0, n0 + 2):
+                    if azi[cnt] != 0:
+                        break
+                for cnt2 in range(0, cnt):
+                    azi[cnt2] = azi[cnt] - (cnt - cnt2)
+            except Exception:
+                continue
     return None
 
 
