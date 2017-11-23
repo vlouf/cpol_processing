@@ -295,6 +295,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         logger.error("MAJOR ERROR: %s azimuth field is empty.", radar_file_name)
         return None
 
+    radar_codes.correct_azimuth(radar)
+
     # Getting radar's date and time.
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     datestr = radar_start_date.strftime("%Y%m%d_%H%M")

@@ -148,6 +148,24 @@ def check_reflectivity(radar, refl_field_name='DBZ'):
     return is_good
 
 
+def correct_azimuth(radar):
+    """
+    Correct from wrong azimuth
+    """
+    for sl in radar.iter_slice():
+        azi = radar.azimuth['data'][sl]
+        if azi[0] != 0:
+            break
+        n0 = np.sum(azi == 0)
+        if n0 > 1:
+            for cnt in range(0, n0 + 2):
+                if azi[cnt] != 0:
+                    break
+            for cnt2 in range(0, cnt):
+                azi[cnt2] = azi[cnt] - (cnt - cnt2)
+    return None
+
+
 def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     """
     Correct cross correlation ratio (RHOHV) from noise. From the Schuur et al.
