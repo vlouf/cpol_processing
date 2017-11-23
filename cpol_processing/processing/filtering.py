@@ -87,7 +87,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     rhohv = radar.fields[rhohv_name]['data']
     r = radar.range['data']
     azi = radar.azimuth['data']
-    [R, A] = np.meshgrid(r, azi)
+    [R, A] = np.meshgrid(r, azi)    
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     gf = pyart.filters.GateFilter(radar)
 
@@ -110,9 +110,12 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
 
     emr4 = np.zeros_like(vel_dict)
     emr4[rhohv > 0.8] = 1
-    emr4[(R > 40e3) & (dbz > 30)] = 1
+    emr4[(rhohv > 0.5) & (R > 100)] = 1
+    emr4[(R > 20e3) & (dbz > 15)] = 1
     if noise_threshold is not None:
         emr4[vel_dict < noise_threshold * 1.15] = 1
+    if radar_start_date.year >= 2009:
+        emr4[1080:, :] = 1
 
     radar.add_field_like(phidp_name, "TPHI", emr4, replace_existing=True)
     gf.include_equal("TPHI", 1)
