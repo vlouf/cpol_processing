@@ -111,7 +111,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
 
     if noise_threshold is not None:
         radar.add_field_like(refl_name, "TPHI", vel_dict, replace_existing=True)
-        gf.eclude_above("TPHI", noise_threshold * 1.15)
+        gf.exclude_above("TPHI", noise_threshold * 1.15)
         gf.include_above(rhohv_name, 0.7)
         radar.fields.pop('TPHI')
 
