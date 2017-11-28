@@ -113,8 +113,8 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     except Exception:
         pass
 
-    dz = radar.fields[refl_field]['data'].copy()
-    dz = np.ma.masked_where(gatefilter.gate_excluded, dz).filled(-9999)
+    dz = radar.fields[refl_field]['data'].copy().filled(-9999)
+    # dz = np.ma.masked_where(gatefilter.gate_excluded, dz).filled(-9999)
 
     # Extract dimensions
     rng = radar.range['data']

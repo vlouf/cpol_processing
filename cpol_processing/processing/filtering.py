@@ -94,7 +94,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
 
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -40.0, 80.0)
-    gf.exclude_below(rhohv_name, 0.6)
+    # gf.exclude_below(rhohv_name, 0.6)
 
     if radar_start_date.year > 2004:
         phi = unfold_raw_phidp(radar, gf)
@@ -109,12 +109,11 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         gf.exclude_below(rhohv_name, 0.8)
         noise_threshold = None
 
-    emr4 = np.zeros_like(dbz)
     if noise_threshold is not None:
-        emr4[vel_dict < noise_threshold * 1.15] = 1
-    radar.add_field_like(refl_name, "TPHI", emr4, replace_existing=True)
-    gf.include_equal("TPHI", 1)
-    radar.fields.pop('TPHI')
+        radar.add_field_like(refl_name, "TPHI", vel_dict, replace_existing=True)
+        gf.eclude_above("TPHI", noise_threshold * 1.15)
+        gf.include_above(rhohv_name, 0.7)
+        radar.fields.pop('TPHI')
 
     if radar_start_date.year < 2006:
         posi, posj = np.where((dbz < 20) & (rhohv < 0.8))
@@ -123,6 +122,19 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         radar.add_field_like("NCP", "EMR3", nar, replace_existing=True)
         gf.exclude_equal("EMR3", 0)
         radar.fields.pop("EMR3")
+
+    if radar_start_date.year == 2007:
+        tvel = pyart.retrieve.calculate_velocity_texture(radar, vel_field="VEL")
+        try:
+            noise_threshold = _noise_th(tvel['data'])
+        except Exception:
+            noise_threshold = None
+            pass
+
+        if noise_threshold is not None:
+            radar.add_field("TVEL", tvel)
+            gf.eclude_above("TVEL", noise_threshold * 1.15)
+            radar.fields.pop('TVEL')
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
