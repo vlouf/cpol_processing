@@ -60,7 +60,7 @@ def _noise_th(x, max_range=90):
     return noise_threshold
 
 
-def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR', zdr_name="ZDR"):
+def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR', zdr_name="ZDR", vel_field="VEL", temp_name="temperature"):
     """
     Basic filtering
 
@@ -82,59 +82,43 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
     """
-    # For CPOL, there is sometime an issue with older seasons.
-    dbz = radar.fields[refl_name]['data']
-    rhohv = radar.fields[rhohv_name]['data']
-    r = radar.range['data']
-    azi = radar.azimuth['data']
-    [R, A] = np.meshgrid(r, azi)
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
 
     gf = pyart.filters.GateFilter(radar)
-
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -40.0, 80.0)
-    # gf.exclude_below(rhohv_name, 0.6)
 
-    if radar_start_date.year > 2004:
-        phi = unfold_raw_phidp(radar, gf)
+    if radar_start_date.year <= 2007:
+        # Using velocity texture for filtering.
+        vnyq = radar.fields[vel_field]['data'].max()
+        tvel = pyart.retrieve.calculate_velocity_texture(radar, vel_field=vel_field, nyq=vnyq)
+        radar.add_field("TVEL", tvel, replace_existing=True)
+        gf.exclude_above("TVEL", 4)
+        gf.include_above(rhohv_name, 0.8)
     else:
-        phi = radar.fields[phidp_name]['data'].copy()
+        # Using PHIDP texture for filtering.
+        tvel = pyart.retrieve.calculate_velocity_texture(radar, vel_field=phidp_name, nyq=90)
+        radar.add_field("TVEL", tvel, replace_existing=True)
+        gf.exclude_above("TVEL", 30)
+        gf.exclude_below(rhohv_name, 0.5)
 
-    vel_dict = pyart.util.angular_texture_2d(phi, 4, phi.max())
+    zdr = radar.fields[zdr_name]['data']
+    dbz = radar.fields[refl_name]['data']
+    rho = radar.fields[rhohv_name]['data']
+    temp = radar.fields[temp_name]['data']
+
+    emr4 = np.zeros_like(dbz) + 1
+    emr4[(zdr > 4) & (dbz < 20) & (temp >= 0)] = 0
+    emr4[(rho < 0.75) & (dbz < 20)] = 0
+
+    radar.add_field_like("total_power", "EMR", emr4, replace_existing=True)
+    gf.exclude_equal('EMR', 0)
+
     try:
-        noise_threshold = _noise_th(vel_dict)
+        radar.fields.pop('TVEL')
+        radar.fields.pop('EMR')
     except Exception:
-        print("Only noise in volume")
-        gf.exclude_below(rhohv_name, 0.8)
-        noise_threshold = None
-
-    if noise_threshold is not None:
-        radar.add_field_like(refl_name, "TPHI", vel_dict, replace_existing=True)
-        gf.exclude_above("TPHI", noise_threshold * 1.15)
-        gf.include_above(rhohv_name, 0.7)
-        radar.fields.pop('TPHI')
-
-    if radar_start_date.year < 2006:
-        posi, posj = np.where((dbz < 20) & (rhohv < 0.8))
-        nar = np.zeros_like(dbz) + 1
-        nar[posi, posj] = 0
-        radar.add_field_like("NCP", "EMR3", nar, replace_existing=True)
-        gf.exclude_equal("EMR3", 0)
-        radar.fields.pop("EMR3")
-
-    if radar_start_date.year == 2007:
-        tvel = pyart.retrieve.calculate_velocity_texture(radar, vel_field="VEL")
-        try:
-            noise_threshold = _noise_th(tvel['data'])
-        except Exception:
-            noise_threshold = None
-            pass
-
-        if noise_threshold is not None:
-            radar.add_field("TVEL", tvel)
-            gf.eclude_above("TVEL", noise_threshold * 1.15)
-            radar.fields.pop('TVEL')
+        pass
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
