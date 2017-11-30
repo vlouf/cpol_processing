@@ -113,7 +113,8 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     emr4 = np.zeros_like(dbz) + 1
     emr4[(zdr > 4) & (dbz < 20) & (temp >= 0)] = 0
     emr4[(rho < 0.75) & (dbz < 20)] = 0
-    emr4[(R >50e3) & (dbz > 20) & (rho > 0.4)] = 1
+    if radar_start_date.year >= 2007:
+        emr4[(R >50e3) & (dbz > 20)] = 1
 
     radar.add_field_like(refl_name, "EMR", emr4, replace_existing=True)
     gf.exclude_equal('EMR', 0)
