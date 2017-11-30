@@ -107,14 +107,7 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
         Bringi specific differential phase array.
     """
     dp = radar.fields[unfold_phidp_name]['data'].copy()
-    # Extract data
-    try:
-        dp = dp.filled(-9999)
-    except Exception:
-        pass
-
     dz = radar.fields[refl_field]['data'].copy().filled(-9999)
-    # dz = np.ma.masked_where(gatefilter.gate_excluded, dz).filled(-9999)
 
     # Extract dimensions
     rng = radar.range['data']
@@ -128,9 +121,6 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     # Mask array
     phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
-
-    phi_off = np.min(np.min(phidpb, axis=1))
-    phidpb -= phi_off
 
     # Get metadata.
     phimeta = pyart.config.get_metadata("differential_phase")
@@ -203,11 +193,9 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
     if dtime < CPOL_DATE_PHIDP_FOLD:
         tru_phi = phi
     else:
-        phidp_unfold = np.ma.masked_where(gatefilter.gate_excluded, phi) + 180
-        pmin = np.min(np.min(phidp_unfold, axis=1))
-        tru_phi = phidp_unfold - pmin
-
-    tru_phi += 45
-    tru_phi[tru_phi > 360] -= 360
+        tru_phi = phidp_unfold + 225
+        pmin = phi[gatefilter.gate_included].min()
+        tru_phi -= pmin
+        tru_phi[tru_phi > 360] -= 360        
 
     return tru_phi

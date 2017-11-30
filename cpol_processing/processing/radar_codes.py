@@ -199,8 +199,9 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     rho_corr = rhohv * (1 + 1 / natural_snr)
 
     # Not allowing the corrected RHOHV to be lower than the raw rhohv
-    pos = rho_corr < rhohv
-    rho_corr[pos] = rhohv[pos]
+    # pos = rho_corr < rhohv
+    # rho_corr[pos] = rhohv[pos]
+    rho_corr[np.isnan(rho_corr) | (rho_corr < 0)] = 1
 
     return rho_corr
 
