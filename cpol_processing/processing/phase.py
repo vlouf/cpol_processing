@@ -116,15 +116,16 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     [R, A] = np.meshgrid(rng, azi)
 
     # Compute KDP bringi.
-    kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999)
+    kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999, nfilter=3, thsd=24)
 
     # Mask array
-    phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
+    # phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
+    phi2 = np.cumsum(kdpb.filled(0), axis=1)
 
     # Get metadata.
     phimeta = pyart.config.get_metadata("differential_phase")
-    phimeta['data'] = phidpb
+    phimeta['data'] = phi2
     kdpmeta = pyart.config.get_metadata("specific_differential_phase")
     kdpmeta['data'] = kdpb
 
@@ -194,8 +195,8 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
         tru_phi = phi
     else:
         tru_phi = phi + 180
-        pmin = phi[gatefilter.gate_included].min()
-        tru_phi -= pmin        
+        pmin = tru_phi[gatefilter.gate_included].min()
+        tru_phi -= pmin
         tru_phi[tru_phi > 360] -= 360
 
     return tru_phi
