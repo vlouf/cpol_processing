@@ -193,9 +193,9 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
     if dtime < CPOL_DATE_PHIDP_FOLD:
         tru_phi = phi
     else:
-        tru_phi = phidp_unfold + 225
+        tru_phi = phi + 225
         pmin = phi[gatefilter.gate_included].min()
         tru_phi -= pmin
-        tru_phi[tru_phi > 360] -= 360        
+        tru_phi[tru_phi > 360] -= 360
 
     return tru_phi
