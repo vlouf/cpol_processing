@@ -111,7 +111,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     emr4[(zdr > 4) & (dbz < 20) & (temp >= 0)] = 0
     emr4[(rho < 0.75) & (dbz < 20)] = 0
 
-    radar.add_field_like("total_power", "EMR", emr4, replace_existing=True)
+    radar.add_field_like(refl_name, "EMR", emr4, replace_existing=True)
     gf.exclude_equal('EMR', 0)
 
     try:
