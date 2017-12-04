@@ -113,7 +113,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
                 'temperature', 'giangrande_differential_phase', 'giangrande_specific_differential_phase',
                 'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
-                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity']
+                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity', "velocity_texture",
+                "total_power"]
     for mykey in radar.fields.keys():
         if mykey not in goodkeys:
             unwanted_keys.append(mykey)
@@ -319,6 +320,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         vel_missing = True
         pass
 
+    # Compute the velocity texture.
+    velocity_texture = filtering.velocity_texture(radar)
+    radar.add_field("TVEL", velocity_texture, replace_existing=True)
+
     # Looking for RHOHV field
     # For CPOL, season 09/10, there are no RHOHV fields before March!!!!
     try:
@@ -421,7 +426,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         radar.fields['PHIDP']['data'] /= 2
 
     # Unfold VELOCITY
-    # This function will check if a 'VEL_CORR' field exists anyway.
     try:
         radar.fields['VEL']
         vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, constrain_sounding=False)
