@@ -320,10 +320,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         vel_missing = True
         pass
 
-    # Compute the velocity texture.
-    velocity_texture = filtering.velocity_texture(radar)
-    radar.add_field("TVEL", velocity_texture, replace_existing=True)
-
+    if not vel_missing:
+        # Compute the velocity texture.
+        velocity_texture = filtering.velocity_texture(radar)
+        radar.add_field("TVEL", velocity_texture, replace_existing=True)
+        
     # Looking for RHOHV field
     # For CPOL, season 09/10, there are no RHOHV fields before March!!!!
     try:

@@ -60,7 +60,8 @@ def _noise_th(x, max_range=90):
     return noise_threshold
 
 
-def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR', zdr_name="ZDR", vel_field="VEL", temp_name="temperature"):
+def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR',
+                  zdr_name="ZDR", vel_field="VEL", tvel_name="TVEL", temp_name="temperature"):
     """
     Basic filtering
 
@@ -89,18 +90,15 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     gf.exclude_outside(refl_name, -40.0, 80.0)
 
     if radar_start_date.year <= 2007:
-        # Using velocity texture for filtering.
-        vnyq = radar.fields[vel_field]['data'].max()
-        tvel = pyart.retrieve.calculate_velocity_texture(radar, vel_field=vel_field, nyq=vnyq)
-        radar.add_field("TVEL", tvel, replace_existing=True)
-        gf.exclude_above("TVEL", 4)
+        gf.exclude_above(tvel_name, 4)
         gf.include_above(rhohv_name, 0.8)
     else:
         # Using PHIDP texture for filtering.
-        tvel = pyart.retrieve.calculate_velocity_texture(radar, vel_field=phidp_name, nyq=90)
-        radar.add_field("TVEL", tvel, replace_existing=True)
-        gf.exclude_above("TVEL", 30)
+        tphi = pyart.retrieve.calculate_velocity_texture(radar, vel_field=phidp_name, nyq=90)
+        radar.add_field("TPHI", tphi, replace_existing=True)
+        gf.exclude_above("TPHI", 30)
         gf.exclude_below(rhohv_name, 0.5)
+        radar.fields.pop('TPHI')
 
     zdr = radar.fields[zdr_name]['data']
     dbz = radar.fields[refl_name]['data']
@@ -121,7 +119,6 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     gf.include_equal('EMR', 2)
 
     try:
-        radar.fields.pop('TVEL')
         radar.fields.pop('EMR')
     except Exception:
         pass
