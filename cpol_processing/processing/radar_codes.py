@@ -43,6 +43,43 @@ import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 
 
+def correct_velocity_unfolding(radar, vel_name="VEL_UNFOLDED", simvel_name="sim_velocity"):
+    """
+    Use radiosounding to constrain to the dominant wind the dealiased velocity.
+
+    Parameters:
+    ===========
+    radar:
+    vel_name: str
+        Name of the unfolded velocity field
+    simvel_name: str
+        Name of the simulated wind velocity from the radiosounding.
+
+    Returns:
+    ========
+    velmeta: dict
+        Dictionnary containing the corrected dealiased velocity.
+    """
+    vel = radar.fields[vel_name]['data']
+    newvels = radar.fields[vel_name]['data'].copy()
+    simvel = radar.fields[simvel_name]['data']
+    vnyq = radar.get_nyquist_vel(0)
+
+    fmin = lambda x: x - vnyq
+    fmax = lambda x: x + vnyq
+
+    posmin = vel < fmin(simvel)
+    posmax = vel > fmax(simvel)
+
+    newvels[posmin] += vnyq * 2
+    newvels[posmax] -= vnyq * 2
+
+    velmeta = pyart.config.get_metadata("velocity")
+    velmeta['data'] = newvels
+
+    return velmeta
+
+
 def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
     """
     Just in case pyart.retrieve.calculate_snr_from_reflectivity, I can calculate
@@ -325,7 +362,9 @@ def get_simulated_wind_profile(radar, radiosonde_fname, height_name="height", sp
         Simulated velocity.
     """
     interp_sonde = netCDF4.Dataset(radiosonde_fname)
-    hwind_prof = pyart.core.HorizontalWindProfile(interp_sonde[height_name], interp_sonde[speed_name], interp_sonde[wdir_name],)
+    hwind_prof = pyart.core.HorizontalWindProfile(interp_sonde[height_name],
+                                                  interp_sonde[speed_name],
+                                                  interp_sonde[wdir_name],)
     sim_vel = pyart.util.simulated_vel_from_profile(radar, hwind_prof)
 
     return sim_vel
@@ -559,19 +598,7 @@ def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding
         vdop_vel = pyart.correct.dealias_region_based(radar, vel_field=vel_name,
                                                       gatefilter=gf, nyquist_vel=v_nyq_vel)
 
-    # # Cf. mail from Bobby Jackson for skip_between_rays parameters.
-    # if bobby_params:
-    #     vdop_vel = pyart.correct.dealias_region_based(radar,
-    #                                                   vel_field=vel_name,
-    #                                                   gatefilter=gf,
-    #                                                   nyquist_vel=v_nyq_vel,
-    #                                                   skip_between_rays=2000)
-    # else:
-    #     vdop_vel = pyart.correct.dealias_region_based(radar,
-    #                                                   vel_field=vel_name,
-    #                                                   gatefilter=gf,
-    #                                                   nyquist_vel=v_nyq_vel)
-
+    # # Cf. mail from Bobby Jackson
     if constrain_sounding:
         gfilter = gf.gate_excluded
         vels = deepcopy(vdop_vel['data'])
