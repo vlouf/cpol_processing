@@ -279,9 +279,10 @@ if __name__ == '__main__':
         print("Output directory does not exist {}.".format(OUTPATH))
         sys.exit()
     OUTPATH = os.path.join(OUTPATH, "PPI")
-    if not os.path.isdir(OUTPATH):
-        print("Creating PPI files directory: {}.".format(OUTPATH))
+    try:
         os.mkdir(OUTPATH)
+    except FileExistsError:
+        pass
 
     # Create input directory.
     make_dir(LOG_FILE_PATH)
