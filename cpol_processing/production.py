@@ -308,8 +308,13 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)
 
     # Simulate wind profile
-    sim_vel = radar_codes.get_simulated_wind_profile(radar, radiosonde_fname)
-    radar.add_field("sim_velocity", sim_vel)
+    try:
+        sim_vel = radar_codes.get_simulated_wind_profile(radar, radiosonde_fname)
+        radar.add_field("sim_velocity", sim_vel)
+        has_simvel = True
+    except Exception:
+        has_simvel = False
+        pass
 
     # Correct Doppler velocity units.
     try:
@@ -432,8 +437,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         vdop_unfold = radar_codes.unfold_velocity(radar, gatefilter, constrain_sounding=False)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
 
-        vdop_corr = radar_codes.correct_velocity_unfolding(radar)
-        radar.add_field('VEL_UNFOLDED', vdop_corr, replace_existing=True)
+        if has_simvel:
+            vdop_corr = radar_codes.correct_velocity_unfolding(radar)
+            radar.add_field('VEL_UNFOLDED', vdop_corr, replace_existing=True)
 
         logger.info('Doppler velocity unfolded.')
     except Exception:
