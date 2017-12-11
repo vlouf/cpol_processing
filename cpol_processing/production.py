@@ -36,6 +36,7 @@ from .processing import gridding
 from .processing import hydrometeors
 from .processing import phase
 from .processing import radar_codes
+from .processing import velocity
 
 
 def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_seapol=False):
@@ -102,6 +103,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     # Check if output file already exists.
     if os.path.isfile(outfilename):
         logger.error('Output file already exists for: %s.', outfilename)
+        print(f"Output file {outfilename} already exists.")
         return None
 
     # Write results
@@ -126,12 +128,14 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         gridding.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
         gridding.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
         logger.info('Gridding done.')
+        print('Gridding done.')
     except Exception:
         logging.error('Problem while gridding.')
         raise
 
     # Processing finished!
     logger.info('%s processed in  %0.2f s.', os.path.basename(radar_file_name), (time.time() - tick))
+    print('%s processed in  %0.2fs.' % (os.path.basename(radar_file_name), (time.time() - tick)))
 
     return None
 
@@ -290,10 +294,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
         logger.error("MAJOR ERROR: %s reflectivity field is empty.", radar_file_name)
+        print(f"MAJOR ERROR: {radar_file_name} reflectivity field is empty.")
         return None
 
     if not radar_codes.check_azimuth(radar):
         logger.error("MAJOR ERROR: %s azimuth field is empty.", radar_file_name)
+        print(f"MAJOR ERROR: {radar_file_name} azimuth field is empty.")
         return None
 
     radar_codes.correct_azimuth(radar)
@@ -302,6 +308,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     datestr = radar_start_date.strftime("%Y%m%d_%H%M")
     logger.info("%s read.", radar_file_name)
+    print(f"{radar_file_name} read.", radar_file_name)
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
@@ -336,6 +343,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         radar.metadata['debug_info'] = 'RHOHV field does not exist in RAW data. I had to use a fake RHOHV.'
         fake_rhohv = True  # We delete this fake field later.
         logger.critical("RHOHV field not found, creating a fake RHOHV")
+        print(f"RHOHV field not found, creating a fake RHOHV {radar_file_name}")
 
     # Compute SNR and extract radiosounding temperature.
     try:
@@ -345,15 +353,18 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     except ValueError:
         traceback.print_exc()
         logger.error("Impossible to compute SNR")
+        print(f"Impossible to compute SNR {radar_file_name}")
         return None
 
     # Looking for SNR
     try:
         radar.fields['SNR']
         logger.info('SNR already exists.')
+        print('SNR already exists.')
     except KeyError:
         radar.add_field('SNR', snr, replace_existing=True)
         logger.info('SNR calculated.')
+        print(f'SNR calculated. {radar_file_name}')
 
     # Correct RHOHV
     if not fake_rhohv:
@@ -502,8 +513,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Treatment is finished!
     end_time = time.time()
-    logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name),
-                (end_time - start_time))
+    logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name), (end_time - start_time))
+    print("Treatment for %s done in %0.2f seconds." % (os.path.basename(radar_file_name), (end_time - start_time)))
 
     # Plot check figure.
     logger.info('Plotting figure')
