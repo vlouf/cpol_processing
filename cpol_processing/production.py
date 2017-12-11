@@ -196,14 +196,13 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('bringi_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('giangrande_differential_phase', ax=the_ax[8], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('giangrande_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
-        gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[9], vmin=-2, vmax=5, cmap='pyart_Theodore16')
         try:
+            gr.plot_ppi('raw_velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             gr.plot_ppi('velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
-                        cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter, cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
             try:
                 gr.plot_ppi('VRADH', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
@@ -308,7 +307,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     datestr = radar_start_date.strftime("%Y%m%d_%H%M")
     logger.info("%s read.", radar_file_name)
-    print(f"{radar_file_name} read.", radar_file_name)
+    print(f"{radar_file_name} read.")
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
