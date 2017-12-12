@@ -307,7 +307,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     datestr = radar_start_date.strftime("%Y%m%d_%H%M")
     logger.info("%s read.", radar_file_name)
-    print(f"{radar_file_name} read.")
+    print("Input radar file {} read.".format(os.path.basename(radar_file_name)))
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
@@ -422,6 +422,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # Giangrande PHIDP/KDP
     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_CORR')
+    # Hack because giangrandes's process ontop of bringi's tends to not be strong enough.
+    if half_phi:
+        phidp_gg['data'] *= 2
+        kdp_gg['data'] *= 2
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
