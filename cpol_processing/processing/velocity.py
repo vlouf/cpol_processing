@@ -138,6 +138,11 @@ def get_simulated_wind_profile(radar, radiosonde_fname, height_name="height", sp
                                                   interp_sonde[speed_name],
                                                   interp_sonde[wdir_name],)
     sim_vel = pyart.util.simulated_vel_from_profile(radar, hwind_prof)
+    try:
+        sim_vel['units'] = "m/s"
+        sim_vel['standard_name'] = "simulated_radial_velocity"
+    except Exception:
+        pass
 
     return sim_vel
 
