@@ -242,8 +242,6 @@ def rainfall_rate(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KD
         kdp = radar.fields[kdp_name]['data']
 
     rain, method = csu_blended_rain.calc_blended_rain_tropical(dz=dbz, zdr=zdr, kdp=kdp, fhc=fhc, band='C')
-    rain[rain == 0] = np.NaN
-    rain = np.ma.masked_where(np.isnan(rain), rain)
 
     rainrate = {"long_name": 'Blended Rainfall Rate',
                 "units": "mm h-1",
