@@ -94,11 +94,14 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         gf.include_above(rhohv_name, 0.8)
     else:
         # Using PHIDP texture for filtering.
-        tphi = pyart.retrieve.calculate_velocity_texture(radar, vel_field=phidp_name, nyq=90)
-        radar.add_field("TPHI", tphi, replace_existing=True)
-        gf.exclude_above("TPHI", 30)
-        gf.exclude_below(rhohv_name, 0.5)
-        radar.fields.pop('TPHI')
+        try:
+            tphi = pyart.retrieve.calculate_velocity_texture(radar, vel_field=phidp_name, nyq=90)
+            radar.add_field("TPHI", tphi, replace_existing=True)
+            gf.exclude_above("TPHI", 30)
+            gf.exclude_below(rhohv_name, 0.5)
+            radar.fields.pop('TPHI')
+        except Exception:
+            pass
 
     zdr = radar.fields[zdr_name]['data']
     dbz = radar.fields[refl_name]['data']
@@ -199,7 +202,7 @@ def velocity_texture(radar, vel_name='VEL'):
 
     try:
         v_nyq_vel = radar.instrument_parameters['nyquist_velocity']['data'][0]
-    except (KeyError, IndexError):
+    except Exception:
         vdop_art = radar.fields[vel_name]['data']
         v_nyq_vel = np.max(np.abs(vdop_art))
 

@@ -59,7 +59,10 @@ def corr_velocity_from_phidp_artifacts(radar, gatefilter, vel_name="VEL", raw_ph
     # Extract data
     phi = radar.fields[raw_phi_name]['data'].copy()
     vel = radar.fields[vel_name]['data'].copy()
-    vnyq = radar.get_nyquist_vel(0)
+    try:
+        vnyq = radar.get_nyquist_vel(0)
+    except Exception:
+        vnyq = np.max(np.abs(vel))
 
     # Find wrong phases.
     cphi =  2 * ( + 90)
@@ -95,7 +98,10 @@ def correct_velocity_unfolding(radar, vel_name="VEL_UNFOLDED", simvel_name="sim_
     vel = radar.fields[vel_name]['data']
     newvels = radar.fields[vel_name]['data'].copy()
     simvel = radar.fields[simvel_name]['data']
-    vnyq = radar.get_nyquist_vel(0)
+    try:
+        vnyq = radar.get_nyquist_vel(0)
+    except Exception:
+        vnyq = np.max(np.abs(vel))
 
     # Find wrongly unfolded velocities
     fmin = lambda x: x - vnyq

@@ -68,7 +68,7 @@ if __name__ == '__main__':
     SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde/"
     # Output directory for verification figures.
     # Output directory for log files.
-    LOG_FILE_PATH = "/short/kl02/vhl548/logfiles/"
+    LOG_FILE_PATH = os.path.expanduser("~")
 
     # Parse arguments
     parser_description = "Leveling treatment of CPOL data from level 1a to level 1b."
