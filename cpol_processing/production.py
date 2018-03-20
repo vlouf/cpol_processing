@@ -164,7 +164,6 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         gridding.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
         gridding.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
         logger.info('Gridding done.')
-        print('Gridding done.')
     except Exception:
         traceback.print_exc()
         logging.error('Problem while gridding.')
@@ -339,7 +338,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     datestr = radar_start_date.strftime("%Y%m%d_%H%M")
     logger.info("%s read.", radar_file_name)
-    print("Input radar file {} read.".format(os.path.basename(radar_file_name)))
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
@@ -391,11 +389,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     try:
         radar.fields['SNR']
         logger.info('SNR already exists.')
-        print('SNR already exists.')
     except KeyError:
         radar.add_field('SNR', snr, replace_existing=True)
         logger.info('SNR calculated.')
-        print(f'SNR calculated. {radar_file_name}')
 
     # Correct RHOHV
     if not fake_rhohv:
