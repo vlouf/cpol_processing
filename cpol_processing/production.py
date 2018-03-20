@@ -16,6 +16,7 @@ CPOL Level 1b main production line.
 import gc
 import os
 import time
+import uuid
 import logging
 import datetime
 import traceback
@@ -39,7 +40,7 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_seapol=False):
+def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_cpol=True):
     """
     Call processing function and write data.
 
@@ -87,7 +88,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
-    radar = production_line(radar_file_name, sound_dir, figure_path, is_seapol)
+    radar = production_line(radar_file_name, sound_dir, figure_path)
 
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
 
@@ -105,6 +106,32 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         logger.error('Output file already exists for: %s.', outfilename)
         print(f"Output file {outfilename} already exists.")
         return None
+
+    if is_cpol:
+        global_metadata = dict()
+        global_metadata['uuid'] = str(uuid.uuid4())
+        global_metadata['naming_authority'] = 'au.org.nci'
+        global_metadata['source'] = "Australian Bureau of Meteorology and Monash University"
+        global_metadata['processing_level'] = "L1B"
+        global_metadata['acknowledgement'] = "This work has been supported by the U.S. Department " + \
+                                             "of Energy Atmospheric Systems Research Program through " + \
+                                             "the grant DE-SC0014063. Data may be freely distributed."
+        global_metadata['product_version'] = datetime.datetime.now().strftime("%Y.%m")
+        global_metadata['references'] = "Contact V. Louf <valentin.louf@bom.gov.au>"
+        global_metadata['creator_name'] = "Valentin Louf"
+        global_metadata['creator_email'] = "valentin.louf@bom.gov.au"
+        global_metadata['creator_url'] = "github.com/vlouf"
+        global_metadata['institution'] = "Australian Bureau of Meteorology"
+        global_metadata['publisher_name'] = "Australian Bureau of Meteorology"
+        global_metadata['publisher_url'] = "bom.gov.au"
+        global_metadata['publisher_type'] = "institution"
+        global_metadata['publisher_institution'] = "Australian Bureau of Meteorology"
+        global_metadata['site_name'] = "Gunn_Pt"
+        global_metadata['country'] = "Australia"
+        global_metadata['state'] = "NT"
+
+        for k, v in global_metadata.items():
+            radar.metadata[k] = v
 
     # Write results
     pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
@@ -222,9 +249,9 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             except Exception:
                 pass
 
-        gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
-        gr.plot_ppi('NW', ax=the_ax[13], gatefilter=gatefilter, cmap='cubehelix', vmin=0, vmax=8)
-        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[14], gatefilter=gatefilter)
+        gr.plot_ppi('D0', ax=the_ax[12], cmap='GnBu', vmin=0, vmax=2)
+        gr.plot_ppi('NW', ax=the_ax[13], cmap='cubehelix', vmin=0, vmax=8)
+        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[14])
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
@@ -241,7 +268,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=False):
+def production_line(radar_file_name, sound_dir, figure_path=None):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -294,12 +321,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
 
     # !!! READING THE RADAR !!!
     radar = radar_codes.read_radar(radar_file_name)
-
-    # Correct SEAPOL PHIDP
-    if is_seapol:
-        phi = radar.fields['PHIDP']['data']
-        radar.add_field_like("PHIDP", "PHIDP", -phi, replace_existing=True)
-        print("SEAPOL PHIDP corrected.")
 
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
