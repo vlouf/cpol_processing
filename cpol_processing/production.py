@@ -112,11 +112,20 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     # Deleting all unwanted keys for gridded product.
     logger.info("Gridding started.")
     unwanted_keys = []
-    goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
-                'temperature', 'giangrande_differential_phase', 'giangrande_specific_differential_phase',
-                'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
-                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity', "velocity_texture",
-                "total_power"]
+    goodkeys = ['corrected_differential_reflectivity',
+                'cross_correlation_ratio',
+                'temperature',
+                'giangrande_differential_phase',
+                'giangrande_specific_differential_phase',
+                'radar_echo_classification',
+                'radar_estimated_rain_rate',
+                'D0',
+                'NW',
+                'reflectivity',
+                'velocity',
+                'region_dealias_velocity',
+                'velocity_texture',
+                'total_power']
     for mykey in radar.fields.keys():
         if mykey not in goodkeys:
             unwanted_keys.append(mykey)
@@ -130,6 +139,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         logger.info('Gridding done.')
         print('Gridding done.')
     except Exception:
+        traceback.print_exc()
         logging.error('Problem while gridding.')
         raise
 
@@ -184,7 +194,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         the_ax = the_ax.flatten()
         # Plotting reflectivity
         gr.plot_ppi('total_power', ax=the_ax[0])
-        gr.plot_ppi('corrected_reflectivity', ax=the_ax[1], gatefilter=gatefilter)
+        gr.plot_ppi('reflectivity', ax=the_ax[1], gatefilter=gatefilter)
         gr.plot_ppi('radar_echo_classification', ax=the_ax[2], gatefilter=gatefilter)
 
         gr.plot_ppi('differential_reflectivity', ax=the_ax[3])
@@ -202,7 +212,8 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         try:
             gr.plot_ppi('raw_velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             gr.plot_ppi('velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter, cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
+                        cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
             try:
                 gr.plot_ppi('VRADH', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
@@ -389,10 +400,14 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # GateFilter
-    gatefilter = filtering.do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR', zdr_name="ZDR")
+    gatefilter = filtering.do_gatefilter(radar,
+                                         refl_name='DBZ',
+                                         phidp_name="PHIDP",
+                                         rhohv_name='RHOHV_CORR',
+                                         zdr_name="ZDR")
     logger.info('Filter initialized.')
 
-    ############ PHIDP ############
+    # PHIDP ############
     # Check PHIDP:
     half_phi = phase.check_phidp(radar)
     if half_phi:
@@ -437,7 +452,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         radar.fields['PHI_UNF']['data'] /= 2
         radar.fields['PHIDP']['data'] /= 2
 
-    ############ VELOCITY ############
+    # VELOCITY
     # Simulate wind profile
     try:
         sim_vel = velocity.get_simulated_wind_profile(radar, radiosonde_fname)
@@ -465,7 +480,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
             radar.add_field('VEL_UNFOLDED', vdop_corr, replace_existing=True)
 
         logger.info('Doppler velocity unfolded.')
-
 
     # Correct Attenuation ZH
     atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar)
@@ -528,8 +542,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     figure_time = time.time()
     logger.info('Figure saved in %0.2fs.', (figure_time - end_time))
 
-    hardcode_keys = ["corrected_reflectivity", "radar_echo_classification", "corrected_differential_reflectivity",
-                     "region_dealias_velocity", "D0", "NW", "radar_estimated_rain_rate", ]
+    hardcode_keys = ["reflectivity",
+                     "radar_echo_classification",
+                     "corrected_differential_reflectivity",
+                     "region_dealias_velocity"]
     for mykey in hardcode_keys:
         try:
             radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
