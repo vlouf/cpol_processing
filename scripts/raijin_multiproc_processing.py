@@ -257,7 +257,7 @@ if __name__ == '__main__':
     # Input radar data directory
     INPATH = "/g/data2/rr5/vhl548/CPOL_level_1a"
     # Output directory for CF/Radial PPIs
-    OUTPATH = "/g/data2/rr5/vhl548/NEW_CPOL_level_1b/"
+    OUTPATH = "/short/kl02/vhl548/NEW_CPOL_level_1b/"
     # Input directory for Radiosoundings
     SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde"
     # Output directory for log files.
