@@ -76,8 +76,8 @@ def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHI
     kdp = radar.fields[kdp_name]['data'].copy()
     phidp = radar.fields[phidp_name]['data'].copy()
     kdp[gatefilter.gate_excluded] = 0
-    kdp[(kdp < -2)] = 0
-    kdp[kdp > 10] = 10
+    kdp[(kdp < -4)] = 0
+    kdp[kdp > 15] = 15
     interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
 
     phidp[:, :-1] = interg / (len(radar.range['data']))
