@@ -16,6 +16,7 @@ CPOL Level 1b main production line.
 import gc
 import os
 import time
+import uuid
 import logging
 import datetime
 import traceback
@@ -39,7 +40,7 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_seapol=False):
+def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_cpol=True):
     """
     Call processing function and write data.
 
@@ -87,7 +88,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
-    radar = production_line(radar_file_name, sound_dir, figure_path, is_seapol)
+    radar = production_line(radar_file_name, sound_dir, figure_path)
 
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
 
@@ -106,17 +107,52 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         print(f"Output file {outfilename} already exists.")
         return None
 
+    if is_cpol:
+        global_metadata = dict()
+        global_metadata['uuid'] = str(uuid.uuid4())
+        global_metadata['naming_authority'] = 'au.org.nci'
+        global_metadata['source'] = "Australian Bureau of Meteorology and Monash University"
+        global_metadata['processing_level'] = "L1B"
+        global_metadata['acknowledgement'] = "This work has been supported by the U.S. Department " + \
+                                             "of Energy Atmospheric Systems Research Program through " + \
+                                             "the grant DE-SC0014063. Data may be freely distributed."
+        global_metadata['product_version'] = datetime.datetime.now().strftime("%Y.%m")
+        global_metadata['references'] = "Contact V. Louf <valentin.louf@bom.gov.au>"
+        global_metadata['creator_name'] = "Valentin Louf"
+        global_metadata['creator_email'] = "valentin.louf@bom.gov.au"
+        global_metadata['creator_url'] = "github.com/vlouf"
+        global_metadata['institution'] = "Australian Bureau of Meteorology"
+        global_metadata['publisher_name'] = "Australian Bureau of Meteorology"
+        global_metadata['publisher_url'] = "bom.gov.au"
+        global_metadata['publisher_type'] = "institution"
+        global_metadata['publisher_institution'] = "Australian Bureau of Meteorology"
+        global_metadata['site_name'] = "Gunn_Pt"
+        global_metadata['country'] = "Australia"
+        global_metadata['state'] = "NT"
+
+        for k, v in global_metadata.items():
+            radar.metadata[k] = v
+
     # Write results
     pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
 
     # Deleting all unwanted keys for gridded product.
     logger.info("Gridding started.")
     unwanted_keys = []
-    goodkeys = ['corrected_differential_reflectivity', 'cross_correlation_ratio',
-                'temperature', 'giangrande_differential_phase', 'giangrande_specific_differential_phase',
-                'radar_echo_classification', 'radar_estimated_rain_rate', 'D0',
-                'NW', 'corrected_reflectivity', 'velocity', 'region_dealias_velocity', "velocity_texture",
-                "total_power"]
+    goodkeys = ['corrected_differential_reflectivity',
+                'cross_correlation_ratio',
+                'temperature',
+                'giangrande_differential_phase',
+                'giangrande_specific_differential_phase',
+                'radar_echo_classification',
+                'radar_estimated_rain_rate',
+                'D0',
+                'NW',
+                'reflectivity',
+                'velocity',
+                'region_dealias_velocity',
+                'velocity_texture',
+                'total_power']
     for mykey in radar.fields.keys():
         if mykey not in goodkeys:
             unwanted_keys.append(mykey)
@@ -128,8 +164,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         gridding.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
         gridding.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
         logger.info('Gridding done.')
-        print('Gridding done.')
     except Exception:
+        traceback.print_exc()
         logging.error('Problem while gridding.')
         raise
 
@@ -184,7 +220,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         the_ax = the_ax.flatten()
         # Plotting reflectivity
         gr.plot_ppi('total_power', ax=the_ax[0])
-        gr.plot_ppi('corrected_reflectivity', ax=the_ax[1], gatefilter=gatefilter)
+        gr.plot_ppi('reflectivity', ax=the_ax[1], gatefilter=gatefilter)
         gr.plot_ppi('radar_echo_classification', ax=the_ax[2], gatefilter=gatefilter)
 
         gr.plot_ppi('differential_reflectivity', ax=the_ax[3])
@@ -202,7 +238,8 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         try:
             gr.plot_ppi('raw_velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             gr.plot_ppi('velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter, cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
+                        cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
             try:
                 gr.plot_ppi('VRADH', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
@@ -211,9 +248,9 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             except Exception:
                 pass
 
-        gr.plot_ppi('D0', ax=the_ax[12], gatefilter=gatefilter, cmap='GnBu', vmin=0, vmax=2)
-        gr.plot_ppi('NW', ax=the_ax[13], gatefilter=gatefilter, cmap='cubehelix', vmin=0, vmax=8)
-        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[14], gatefilter=gatefilter)
+        gr.plot_ppi('D0', ax=the_ax[12], cmap='GnBu', vmin=0, vmax=2)
+        gr.plot_ppi('NW', ax=the_ax[13], cmap='cubehelix', vmin=0, vmax=8)
+        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[14])
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
@@ -230,7 +267,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=False):
+def production_line(radar_file_name, sound_dir, figure_path=None):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -284,12 +321,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     # !!! READING THE RADAR !!!
     radar = radar_codes.read_radar(radar_file_name)
 
-    # Correct SEAPOL PHIDP
-    if is_seapol:
-        phi = radar.fields['PHIDP']['data']
-        radar.add_field_like("PHIDP", "PHIDP", -phi, replace_existing=True)
-        print("SEAPOL PHIDP corrected.")
-
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
         logger.error("MAJOR ERROR: %s reflectivity field is empty.", radar_file_name)
@@ -307,7 +338,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     datestr = radar_start_date.strftime("%Y%m%d_%H%M")
     logger.info("%s read.", radar_file_name)
-    print("Input radar file {} read.".format(os.path.basename(radar_file_name)))
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
@@ -359,11 +389,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     try:
         radar.fields['SNR']
         logger.info('SNR already exists.')
-        print('SNR already exists.')
     except KeyError:
         radar.add_field('SNR', snr, replace_existing=True)
         logger.info('SNR calculated.')
-        print(f'SNR calculated. {radar_file_name}')
 
     # Correct RHOHV
     if not fake_rhohv:
@@ -389,10 +417,14 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # GateFilter
-    gatefilter = filtering.do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR', zdr_name="ZDR")
+    gatefilter = filtering.do_gatefilter(radar,
+                                         refl_name='DBZ',
+                                         phidp_name="PHIDP",
+                                         rhohv_name='RHOHV_CORR',
+                                         zdr_name="ZDR")
     logger.info('Filter initialized.')
 
-    ############ PHIDP ############
+    # PHIDP ############
     # Check PHIDP:
     half_phi = phase.check_phidp(radar)
     if half_phi:
@@ -437,7 +469,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
         radar.fields['PHI_UNF']['data'] /= 2
         radar.fields['PHIDP']['data'] /= 2
 
-    ############ VELOCITY ############
+    # VELOCITY
     # Simulate wind profile
     try:
         sim_vel = velocity.get_simulated_wind_profile(radar, radiosonde_fname)
@@ -465,7 +497,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
             radar.add_field('VEL_UNFOLDED', vdop_corr, replace_existing=True)
 
         logger.info('Doppler velocity unfolded.')
-
 
     # Correct Attenuation ZH
     atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar)
@@ -528,8 +559,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_seapol=Fals
     figure_time = time.time()
     logger.info('Figure saved in %0.2fs.', (figure_time - end_time))
 
-    hardcode_keys = ["corrected_reflectivity", "radar_echo_classification", "corrected_differential_reflectivity",
-                     "region_dealias_velocity", "D0", "NW", "radar_estimated_rain_rate", ]
+    hardcode_keys = ["reflectivity",
+                     "radar_echo_classification",
+                     "corrected_differential_reflectivity",
+                     "region_dealias_velocity"]
     for mykey in hardcode_keys:
         try:
             radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)

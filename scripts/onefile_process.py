@@ -54,7 +54,7 @@ def main():
     print("")
 
     # Serious stuffs begin here.
-    cpol_processing.process_and_save(INFILE, OUTPATH, OUTPATH_GRID, FIGURE_CHECK_PATH, SOUND_DIR, IS_SEAPOL)
+    cpol_processing.process_and_save(INFILE, OUTPATH, OUTPATH_GRID, FIGURE_CHECK_PATH, SOUND_DIR)
 
     return None
 
@@ -87,8 +87,8 @@ if __name__ == '__main__':
         type=str,
         help='Output directory.',
         required=True)
-    parser.add_argument('--seapol', dest='seapol', action='store_true')
-    parser.add_argument('--no-seapol', dest='seapol', action='store_false')
+    # parser.add_argument('--seapol', dest='seapol', action='store_true')
+    # parser.add_argument('--no-seapol', dest='seapol', action='store_false')
     parser.set_defaults(seapol=False)
 
     args = parser.parse_args()

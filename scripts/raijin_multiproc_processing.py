@@ -154,7 +154,7 @@ def production_line_manager(radar_file_name, outpath, outpath_grid, figure_path,
     signal.alarm(TIME_BEFORE_DEATH)
     try:
         cpol_processing.process_and_save(radar_file_name, outpath, outpath_grid,
-                                         figure_path, sound_dir)
+                                         figure_path, sound_dir, IS_CPOL)
     except TimeoutException:
         # Treatment time was too long.
         logging.error("Too much time taken to treat %s, killing process.", shortname)
@@ -257,7 +257,7 @@ if __name__ == '__main__':
     # Input radar data directory
     INPATH = "/g/data2/rr5/vhl548/CPOL_level_1a"
     # Output directory for CF/Radial PPIs
-    OUTPATH = "/g/data2/rr5/vhl548/NEW_CPOL_level_1b/"
+    OUTPATH = "/short/kl02/vhl548/NEW_CPOL_level_1b/"
     # Input directory for Radiosoundings
     SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde"
     # Output directory for log files.

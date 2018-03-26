@@ -251,7 +251,7 @@ def get_field_names():
                     ('TVEL', "velocity_texture"),
                     ('TPHI', "differential_phase_texture"),
                     ('DBZ', 'total_power'),
-                    ('DBZ_CORR', 'corrected_reflectivity'),
+                    ('DBZ_CORR', 'reflectivity'),
                     ('RHOHV_CORR', 'RHOHV'),
                     ('RHOHV', 'cross_correlation_ratio'),
                     ('ZDR', 'differential_reflectivity'),
