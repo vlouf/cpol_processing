@@ -89,10 +89,12 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -40.0, 80.0)
 
-    if radar_start_date.year <= 2007:
+    try:
         gf.exclude_above(tvel_name, 4)
-        gf.include_above(rhohv_name, 0.8)
-    else:
+    except Exception:
+        pass
+
+    if radar_start_date >= 2009:
         # Using PHIDP texture for filtering.
         try:
             tphi = pyart.retrieve.calculate_velocity_texture(radar, vel_field=phidp_name, nyq=90)
