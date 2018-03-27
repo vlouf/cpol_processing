@@ -165,8 +165,8 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                    rhv_field=rhv_field,
                                                    phidp_field=phidp_field)
 
-    # Removing the last 11 gates due to filter effect.
-    kdp_gg['data'][:, -11:] = 0
+    # Removing the last 20 gates due to filter effect.
+    kdp_gg['data'][:, -20:] = 0
 
     return phidp_gg, kdp_gg
 
