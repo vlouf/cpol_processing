@@ -518,7 +518,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('Hydrometeors classification estimated.')
 
     # Rainfall rate
-    rainfall = hydrometeors.rainfall_rate(radar)
+    rainfall = hydrometeors.rainfall_rate(radar, gatefilter)
     radar.add_field("radar_estimated_rain_rate", rainfall)
     logger.info('Rainfall rate estimated.')
 

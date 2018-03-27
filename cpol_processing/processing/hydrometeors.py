@@ -210,7 +210,7 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
     return class_meta
 
 
-def rainfall_rate(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG',
+def rainfall_rate(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG',
                   hydro_name='radar_echo_classification'):
     """
     Rainfall rate algorithm from csu_radartools.
@@ -242,6 +242,8 @@ def rainfall_rate(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KD
         kdp = radar.fields[kdp_name]['data']
 
     rain, method = csu_blended_rain.calc_blended_rain_tropical(dz=dbz, zdr=zdr, kdp=kdp, fhc=fhc, band='C')
+
+    rain[gatefilter.gate_excluded] = 0
 
     rainrate = {"long_name": 'Blended Rainfall Rate',
                 "units": "mm h-1",
