@@ -53,35 +53,35 @@ def check_phidp(radar, phi_name="PHIDP"):
     return half_phi
 
 
-def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHIDP_BRINGI"):
-    """
-    Correct PHIDP and KDP from spider webs.
-
-    Parameters
-    ==========
-    radar:
-        Py-ART radar data structure.
-    gatefilter:
-        Gate filter.
-    kdp_name: str
-        Differential phase key name.
-    phidp_name: str
-        Differential phase key name.
-
-    Returns:
-    ========
-    phidp: ndarray
-        Differential phase array.
-    """
-    kdp = radar.fields[kdp_name]['data'].copy()
-    phidp = radar.fields[phidp_name]['data'].copy()
-    kdp[gatefilter.gate_excluded] = 0
-    kdp[(kdp < -4)] = 0
-    kdp[kdp > 15] = 15
-    interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
-
-    phidp[:, :-1] = interg / (len(radar.range['data']))
-    return phidp
+# def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHIDP_BRINGI"):
+#     """
+#     Correct PHIDP and KDP from spider webs.
+# 
+#     Parameters
+#     ==========
+#     radar:
+#         Py-ART radar data structure.
+#     gatefilter:
+#         Gate filter.
+#     kdp_name: str
+#         Differential phase key name.
+#     phidp_name: str
+#         Differential phase key name.
+#
+#     Returns:
+#     ========
+#     phidp: ndarray
+#         Differential phase array.
+#     """
+#     kdp = radar.fields[kdp_name]['data'].copy()
+#     phidp = radar.fields[phidp_name]['data'].copy()
+#     kdp[gatefilter.gate_excluded] = 0
+#     kdp[(kdp < -4)] = 0
+#     kdp[kdp > 15] = 15
+#     interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
+#
+#     phidp[:, :-1] = interg / (len(radar.range['data']))
+#     return phidp
 
 
 def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP", rhohv_name="RHOHV_CORR", refl_field='DBZ'):

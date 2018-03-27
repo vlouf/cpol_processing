@@ -447,17 +447,15 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.fields['KDP_BRINGI']['long_name'] = "bringi_corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-    # Correct spider webs on phidp.
-    phidp = phase.fix_phidp_from_kdp(radar, gatefilter)
-    radar.add_field_like("PHIDP", "PHI_CORR", phidp, replace_existing=True)
-    logger.info('PHIDP spider webs removed.')
-
     # Giangrande PHIDP/KDP
-    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_CORR')
-    # Hack because giangrandes's process ontop of bringi's tends to not be strong enough.
+    if gatefilter.gate_included.sum() / gatefilter.gate_excluded.sum() < 0.3:
+        # small scene/not enough data. Using smoothed PHIDP.
+        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV')
+    else:
+        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF', rhv_field='RHOHV')
     if half_phi:
-        phidp_gg['data'] *= 2
-        kdp_gg['data'] *= 2
+        phidp_gg['data'] /= 2
+        kdp_gg['data'] /= 2
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
