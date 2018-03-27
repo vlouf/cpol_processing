@@ -241,7 +241,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         try:
-            gr.plot_ppi('corrected_velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('sim_velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
             pass
 
