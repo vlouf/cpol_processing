@@ -23,7 +23,7 @@ import numpy as np
 from csu_radartools import csu_liquid_ice_mass, csu_fhc, csu_blended_rain, csu_dsd
 
 
-def dsd_retrieval(radar, refl_name='DBZ', zdr_name='ZDR_CORR', kdp_name='KDP_GG'):
+def dsd_retrieval(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG'):
     """
     Compute the DSD retrieval using the csu library.
 
@@ -165,7 +165,7 @@ def liquid_ice_mass(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
     return liquid_water_mass, ice_mass
 
 
-def merhala_class_convstrat(radar, dbz_name="DBZ", rain_name="radar_estimated_rain_rate",
+def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimated_rain_rate",
                             d0_name="D0", nw_name="NW"):
     """
     Merhala Thurai's has a criteria for classifying rain either Stratiform

@@ -560,7 +560,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     hardcode_keys = ["reflectivity",
                      "radar_echo_classification",
                      "corrected_differential_reflectivity",
-                     "region_dealias_velocity"]
+                     "region_dealias_velocity",
+                     "D0", "NW"]
     for mykey in hardcode_keys:
         try:
             radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
