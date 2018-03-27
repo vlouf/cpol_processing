@@ -23,7 +23,7 @@ import numpy as np
 from csu_radartools import csu_liquid_ice_mass, csu_fhc, csu_blended_rain, csu_dsd
 
 
-def dsd_retrieval(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG'):
+def dsd_retrieval(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG'):
     """
     Compute the DSD retrieval using the csu library.
 
@@ -55,8 +55,8 @@ def dsd_retrieval(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KD
     d0, Nw, mu = csu_dsd.calc_dsd(dz=dbz, zdr=zdr, kdp=kdp, band='C')
 
     Nw = np.log10(Nw)
-    Nw = np.ma.masked_where(np.isnan(Nw), Nw)
-    d0 = np.ma.masked_where(np.isnan(d0), d0)
+    Nw = np.ma.masked_where(np.isnan(Nw) | (gatefilter.gate_excluded), Nw)
+    d0 = np.ma.masked_where(np.isnan(d0) | (gatefilter.gate_excluded), d0)
 
     nw_dict = {'data': Nw,
                'units': 'AU', 'long_name': 'Normalized Intercept Parameter',

@@ -524,7 +524,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('Rainfall rate estimated.')
 
     # DSD retrieval
-    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar)
+    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter)
     radar.add_field("D0", d0_dict)
     radar.add_field("NW", nw_dict)
     logger.info('DSD estimated.')

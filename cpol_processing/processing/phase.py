@@ -56,7 +56,7 @@ def check_phidp(radar, phi_name="PHIDP"):
 # def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHIDP_BRINGI"):
 #     """
 #     Correct PHIDP and KDP from spider webs.
-# 
+#
 #     Parameters
 #     ==========
 #     radar:
@@ -164,6 +164,9 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                    ncp_field=ncp_field,
                                                    rhv_field=rhv_field,
                                                    phidp_field=phidp_field)
+
+    # Removing the last 11 gates due to filter effect.
+    kdp_gg['data'][:, -11:] = 0
 
     return phidp_gg, kdp_gg
 
