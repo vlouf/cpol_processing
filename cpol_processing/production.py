@@ -236,12 +236,12 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
         try:
-            gr.plot_ppi('raw_velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('corrected_velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
                         cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
         except KeyError:
