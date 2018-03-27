@@ -39,8 +39,8 @@ def _get_latlon(radgrid):
         Array of coordinates for all points.
     """
     # Declare array, filled 0 in order to not have a masked array.
-    lontot = np.zeros_like(radgrid.fields['corrected_reflectivity']['data'].filled(0))
-    lattot = np.zeros_like(radgrid.fields['corrected_reflectivity']['data'].filled(0))
+    lontot = np.zeros_like(radgrid.fields['reflectivity']['data'].filled(0))
+    lattot = np.zeros_like(radgrid.fields['reflectivity']['data'].filled(0))
 
     for lvl in range(radgrid.nz):
         lontot[lvl, :, :], lattot[lvl, :, :] = radgrid.get_point_longitude_latitude(lvl)
@@ -98,7 +98,7 @@ def gridding_radar_150km(radar, radar_date, outpath):
     # exclude masked gates from the gridding
     my_gatefilter = pyart.filters.GateFilter(radar)
     my_gatefilter.exclude_transition()
-    my_gatefilter.exclude_masked('corrected_reflectivity')
+    my_gatefilter.exclude_masked('reflectivity')
 
     # Gridding
     grid_150km = pyart.map.grid_from_radars(
@@ -163,7 +163,7 @@ def gridding_radar_70km(radar, radar_date, outpath):
     # exclude masked gates from the gridding
     my_gatefilter = pyart.filters.GateFilter(radar)
     my_gatefilter.exclude_transition()
-    my_gatefilter.exclude_masked('corrected_reflectivity')
+    my_gatefilter.exclude_masked('reflectivity')
 
     # Gridding
     grid_70km = pyart.map.grid_from_radars(
