@@ -198,8 +198,11 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
         tru_phi = phi
     else:
         tru_phi = phi + 180
-        pmin = tru_phi[gatefilter.gate_included].min()
-        tru_phi -= pmin
+        try:
+            pmin = tru_phi[gatefilter.gate_included].min()
+            tru_phi -= pmin
+        except ValueError:
+            pass
         tru_phi[tru_phi > 360] -= 360
 
     return tru_phi
