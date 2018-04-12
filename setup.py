@@ -20,7 +20,7 @@ AUTHOR = 'Valentin Louf'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    "arm_pyart", "numpy", "csu_radartools", "crayons", "netCDF4", "scipy"
+    "arm_pyart", "numpy", "csu_radartools", "crayons", "netCDF4", "scipy", "numba"
 ]
 
 # The rest you shouldn't have to touch too much :)
