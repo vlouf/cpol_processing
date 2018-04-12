@@ -257,6 +257,8 @@ def compare_refl_3D(radar, gatefilter, dbz_name='DBZ'):
 
         dbz_tot[radar.get_slice(sl)] = dbz_ref
 
+    dbz_tot = np.ma.masked_where(gatefilter.gate_excluded, dbz_tot)
+
     return dbz_tot
 
 
