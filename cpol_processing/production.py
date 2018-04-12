@@ -458,7 +458,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.fields['KDP_BRINGI']['long_name'] = "bringi_corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF', rhv_field='RHOHV')
+    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF', rhv_field='RHOHV_CORR')
     if half_phi:
         phidp_gg['data'] /= 2
         kdp_gg['data'] /= 2
