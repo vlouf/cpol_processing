@@ -23,7 +23,211 @@ import scipy
 import netCDF4
 import numpy as np
 
+from numba import jit
+
 from .phase import unfold_raw_phidp
+
+
+@jit(nopython=True)
+def _get_iter_pos(azi, st, nb=180):
+    """
+    Return a sequence of integers from start (inclusive) to stop (start + nb)
+    by step of 1 for iterating over the azimuth (handle the case that azimuth
+    360 is in fact 0, i.e. a cycle).
+    JIT-friendly function (this is why the function looks much longer than the
+    pythonic way of doing this).
+
+    Parameters:
+    ===========
+    azi: ndarray<float>
+        Azimuth.
+    st: int
+        Starting point.
+    nb: int
+        Number of unitary steps.
+
+    Returns:
+    ========
+    out: ndarray<int>
+        Array containing the position from start to start + nb, i.e.
+        azi[out[0]] <=> st
+    """
+    if st < 0:
+        st += len(azi)
+    if st >= len(azi):
+        st -= len(azi)
+
+    ed = st + nb
+    if ed >= len(azi):
+        ed -= len(azi)
+    if ed < 0:
+        ed += len(azi)
+
+    posazi = np.arange(0, len(azi))
+    mypos = np.empty_like(posazi)
+
+    if nb > 0:
+        if st < ed:
+            end = ed - st
+            mypos[:end] = posazi[st:ed]
+        else:
+            mid = (len(azi) - st)
+            end = (len(azi) - st + ed)
+            mypos[:mid] = posazi[st:]
+            mypos[mid:end] = posazi[:ed]
+    else:  # Goin backward.
+        if st < ed:
+            mid = st + 1
+            end = st + len(azi) - ed
+            mypos[:mid] = posazi[st::-1]
+            mypos[mid:end] = posazi[-1:ed:-1]
+        else:
+            end = np.abs(st - ed)
+            mypos[:end] = posazi[st:ed:-1]
+
+    out = np.zeros((end, ), dtype=mypos.dtype)
+    for n in range(end):
+        out[n] = mypos[n]
+
+    return out
+
+
+@jit(nopython=True)
+def _get_iter_range(pos_center, nb_gate, maxrange):
+    """
+    Similar as get_iter_pos, but this time for creating an array of iterative
+    indices over the radar range. JIT-friendly function.
+
+    Parameters:
+    ===========
+    pos_center: int
+        Starting point
+    nb_gate: int
+        Number of gates to iter to.
+    maxrange: int
+        Length of the radar range, i.e. maxrange = len(r)
+
+    Returns:
+    ========
+    Array of iteration indices.
+    """
+    half_range = nb_gate // 2
+    if pos_center < half_range:
+        st_pos = 0
+    else:
+        st_pos = pos_center - half_range
+
+    if pos_center + half_range >= maxrange:
+        end_pos = maxrange
+    else:
+        end_pos = pos_center + half_range
+
+    return np.arange(st_pos, end_pos)
+
+
+@jit(nopython=True)
+def _comp_refl_sl(ground_range_reference, ground_range_slice, azimuth_reference, azimuth_slice, dbz_ref, dbz_slice):
+    """
+    Dealias using 3D continuity. This function will look at the velocities from
+    one sweep (the reference) to the other (the slice).
+
+    Parameters:
+    ===========
+    ground_range_reference: ndarray
+        Radar range
+    ground_range_slice: ndarray
+        Radar range
+    azimuth_reference: ndarray
+        Azimuth of the reference sweep.
+    azimuth_slice: ndarray
+        Azimuth of the sweep to dealias.
+    dbz_ref: ndarray <azimuth, r>
+        Reference reflectivity
+    dbz_slice: ndarray <azimuth, r>
+        Reflectivity to be corrected.
+
+    Returns:
+    ========
+    dbz_slice: ndarray <azimuth, r>
+        Reflectivity corrected.
+    """
+    maxazi, maxrange = dbz_slice.shape
+    window_azimuth = 3
+    window_range = 3
+
+    for nazi in range(maxazi):
+        for ngate in range(maxrange):
+            if np.isnan(dbz_slice[nazi, ngate]):
+                continue
+
+            current_dbz = dbz_slice[nazi, ngate]
+
+            rpos_reference = np.argmin(np.abs(ground_range_reference - ground_range_slice[ngate]))
+            apos_reference = np.argmin(np.abs(azimuth_reference - azimuth_slice[nazi]))
+
+            apos_iter = _get_iter_pos(azimuth_reference, apos_reference - window_azimuth // 2,
+                                      window_azimuth)
+            rpos_iter = _get_iter_range(rpos_reference, window_range, maxrange)
+
+            comp_dbz = np.zeros((len(rpos_iter) * len(apos_iter))) + np.NaN
+
+            cnt = -1
+            for na in apos_iter:
+                for nr in rpos_iter:
+                    cnt += 1
+                    comp_dbz[cnt] = dbz_ref[na, nr]
+
+            if np.sum(~np.isnan(comp_dbz)) == 0:
+                dbz_slice[nazi, ngate] = np.NaN
+
+    return dbz_slice
+
+
+def compare_refl_3D(radar, gatefilter, dbz_name='DBZ'):
+    """
+    Compare the reflectivity of the first 4 sweeps and check that 3D continuity
+    exists. The goals is to remove the recalcitrant permanent clutter.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    gatefilter:
+        Gate filter.
+    dbz_name: str
+        Name of the reflectivity.
+
+    Returns:
+    ========
+    dbz_tot: Corrected reflectivity.
+    """
+    dbz_tot = radar.fields[dbz_name]['data'].copy()
+    dbz_tot = np.ma.masked_where(gatefilter.gate_excluded, dbz_tot).filled(np.NaN)
+
+    r_ref = radar.range['data']
+    azi_ref = radar.azimuth['data'][radar.get_slice(1)]
+    dbz_ref = dbz_tot[radar.get_slice(1)]
+
+    azi_sl = radar.azimuth['data'][radar.get_slice(0)]
+    dbz_sl = dbz_tot[radar.get_slice(0)]
+    dbz_ref = _comp_refl_sl(r_ref, r_ref, azi_ref, azi_sl, dbz_ref, dbz_sl)
+    azi_ref = azi_sl
+
+    dbz_tot[radar.get_slice(0)] = dbz_ref
+
+    r_ref = radar.range['data']
+    azi_ref = radar.azimuth['data'][radar.get_slice(0)]
+    dbz_ref = dbz_tot[radar.get_slice(0)]
+
+    for sl in range(1, 3):
+        azi_sl = radar.azimuth['data'][radar.get_slice(sl)]
+        dbz_sl = dbz_tot[radar.get_slice(sl)]
+        dbz_ref = _comp_refl_sl(r_ref, r_ref, azi_ref, azi_sl, dbz_ref, dbz_sl)
+        azi_ref = azi_sl
+
+        dbz_tot[radar.get_slice(sl)] = dbz_ref
+
+    return dbz_tot
 
 
 def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR',

@@ -430,6 +430,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
                                          zdr_name="ZDR")
     logger.info('Filter initialized.')
 
+    # Removing ground clutter.
+    corr_dbz = filtering.compare_refl_3D(radar, gatefilter)
+    radar.add_field_like('DBZ', 'DBZ', corr_dbz, replace_existing=True)
+    logger.info('3D continuity checked.')
+
     # PHIDP ############
     # Check PHIDP:
     half_phi = phase.check_phidp(radar)
