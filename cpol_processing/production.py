@@ -10,7 +10,7 @@ CPOL Level 1b main production line.
 
     process_and_save
     plot_quicklook
-    production_line
+    production_line  => Driver function.
 """
 # Python Standard Library
 import gc
@@ -335,7 +335,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
         print(f"MAJOR ERROR: {radar_file_name} azimuth field is empty.")
         return None
 
-    radar_codes.correct_azimuth(radar)
+    new_azimuth, azi_has_changed = radar_codes.correct_azimuth(radar)
+    if azi_has_changed:
+        logger.info('Azimuth has been corrected.')
+        radar.azimuth['data'] = new_azimuth
 
     # Getting radar's date and time.
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
@@ -450,12 +453,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.fields['KDP_BRINGI']['long_name'] = "bringi_corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-    # Giangrande PHIDP/KDP
-    if gatefilter.gate_included.sum() / gatefilter.gate_excluded.sum() < 0.3:
-        # small scene/not enough data. Using smoothed PHIDP.
-        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV')
-    else:
-        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF', rhv_field='RHOHV')
+    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF', rhv_field='RHOHV')
     if half_phi:
         phidp_gg['data'] /= 2
         kdp_gg['data'] /= 2

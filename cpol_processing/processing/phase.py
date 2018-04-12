@@ -25,7 +25,7 @@ import scipy
 import netCDF4
 import numpy as np
 
-from scipy import integrate
+from scipy import integrate, ndimage
 from csu_radartools import csu_kdp
 
 
@@ -190,7 +190,9 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
         Unfolded raw PHIDP.
     """
     # Extract data
-    phi = radar.fields[phi_name]['data'].copy()
+    myphi = radar.fields[phi_name]['data'].copy()
+    phi = ndimage.percentile_filter(myphi, 20, 2)
+
     # For CPOL, PHIDP is properly unfolded before season 2003/2004
     CPOL_DATE_PHIDP_FOLD = datetime.datetime(2003, 10, 1)
     dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])

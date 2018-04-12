@@ -146,26 +146,41 @@ def check_reflectivity(radar, refl_field_name='DBZ'):
 
 def correct_azimuth(radar):
     """
-    Sometimes, rapic files have multiple zeros. This corrects from wrong azimuths.
+    Check if the azimuth is right.
+
+    Parameters:
+    ===========
+    radar: Py-ART radar structure
+
+    Returns:
+    ========
+    azimuth: ndarray
+        Corrected azimuth
+    has_changed: bool
+        Is there any change?
     """
-    for sl in radar.iter_slice():
-        azi = radar.azimuth['data'][sl]
-        if azi[0] != 0:
+    has_changed = False
+    azimuth = radar.azimuth['data']
+    for sl in range(radar.nsweeps):
+        azi = azimuth[radar.get_slice(sl)]
+        if np.sum(azi == 0) <= 2:
             continue
-        n0 = np.sum(azi == 0)
-        if n0 > 1:
-            try:
-                for cnt in range(0, n0 + 2):
-                    if azi[cnt] != 0:
-                        break
-                for cnt2 in range(0, cnt):
-                    val = azi[cnt] - (cnt - cnt2)
-                    if val < 0:
-                        val += 360
-                    azi[cnt2] = val
-            except Exception:
-                continue
-    return None
+
+        azi_zero = azi[-1]
+        for na in range(len(azi) - 2, -1, -1):
+            if azi[na] != azi_zero - 1:
+                if azi_zero == 0 and azi[na] == 359:
+                    azi_zero = azi[na]
+                    continue
+                else:
+                    has_changed = True
+                    azi[na] = azi_zero - 1
+            azi_zero = azi[na]
+
+        azimuth[azimuth < 0] += 360
+        azimuth[radar.get_slice(sl)] = azi
+
+    return azimuth, has_changed
 
 
 def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
