@@ -85,6 +85,19 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
 
         return outfilename
 
+    try:
+        os.mkdir(outpath)
+    except FileExistsError:
+        pass
+    try:
+        os.mkdir(outpath_grid)
+    except FileExistsError:
+        pass
+    try:
+        os.mkdir(figure_path)
+    except FileExistsError:
+        pass
+
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
