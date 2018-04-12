@@ -28,6 +28,36 @@ from numba import jit
 from .phase import unfold_raw_phidp
 
 
+def _mask_rhohv(radar, rhohv_name, tight=True):
+    nrays = radar.nrays
+    ngate = radar.ngates
+    oneray = np.zeros((ngate))
+    oneray[:(ngate // 2)] = 1 - np.linspace(0.05, 0.4, ngate // 2)
+    oneray[(ngate // 2):] = 0.3
+    emr = np.vstack([oneray for e in range(nrays)])
+    rho = radar.fields[rhohv_name]['data']
+    emr2 = np.zeros(rho.shape)
+    emr2[rho > emr] = 1
+    return emr2
+
+
+def _noise_th(x, max_range=90):
+    n, bins = np.histogram(x.flatten(), bins=150, range=(5, max_range))
+    cnt = 10
+    peaks = []
+    while (len(peaks) < 1) or (cnt == 0):
+        peaks = scipy.signal.find_peaks_cwt(n, [cnt])
+        cnt - 1
+
+    centers = bins[0:-1] + (bins[1] - bins[0])
+    search_data = n[peaks[0]:peaks[1]]
+    search_centers = centers[peaks[0]:peaks[1]]
+    locs = search_data.argsort()
+    noise_threshold = search_centers[locs[0]]
+
+    return noise_threshold
+
+
 @jit(nopython=True)
 def _get_iter_pos(azi, st, nb=180):
     """
