@@ -190,8 +190,8 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
         Unfolded raw PHIDP.
     """
     # Extract data
-    myphi = radar.fields[phi_name]['data'].copy()
-    # phi = ndimage.percentile_filter(myphi, 20, 2)
+    phi = radar.fields[phi_name]['data'].copy()
+    # phi = ndimage.percentile_filter(phi, 20, 2)
 
     # For CPOL, PHIDP is properly unfolded before season 2003/2004
     CPOL_DATE_PHIDP_FOLD = datetime.datetime(2003, 10, 1)
