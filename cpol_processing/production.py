@@ -425,7 +425,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     except KeyError:
         # Creating a fake NCP field.
         ncp = pyart.config.get_metadata('normalized_coherent_power')
-        emr2 = filtering._mask_rhohv(radar, "RHOHV_CORR", tight=True)
+        emr2 = np.zeros_like(snr['data'])
+        emr2[snr['data'] > 7.5] = 1
         ncp['data'] = emr2
         ncp['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
         radar.add_field('NCP', ncp)
@@ -471,14 +472,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.fields['KDP_BRINGI']['long_name'] = "bringi_corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-    if gatefilter.gate_included.sum() / gatefilter.gate_excluded.sum() < 0.3:
-        # small scene/not enough data. Using smoothed PHIDP.
-        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')
-    else:
-        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHI_UNF', rhv_field='RHOHV_CORR')
-    if half_phi:
-        phidp_gg['data'] /= 2
-        kdp_gg['data'] /= 2
+    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
