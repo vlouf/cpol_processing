@@ -262,7 +262,7 @@ def _noise_th(x, max_range=90):
 
 def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR',
                   zdr_name="ZDR", vel_field="VEL", tvel_name="TVEL", temp_name="temperature",
-                  spectrum_name='WIDTH'):
+                  spectrum_name='WIDTH', snr_name='SNR'):
     """
     Basic filtering
 
@@ -283,6 +283,25 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     ========
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
+    """    
+    r = radar.range['data']
+    azi = radar.azimuth['data']
+    R, A = np.meshgrid(r, azi)
+    refl = radar.fields[refl_name]['data'].copy()
+    rho_corr = radar.fields[rhohv_name]['data']
+    fcut = -0.6 / 140e3 * R + 0.8
+    refl[rho_corr < fcut] = np.NaN    
+    radar.add_field_like(refl_name, 'NDBZ', refl)
+
+    gf = pyart.filters.GateFilter(radar)
+    gf.exclude_invalid('NDBZ')
+    gf.exclude_below(snr_name, 10)
+    gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
+    try:
+        radar.fields.pop('NDBZ')
+    except Exception:
+        pass
+    
     """
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
 
@@ -329,7 +348,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         radar.fields.pop('EMR')
     except Exception:
         pass
-
+    """
     return gf_despeckeld
 
 
