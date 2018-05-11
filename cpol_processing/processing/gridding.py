@@ -104,7 +104,8 @@ def gridding_radar_150km(radar, radar_date, outpath):
     grid_150km = pyart.map.grid_from_radars(
         radar, gatefilters=my_gatefilter,
         grid_shape=(41, 117, 117),
-        grid_limits=((0, 20000), (-145000.0, 145000.0), (-145000.0, 145000.0)))
+        grid_limits=((0, 20000), (-145000.0, 145000.0), (-145000.0, 145000.0)),
+        roi_func='constant', constant_roi=2500)
 
     # Latitude Longitude field for each point.
     longitude, latitude = _get_latlon(grid_150km)
@@ -169,7 +170,8 @@ def gridding_radar_70km(radar, radar_date, outpath):
     grid_70km = pyart.map.grid_from_radars(
         radar, gatefilters=my_gatefilter,
         grid_shape=(41, 141, 141),
-        grid_limits=((0, 20000), (-70000.0, 70000.0), (-70000.0, 70000.0)))
+        grid_limits=((0, 20000), (-70000.0, 70000.0), (-70000.0, 70000.0)),
+        roi_func='constant', constant_roi=1000)
 
     # Latitude Longitude field for each point.
     longitude, latitude = _get_latlon(grid_70km)
