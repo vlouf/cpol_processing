@@ -56,6 +56,54 @@ def _noise_th(x, max_range=90):
     return noise_threshold
 
 
+def texture(data):
+    """Compute the texture of data.
+    Compute the texture of the data by comparing values with a 3x3 neighborhood
+    (based on :cite:`Gourley2007`). NaN values in the original array have
+    NaN textures.
+    Parameters
+    ----------
+    data : :class:`numpy:numpy.ndarray`
+        multi-dimensional array with shape (..., number of beams, number
+        of range bins)
+    Returns
+    ------
+    texture : :class:`numpy:numpy.ndarray`
+        array of textures with the same shape as data
+    """
+    x1 = np.roll(data, 1, -2)  # center:2
+    x2 = np.roll(data, 1, -1)  # 4
+    x3 = np.roll(data, -1, -2)  # 8
+    x4 = np.roll(data, -1, -1)  # 6
+    x5 = np.roll(x1, 1, -1)  # 1
+    x6 = np.roll(x4, 1, -2)  # 3
+    x7 = np.roll(x3, -1, -1)  # 9
+    x8 = np.roll(x2, -1, -2)  # 7
+
+    # at least one NaN would give a sum of NaN
+    xa = np.array([x1, x2, x3, x4, x5, x6, x7, x8])
+
+    # get count of valid neighboring pixels
+    xa_valid = np.ones(np.shape(xa))
+    xa_valid[np.isnan(xa)] = 0
+    # count number of valid neighbors
+    xa_valid_count = np.sum(xa_valid, axis=0)
+
+    num = np.zeros(data.shape)
+    for xarr in xa:
+        diff = data - xarr
+        # difference of NaNs will be converted to zero
+        # (to not affect the summation)
+        diff[np.isnan(diff)] = 0
+        # only those with valid values are considered in the summation
+        num += diff ** 2
+
+    # reinforce that NaN values should have NaN textures
+    num[np.isnan(data)] = np.nan
+
+    return np.sqrt(num / xa_valid_count)
+
+
 def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR',
                   zdr_name="ZDR", vel_field="VEL", tvel_name="TVEL", temp_name="temperature",
                   spectrum_name='WIDTH', snr_name='SNR'):
@@ -80,76 +128,80 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
     """    
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
+    
     r = radar.range['data']
     azi = radar.azimuth['data']
     R, A = np.meshgrid(r, azi)
     refl = radar.fields[refl_name]['data'].copy()
     rho_corr = radar.fields[rhohv_name]['data']
     fcut = -0.6 / 140e3 * R + 0.8
-    refl[rho_corr < fcut] = np.NaN    
+    refl[rho_corr < fcut] = np.NaN
     radar.add_field_like(refl_name, 'NDBZ', refl)
 
     gf = pyart.filters.GateFilter(radar)
     gf.exclude_invalid('NDBZ')
-    gf.exclude_below(snr_name, 10)
+    gf.exclude_below(snr_name, 9)
     
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
     
+    # Inspecting Bathurst.
+    if radar_start_date.year <= 2007:
+        dphi = texture(radar.fields[phidp_name]['data'])
+        emr = np.zeros(dphi.shape, dtype=int)
+        for sw in range(2):
+            x, y, z = radar.get_gate_x_y_z(sweep=sw)
+            sl = radar.get_slice(sw)
+            pos = (x > -115e3) & (x < -10e3) & (y > 40e3) & (y < 65e3) & (dphi[sl] > 20)
+            emr[sl][pos] = 1
+            
+        radar.add_field_like(refl_name, 'EMR', emr, replace_existing=True)
+        gf.exclude_equal('EMR', 1)
+    
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
+    
+    # Remove tmp fields.
     try:
         radar.fields.pop('NDBZ')
-    except Exception:
-        pass
-    
-    """
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
-
-    gf = pyart.filters.GateFilter(radar)
-    gf.include_above(rhohv_name, 0.9)
-#     gf.exclude_below(rhohv_name, 0.75)
-    try:
-        gf.exclude_above(spectrum_name, 5)  # PI cf. Doviak and Zrnic book.
-    except KeyError:
-        pass
-
-    zdr = radar.fields[zdr_name]['data']
-    dbz = radar.fields[refl_name]['data']
-    rho = radar.fields[rhohv_name]['data']
-    temp = radar.fields[temp_name]['data']
-    r = radar.range['data']
-    azi = radar.azimuth['data']
-    [R, A] = np.meshgrid(r, azi)
-
-    emr4 = np.zeros_like(dbz) + 1
-    # Positive temperature with low reflectivity and high zdr.
-    emr4[(dbz < 0) & (temp >= 0)] = 0
-    emr4[(rho < 0.75) & (dbz < 20)] = 0
-    emr4[(R < 15e3) & (rho < 0.8)] = 0
-    if radar_start_date.year > 2007:
-        emr4[(R > 20e3) & (dbz > 20)] = 2
-
-    radar.add_field_like(refl_name, "EMR", emr4, replace_existing=True)
-    gf.exclude_equal('EMR', 0)
-    gf.include_equal('EMR', 2)
-
-    gf.exclude_outside(zdr_name, -3.0, 7.0)
-    gf.exclude_outside(refl_name, -40.0, 80.0)
-
-    try:
-        gf.exclude_above(tvel_name, 3)
-    except Exception:
-        pass
-
-    gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
-
-    # Destroying temporary field.
-    try:
         radar.fields.pop('EMR')
     except Exception:
         pass
-    """
+    
     return gf_despeckeld
+
+
+# @jit
+# def filter_bathurst(radar, gatefilter, dbz_name='DBZ'):
+#     sl = radar.get_slice(0)
+#     r = radar.range['data']
+#     azi0 = radar.azimuth['data'][sl]
+#     refl0 = radar.fields[dbz_name]['data'][sl].copy().filled(np.NaN)
+#     refl0[gatefilter.gate_excluded[sl]] = np.NaN
+
+#     sl = radar.get_slice(1)
+#     refl1 = radar.fields[dbz_name]['data'][sl].copy().filled(np.NaN)
+#     refl1[gatefilter.gate_excluded[sl]] = np.NaN
+#     azi1 = radar.azimuth['data'][sl]
+    
+#     flag = np.zeros(radar.fields[dbz_name]['data'].shape, dtype=int)
+
+#     for ngate in range(0, len(r)):
+#         if r[ngate] < 25e3 or r[ngate] > 125e3:
+#             continue
+
+#         for nray in range(0, len(azi0)):
+#             if azi0[nray] < 270:
+#                 continue            
+
+#             if np.isnan(refl0[nray, ngate]):
+#                 continue
+
+#             npos1 = np.argmin(np.abs(azi1 - azi0[nray]))    
+#             if np.isnan(refl1[npos1, ngate]):
+#                 flag[nray, ngate] = 1 
+
+#     return flag
 
 
 def filter_hardcoding(my_array, nuke_filter, bad=-9999):

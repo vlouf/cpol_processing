@@ -102,6 +102,9 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     logger = logging.getLogger()
     tick = time.time()
     radar = production_line(radar_file_name, sound_dir, figure_path)
+    if radar is None:
+        print(f'{radar_file_name} has not been processed. Check logs.')
+        return None
 
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
 
@@ -473,6 +476,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('KDP/PHIDP Bringi estimated.')
 
     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')
+    if half_phi:
+        phidp_gg['data'] /= 2
+        kdp_gg['data'] /= 2
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
