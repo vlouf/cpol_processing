@@ -127,7 +127,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     ========
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
-    """    
+    """
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     
     r = radar.range['data']
@@ -158,6 +158,11 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
             
         radar.add_field_like(refl_name, 'EMR', emr, replace_existing=True)
         gf.exclude_equal('EMR', 1)
+
+    if radar_start_date.year == 1999 and radar_start_date.month == 3:
+        radar.add_field_like(refl_name, 'RRR', R)
+        gf.exclude_above('RRR', 140e3)
+        radar.fields.pop('RRR')
     
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
     
