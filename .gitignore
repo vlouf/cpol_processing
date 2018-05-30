@@ -3,3 +3,4 @@
 .pbs.*
 surendra.py
 .f
+*.pyc

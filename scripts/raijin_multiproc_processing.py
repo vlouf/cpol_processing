@@ -257,13 +257,13 @@ if __name__ == '__main__':
     # Input radar data directory
     INPATH = "/g/data2/rr5/vhl548/CPOL_level_1a"
     # Output directory for CF/Radial PPIs
-    OUTPATH = "/short/kl02/vhl548/NEW_CPOL_level_1b/"
+    OUTPATH = "/g/data2/rr5/vhl548/NEW_CPOL_level_1b/"
     # Input directory for Radiosoundings
     SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde"
     # Output directory for log files.
     LOG_FILE_PATH = os.path.expanduser('~')
     # Time in seconds for which each subprocess is allowed to live.
-    TIME_BEFORE_DEATH = 600  # seconds before killing process.
+    TIME_BEFORE_DEATH = 300  # seconds before killing process.
     # True (or False) it is (or not) CPOL radar:
     IS_CPOL = True
 
