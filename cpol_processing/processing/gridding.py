@@ -22,6 +22,20 @@ import pyart
 import numpy as np
 
 
+def mkdir(dirpath):
+    '''
+    Create directory. Check if directory exists and handles error.
+    '''
+    if not os.path.exists(dirpath):
+        # Might seem redundant, but the multiprocessing creates error.
+        try:
+            os.mkdir(dirpath)
+        except FileExistsError:
+            return None
+        
+    return None
+
+
 def _get_latlon(radgrid):
     """
     Generates lattitude and longitude arrays.
@@ -73,25 +87,13 @@ def gridding_radar_150km(radar, radar_date, outpath):
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
     fname = "CPOL_{}_GRIDS_2500m.nc".format(datetimestr)
 
-    # Output directory
-    outdir_150km = os.path.join(outpath, "GRID_150km_2500m")
-    try:
-        os.mkdir(outdir_150km)
-    except FileExistsError:
-        pass
-
+    # Output directory            
     outdir_150km = os.path.join(outdir_150km, year)
-    try:
-        os.mkdir(outdir_150km)
-    except FileExistsError:
-        pass
-
+    mkdir(outdir_150km)
+    
     outdir_150km = os.path.join(outdir_150km, datestr)
-    try:
-        os.mkdir(outdir_150km)
-    except FileExistsError:
-        pass
-
+    mkdir(outdir_150km)
+    
     # Output file name
     outfilename = os.path.join(outdir_150km, fname)
 
@@ -139,25 +141,13 @@ def gridding_radar_70km(radar, radar_date, outpath):
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
     fname = "CPOL_{}_GRIDS_1000m.nc".format(datetimestr)
 
-    # Output directory
-    outdir_70km = os.path.join(outpath, "GRID_70km_1000m")
-    try:
-        os.mkdir(outdir_70km)
-    except FileExistsError:
-        pass
-
+    # Output directory        
     outdir_70km = os.path.join(outdir_70km, year)
-    try:
-        os.mkdir(outdir_70km)
-    except FileExistsError:
-        pass
-
+    mkdir(outdir_70km)
+    
     outdir_70km = os.path.join(outdir_70km, datestr)
-    try:
-        os.mkdir(outdir_70km)
-    except FileExistsError:
-        pass
-
+    mkdir(outdir_70km)
+    
     # Output file name
     outfilename = os.path.join(outdir_70km, fname)
 
