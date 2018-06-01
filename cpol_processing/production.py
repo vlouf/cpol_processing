@@ -84,7 +84,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
             outfilename = outfilename.replace("SUR", "PPI")
 
         return outfilename
-
+    
+    # Create directories.
     try:
         os.mkdir(outpath)
     except FileExistsError:
@@ -95,6 +96,17 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         pass
     try:
         os.mkdir(figure_path)
+    except FileExistsError:
+        pass    
+    
+    outdir_150km = os.path.join(outpath_grid, "GRID_150km_2500m")
+    outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")    
+    try:
+        os.mkdir(outdir_150km)
+    except FileExistsError:
+        pass
+    try:
+        os.mkdir(outdir_70km)
     except FileExistsError:
         pass
 
@@ -174,11 +186,13 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
             unwanted_keys.append(mykey)
     for mykey in unwanted_keys:
         radar.fields.pop(mykey)
-
+    
     try:
         # Gridding (and saving)
-        gridding.gridding_radar_150km(radar, radar_start_date, outpath=outpath_grid)
-        gridding.gridding_radar_70km(radar, radar_start_date, outpath=outpath_grid)
+        # Full radar range with a 2.5 km grid resolution        
+        gridding.gridding_radar_150km(radar, radar_start_date, outpath=outdir_150km)
+        # Half-range with a 1 km grid resolution
+        gridding.gridding_radar_70km(radar, radar_start_date, outpath=outdir_70km)
         logger.info('Gridding done.')
     except Exception:
         traceback.print_exc()
