@@ -440,6 +440,10 @@ def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="
     interp_sonde = netCDF4.Dataset(sonde_name)
     temperatures = interp_sonde.variables[temp_field_name][:]
     temperatures[(temperatures < -100) | (temperatures > 100)] = np.NaN
+    try:
+        temperatures = temperatures.filled(np.NaN)
+    except AttributeError:
+        pass
     times = interp_sonde.variables['time'][:]
     heights = interp_sonde.variables['height'][:]
 
