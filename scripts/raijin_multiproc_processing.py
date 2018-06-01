@@ -4,8 +4,8 @@ CPOL Level 1b main production line.
 @title: CPOL_PROD_1b
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institution: Bureau of Meteorology
-@date: 31/05/2017
-@version: 0.99
+@date: 31/05/2018
+@version: 1
 
 .. autosummary::
     :toctree: generated/
@@ -275,18 +275,15 @@ if __name__ == '__main__':
         LOG_FILE_PATH = os.path.join(LOG_FILE_PATH, "logfiles")
 
     # Check if paths exist.
-    if not os.path.isdir(OUTPATH):
-        print("Output directory does not exist {}.".format(OUTPATH))
-        sys.exit()
+    make_dir(OUTPATH)
     OUTPATH = os.path.join(OUTPATH, "PPI")
-    try:
-        os.mkdir(OUTPATH)
-    except FileExistsError:
-        pass
-
+    make_dir(OUTPATH)
+    
     # Create input directory.
     make_dir(LOG_FILE_PATH)
     make_dir(OUTPATH_GRID)
+    make_dir(os.path.join(OUTPATH_GRID, 'GRID_150km_2500m'))
+    make_dir(os.path.join(OUTPATH_GRID, 'GRID_70km_1000m'))
     make_dir(FIGURE_CHECK_PATH)
 
     if not os.path.isdir(SOUND_DIR):
