@@ -88,7 +88,7 @@ def gridding_radar_150km(radar, radar_date, outpath):
     fname = "CPOL_{}_GRIDS_2500m.nc".format(datetimestr)
 
     # Output directory            
-    outdir_150km = os.path.join(outdir_150km, year)
+    outdir_150km = os.path.join(outpath, year)
     mkdir(outdir_150km)
     
     outdir_150km = os.path.join(outdir_150km, datestr)
@@ -142,7 +142,7 @@ def gridding_radar_70km(radar, radar_date, outpath):
     fname = "CPOL_{}_GRIDS_1000m.nc".format(datetimestr)
 
     # Output directory        
-    outdir_70km = os.path.join(outdir_70km, year)
+    outdir_70km = os.path.join(outpath, year)
     mkdir(outdir_70km)
     
     outdir_70km = os.path.join(outdir_70km, datestr)
