@@ -154,11 +154,16 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
             x, y, z = radar.get_gate_x_y_z(sweep=sw)
             sl = radar.get_slice(sw)
             pos = (x > -115e3) & (x < -10e3) & (y > 40e3) & (y < 65e3) & (dphi[sl] > 20)
+            pos = pos | ((R[sl] < 75e3) & (dphi[sl] > 20))
             emr[sl][pos] = 1
-            
-        radar.add_field_like(refl_name, 'EMR', emr, replace_existing=True)
-        gf.exclude_equal('EMR', 1)
 
+            radar.add_field_like(refl_name, 'EMR', emr, replace_existing=True)
+            gf.exclude_equal('EMR', 1)
+    else:
+        # Using PHIDP texture for filtering.
+        gf.exclude_below(rhohv_name, 0.45)
+        
+        
     if radar_start_date.year == 1999 and radar_start_date.month == 3:
         radar.add_field_like(refl_name, 'RRR', R)
         gf.exclude_above('RRR', 140e3)
