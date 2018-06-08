@@ -120,13 +120,12 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999, thsd=12, window=3.0, std_gate=11)
 
     # Mask array
-    # phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
-    kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
-    phi2 = np.cumsum(kdpb.filled(0), axis=1) /2
+    phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
+    kdpb = np.ma.masked_where(kdpb == -9999, kdpb)    
 
     # Get metadata.
     phimeta = pyart.config.get_metadata("differential_phase")
-    phimeta['data'] = phi2
+    phimeta['data'] = phidpb
     kdpmeta = pyart.config.get_metadata("specific_differential_phase")
     kdpmeta['data'] = kdpb
 
