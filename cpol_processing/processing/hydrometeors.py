@@ -23,7 +23,7 @@ import numpy as np
 from csu_radartools import csu_liquid_ice_mass, csu_fhc, csu_blended_rain, csu_dsd
 
 
-def dsd_retrieval(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG'):
+def dsd_retrieval(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_BRINGI'):
     """
     Compute the DSD retrieval using the csu library.
 
@@ -72,7 +72,7 @@ def dsd_retrieval(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', 
 
 
 def hydrometeor_classification(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
-                               kdp_name='KDP_GG', rhohv_name='RHOHV_CORR',
+                               kdp_name='KDP_BRINGI', rhohv_name='RHOHV_CORR',
                                temperature_name='temperature',
                                height_name='height'):
     """
@@ -210,7 +210,7 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
     return class_meta
 
 
-def rainfall_rate(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_GG',
+def rainfall_rate(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', kdp_name='KDP_BRINGI',
                   hydro_name='radar_echo_classification'):
     """
     Rainfall rate algorithm from csu_radartools.

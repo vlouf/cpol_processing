@@ -16,6 +16,7 @@ Codes for correcting the differential phase and estimating KDP.
     unfold_raw_phidp
 """
 # Python Standard Library
+import copy
 import time
 import datetime
 
@@ -116,12 +117,12 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     [R, A] = np.meshgrid(rng, azi)
 
     # Compute KDP bringi.
-    kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999, nfilter=3, thsd=24)
+    kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999, thsd=12, window=3.0, std_gate=11)
 
     # Mask array
     # phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
-    phi2 = np.cumsum(kdpb.filled(0), axis=1)
+    phi2 = np.cumsum(kdpb.filled(0), axis=1) /2
 
     # Get metadata.
     phimeta = pyart.config.get_metadata("differential_phase")
@@ -171,7 +172,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     return phidp_gg, kdp_gg
 
 
-def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
+def unfold_raw_phidp(radar, phi_name="PHIDP", refl_field='DBZ', ncp_field='NCP', rhv_field='RHOHV'):
     """
     Unfold raw PHIDP
 
@@ -189,22 +190,11 @@ def unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP"):
     tru_phi: ndarray
         Unfolded raw PHIDP.
     """
-    # Extract data
-    phi = radar.fields[phi_name]['data'].copy()
-    # phi = ndimage.percentile_filter(phi, 20, 2)
+    nphi = pyart.correct.phase_proc.get_phidp_unf(radar, ncpts=2, refl_field=refl_field, 
+                                                  ncp_field=ncp_field, rhv_field=rhv_field, 
+                                                  phidp_field=phi_name)
+    
+    my_new_ph = copy.deepcopy(radar.fields[phi_name])
+    my_new_ph['data'][:, :nphi.shape[1]] = nphi
 
-    # For CPOL, PHIDP is properly unfolded before season 2003/2004
-    CPOL_DATE_PHIDP_FOLD = datetime.datetime(2003, 10, 1)
-    dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-    if dtime < CPOL_DATE_PHIDP_FOLD:
-        tru_phi = phi
-    else:
-        tru_phi = phi + 180
-        try:
-            pmin = tru_phi[gatefilter.gate_included].min()
-            tru_phi -= pmin
-        except ValueError:
-            pass
-        tru_phi[tru_phi > 360] -= 360
-
-    return tru_phi
+    return my_new_ph

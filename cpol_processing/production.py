@@ -262,8 +262,8 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('giangrande_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+        gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
 
         try:
             gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
@@ -468,38 +468,38 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
 
     # PHIDP ############
     # Check PHIDP:
-    half_phi = phase.check_phidp(radar)
-    if half_phi:
-        radar.fields['PHIDP']['data'] *= 2
-        logger.info("PHIDP corrected from half-circle.")
+#     half_phi = phase.check_phidp(radar)
+#     if half_phi:
+#         radar.fields['PHIDP']['data'] *= 2
+#         logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
-    phi_unfold = phase.unfold_raw_phidp(radar, gatefilter, phi_name="PHIDP")
-    radar.add_field_like("PHIDP", "PHI_UNF", phi_unfold, replace_existing=True)
+    phi_unfold = phase.unfold_raw_phidp(radar, phi_name="PHIDP")
+    radar.add_field("PHI_UNF", phi_unfold, replace_existing=True)
     logger.info('Raw PHIDP unfolded.')
 
     # Bringi unfolding.
     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
-    if half_phi:
-        phimeta['data'] /= 2
-        kdpmeta['data'] /= 2
+#     if half_phi:
+#         phimeta['data'] /= 2
+#         kdpmeta['data'] /= 2
     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
-    radar.fields['PHIDP_BRINGI']['long_name'] = "bringi_corrected_differential_phase"
-    radar.fields['KDP_BRINGI']['long_name'] = "bringi_corrected_specific_differential_phase"
+    radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
+    radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')    
-    radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
-    radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
-    radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
-    radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
-    logger.info('KDP/PHIDP Giangrande estimated.')
+#     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')    
+#     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
+#     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
+#     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
+#     radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
+#     logger.info('KDP/PHIDP Giangrande estimated.')
 
-    # Resetting PHIDP.
-    if half_phi:
-        radar.fields['PHI_UNF']['data'] /= 2
-        radar.fields['PHIDP']['data'] /= 2
+#     # Resetting PHIDP.
+#     if half_phi:
+#         radar.fields['PHI_UNF']['data'] /= 2
+#         radar.fields['PHIDP']['data'] /= 2
 
     # VELOCITY
     # Simulate wind profile
