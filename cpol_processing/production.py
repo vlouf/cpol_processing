@@ -474,12 +474,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
 #         logger.info("PHIDP corrected from half-circle.")
 
     # Unfold PHIDP:
-    phi_unfold = phase.unfold_raw_phidp(radar, phi_name="PHIDP")
-    radar.add_field("PHI_UNF", phi_unfold, replace_existing=True)
-    logger.info('Raw PHIDP unfolded.')
+#     phi_unfold = phase.unfold_raw_phidp(radar, phi_name="PHIDP")
+#     radar.add_field("PHI_UNF", phi_unfold, replace_existing=True)
+#     logger.info('Raw PHIDP unfolded.')
 
     # Bringi unfolding.
-    phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
+    phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
 #     if half_phi:
 #         phimeta['data'] /= 2
 #         kdpmeta['data'] /= 2

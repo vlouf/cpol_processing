@@ -109,6 +109,9 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     """
     dp = radar.fields[unfold_phidp_name]['data'].copy()
     dz = radar.fields[refl_field]['data'].copy().filled(-9999)
+    
+    if np.nanmean(dp[gatefilter.gate_included]) < 0:
+        dp += 90
 
     # Extract dimensions
     rng = radar.range['data']
@@ -118,10 +121,16 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
 
     # Compute KDP bringi.
     kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999, thsd=12, window=3.0, std_gate=11)
+    
+    kdpb[kdpb == -9999] = 0
+    kdpb[kdpb < 0] = 0
+    kdpb[kdpb > 14] = 0
+         
+    phidpb = np.cumsum(kdpb, axis=1)
 
     # Mask array
-    phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
-    kdpb = np.ma.masked_where(kdpb == -9999, kdpb)    
+#     phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
+#     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)    
 
     # Get metadata.
     phimeta = pyart.config.get_metadata("differential_phase")
