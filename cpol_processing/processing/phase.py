@@ -85,7 +85,8 @@ def check_phidp(radar, phi_name="PHIDP"):
 #     return phidp
 
 
-def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP", rhohv_name="RHOHV_CORR", refl_field='DBZ'):
+def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
+                 rhohv_name="RHOHV_CORR", refl_field='DBZ'):
     """
     Compute PHIDP and KDP Bringi.
 
@@ -109,9 +110,12 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     """
     dp = radar.fields[unfold_phidp_name]['data'].copy()
     dz = radar.fields[refl_field]['data'].copy().filled(-9999)
-    
-    if np.nanmean(dp[gatefilter.gate_included]) < 0:
-        dp += 90
+
+    try:
+        if np.nanmean(dp[gatefilter.gate_included]) < 0:
+            dp += 90
+    except ValueError:
+        pass
 
     # Extract dimensions
     rng = radar.range['data']
@@ -121,16 +125,16 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
 
     # Compute KDP bringi.
     kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999, thsd=12, window=3.0, std_gate=11)
-    
+
     kdpb[kdpb == -9999] = 0
     kdpb[kdpb < 0] = 0
     kdpb[kdpb > 14] = 0
-         
+
     phidpb = np.cumsum(kdpb, axis=1)
 
     # Mask array
 #     phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
-#     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)    
+#     kdpb = np.ma.masked_where(kdpb == -9999, kdpb)
 
     # Get metadata.
     phimeta = pyart.config.get_metadata("differential_phase")
@@ -198,10 +202,10 @@ def unfold_raw_phidp(radar, phi_name="PHIDP", refl_field='DBZ', ncp_field='NCP',
     tru_phi: ndarray
         Unfolded raw PHIDP.
     """
-    nphi = pyart.correct.phase_proc.get_phidp_unf(radar, ncpts=2, refl_field=refl_field, 
-                                                  ncp_field=ncp_field, rhv_field=rhv_field, 
+    nphi = pyart.correct.phase_proc.get_phidp_unf(radar, ncpts=2, refl_field=refl_field,
+                                                  ncp_field=ncp_field, rhv_field=rhv_field,
                                                   phidp_field=phi_name)
-    
+
     my_new_ph = copy.deepcopy(radar.fields[phi_name])
     my_new_ph['data'][:, :nphi.shape[1]] = nphi
 
