@@ -84,7 +84,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
             outfilename = outfilename.replace("SUR", "PPI")
 
         return outfilename
-    
+
     # Create directories.
     try:
         os.mkdir(outpath)
@@ -97,10 +97,10 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     try:
         os.mkdir(figure_path)
     except FileExistsError:
-        pass    
-    
+        pass
+
     outdir_150km = os.path.join(outpath_grid, "GRID_150km_2500m")
-    outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")    
+    outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")
     try:
         os.mkdir(outdir_150km)
     except FileExistsError:
@@ -150,10 +150,9 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         global_metadata['creator_email'] = "valentin.louf@bom.gov.au"
         global_metadata['creator_url'] = "github.com/vlouf"
         global_metadata['institution'] = "Australian Bureau of Meteorology"
-        global_metadata['publisher_name'] = "Australian Bureau of Meteorology"
-        global_metadata['publisher_url'] = "bom.gov.au"
+        global_metadata['publisher_name'] = "NCI - National Computing Infrastructure"
+        global_metadata['publisher_url'] = "nci.org.au"
         global_metadata['publisher_type'] = "institution"
-        global_metadata['publisher_institution'] = "Australian Bureau of Meteorology"
         global_metadata['site_name'] = "Gunn_Pt"
         global_metadata['country'] = "Australia"
         global_metadata['state'] = "NT"
@@ -186,10 +185,10 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
             unwanted_keys.append(mykey)
     for mykey in unwanted_keys:
         radar.fields.pop(mykey)
-    
+
     try:
         # Gridding (and saving)
-        # Full radar range with a 2.5 km grid resolution        
+        # Full radar range with a 2.5 km grid resolution
         gridding.gridding_radar_150km(radar, radar_start_date, outpath=outdir_150km)
         # Half-range with a 1 km grid resolution
         gridding.gridding_radar_70km(radar, radar_start_date, outpath=outdir_70km)
@@ -250,40 +249,68 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         the_ax = the_ax.flatten()
         # Plotting reflectivity
         gr.plot_ppi('total_power', ax=the_ax[0])
+        the_ax[0].set_title(gr.generate_title('total_power', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         gr.plot_ppi('reflectivity', ax=the_ax[1], gatefilter=gatefilter)
+        the_ax[1].set_title(gr.generate_title('reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         gr.plot_ppi('radar_echo_classification', ax=the_ax[2], gatefilter=gatefilter)
+        the_ax[2].set_title(gr.generate_title('radar_echo_classification', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
         gr.plot_ppi('differential_reflectivity', ax=the_ax[3])
+        the_ax[3].set_title(gr.generate_title('differential_reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[4], gatefilter=gatefilter)
+        the_ax[4].set_title(gr.generate_title('corrected_differential_reflectivity',
+                                              sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         # Seasons 0910: No RHOHV available.
         try:
             gr.plot_ppi('cross_correlation_ratio', ax=the_ax[5], vmin=0.5, vmax=1.05)
+            the_ax[5].set_title(gr.generate_title('cross_correlation_ratio',
+                                                  sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        the_ax[6].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        the_ax[7].set_title(gr.generate_title('corrected_differential_phase', sweep=0,
+                                              datetime_format='%Y-%m-%dT%H:%M'))
+
         gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+        the_ax[8].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
+                                              datetime_format='%Y-%m-%dT%H:%M'))
 
         try:
             gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            the_ax[9].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
             gr.plot_ppi('sim_velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            the_ax[10].set_title(gr.generate_title('sim_velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
             gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
                         cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            the_ax[11].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
+                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         gr.plot_ppi('D0', ax=the_ax[12], cmap='GnBu', vmin=0, vmax=2)
+        the_ax[12].set_title(gr.generate_title('D0', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         gr.plot_ppi('NW', ax=the_ax[13], cmap='cubehelix', vmin=0, vmax=8)
+        the_ax[13].set_title(gr.generate_title('NW', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[14])
+        the_ax[14].set_title(gr.generate_title('radar_estimated_rain_rate', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
@@ -489,7 +516,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-#     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')    
+#     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')
 #     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
 #     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
 #     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"

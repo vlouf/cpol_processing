@@ -129,7 +129,7 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
             Gate filter (excluding all bad data).
     """
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
-    
+
     r = radar.range['data']
     azi = radar.azimuth['data']
     R, A = np.meshgrid(r, azi)
@@ -142,76 +142,31 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
     gf = pyart.filters.GateFilter(radar)
     gf.exclude_invalid('NDBZ')
     gf.exclude_below(snr_name, 9)
-    
+
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
-    
-    # Inspecting Bathurst.
-    if radar_start_date.year <= 2007:
-        dphi = texture(radar.fields[phidp_name]['data'])
-        emr = np.zeros(dphi.shape, dtype=int)
-        for sw in range(2):
-            x, y, z = radar.get_gate_x_y_z(sweep=sw)
-            sl = radar.get_slice(sw)
-            pos = (x > -115e3) & (x < -10e3) & (y > 40e3) & (y < 65e3) & (dphi[sl] > 20)
-            pos = pos | ((R[sl] < 75e3) & (dphi[sl] > 20))
-            emr[sl][pos] = 1
 
-            radar.add_field_like(refl_name, 'EMR', emr, replace_existing=True)
-            gf.exclude_equal('EMR', 1)
-    else:
-        # Using PHIDP texture for filtering.
-        gf.exclude_below(rhohv_name, 0.45)
-        
-        
+    dphi = texture(radar.fields[phidp_name]['data'])
+    radar.add_field_like(phidp_name, 'PHITXT', dphi)
+    gf.exclude_above('PHITXT', 20)
+    gf.exclude_below(rhohv_name, 0.45)
+
+    # Remove rings in march 1999.
     if radar_start_date.year == 1999 and radar_start_date.month == 3:
         radar.add_field_like(refl_name, 'RRR', R)
         gf.exclude_above('RRR', 140e3)
         radar.fields.pop('RRR')
-    
+
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
-    
+
     # Remove tmp fields.
     try:
         radar.fields.pop('NDBZ')
-        radar.fields.pop('EMR')
+        radar.fields.pop('PHITXT')
     except Exception:
         pass
-    
+
     return gf_despeckeld
-
-
-# @jit
-# def filter_bathurst(radar, gatefilter, dbz_name='DBZ'):
-#     sl = radar.get_slice(0)
-#     r = radar.range['data']
-#     azi0 = radar.azimuth['data'][sl]
-#     refl0 = radar.fields[dbz_name]['data'][sl].copy().filled(np.NaN)
-#     refl0[gatefilter.gate_excluded[sl]] = np.NaN
-
-#     sl = radar.get_slice(1)
-#     refl1 = radar.fields[dbz_name]['data'][sl].copy().filled(np.NaN)
-#     refl1[gatefilter.gate_excluded[sl]] = np.NaN
-#     azi1 = radar.azimuth['data'][sl]
-    
-#     flag = np.zeros(radar.fields[dbz_name]['data'].shape, dtype=int)
-
-#     for ngate in range(0, len(r)):
-#         if r[ngate] < 25e3 or r[ngate] > 125e3:
-#             continue
-
-#         for nray in range(0, len(azi0)):
-#             if azi0[nray] < 270:
-#                 continue            
-
-#             if np.isnan(refl0[nray, ngate]):
-#                 continue
-
-#             npos1 = np.argmin(np.abs(azi1 - azi0[nray]))    
-#             if np.isnan(refl1[npos1, ngate]):
-#                 flag[nray, ngate] = 1 
-
-#     return flag
 
 
 def filter_hardcoding(my_array, nuke_filter, bad=-9999):
