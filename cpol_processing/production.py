@@ -290,8 +290,8 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         try:
-            gr.plot_ppi('sim_velocity', ax=the_ax[10], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            the_ax[10].set_title(gr.generate_title('sim_velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('giangrande_differential_phase', ax=the_ax[10], vmin=-180, vmax=180, cmap='pyart_Wild25')
+            the_ax[10].set_title(gr.generate_title('giangrande_differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
@@ -516,12 +516,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-#     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')
-#     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
-#     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
-#     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
-#     radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
-#     logger.info('KDP/PHIDP Giangrande estimated.')
+    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')
+    radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
+    radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
+    radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
+    radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
+    logger.info('KDP/PHIDP Giangrande estimated.')
 
 #     # Resetting PHIDP.
 #     if half_phi:
