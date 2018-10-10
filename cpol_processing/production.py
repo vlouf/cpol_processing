@@ -445,8 +445,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         logger.critical("RHOHV field not found, creating a fake RHOHV")
         print(f"RHOHV field not found, creating a fake RHOHV {radar_file_name}")
 
-    if sound_dir is not None:
-        # Compute SNR and extract radiosounding temperature.
+    # Compute SNR and extract radiosounding temperature.
+    # Requires radiosoundings
+    if sound_dir is not None:        
         try:
             height, temperature, snr = radar_codes.snr_and_sounding(radar, radiosonde_fname)
             radar.add_field('temperature', temperature, replace_existing=True)
@@ -457,13 +458,13 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
             print(f"Impossible to compute SNR {radar_file_name}")
             return None
 
-    # Looking for SNR
-    try:
-        radar.fields['SNR']
-        logger.info('SNR already exists.')
-    except KeyError:
-        radar.add_field('SNR', snr, replace_existing=True)
-        logger.info('SNR calculated.')
+        # Looking for SNR
+        try:
+            radar.fields['SNR']
+            logger.info('SNR already exists.')
+        except KeyError:
+            radar.add_field('SNR', snr, replace_existing=True)
+            logger.info('SNR calculated.')
 
     # Correct RHOHV
     if not fake_rhohv:
