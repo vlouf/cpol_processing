@@ -16,9 +16,9 @@ Radar processing script. This script processes raw radar files using various too
 - Estimate Rainfall rate using [csu_radartools][2].
 - Estimate DSD retrieval using [csu_radartools][2].
 
-# Requirements
+# Radiosoundings
 
-Radiosoundings are required. Ideally radiosoundings coming from arm.gov.
+Radiosoundings used to be required, they are now optionnals. Ideally radiosoundings coming from arm.gov.
 You can download radiosoundings from the University of Wyoming website (http://weather.uwyo.edu/upperair/sounding.html) and save them into a netCDF4 file.
 
 # Install
