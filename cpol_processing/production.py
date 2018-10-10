@@ -41,7 +41,7 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid, figure_path=None, sound_dir=None, is_cpol=True, is_seapol=None):
+def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None, sound_dir=None, is_cpol=True, is_seapol=None):
     """
     Call processing function and write data.
 
@@ -96,6 +96,9 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path=None, s
         os.mkdir(outpath)
     except FileExistsError:
         pass
+        
+    if outpath_grid is None:
+        outpath_grid = os.paht.join(outpath, 'GRIDDED')
     try:
         os.mkdir(outpath_grid)
     except FileExistsError:
