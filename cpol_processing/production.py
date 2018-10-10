@@ -537,13 +537,13 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
 
     # VELOCITY
     # Simulate wind profile
+    has_simvel = False
     if sound_dir is not None:
         try:
             sim_vel = velocity.get_simulated_wind_profile(radar, radiosonde_fname)
             radar.add_field("sim_velocity", sim_vel)
             has_simvel = True
-        except Exception:
-            has_simvel = False
+        except Exception:            
             pass
 
     # Unfold VELOCITY
