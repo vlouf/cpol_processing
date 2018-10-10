@@ -189,22 +189,22 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
             Gate filter (excluding all bad data).
     """
     gf = pyart.filters.GateFilter(radar)
-    gf.exclude_below(snr_name, 9)
+    # gf.exclude_below(snr_name, 9)
 
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
     
-    dphi = texture(radar.fields[phidp_name]['data'])
-    radar.add_field_like(phidp_name, 'PHITXT', dphi)
-    gf.exclude_above('PHITXT', 20)
+    # dphi = texture(radar.fields[phidp_name]['data'])
+    # radar.add_field_like(phidp_name, 'PHITXT', dphi)
+    # gf.exclude_above('PHITXT', 20)
     gf.exclude_below(rhohv_name, 0.45)
     
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
     
-    try:        
-        radar.fields.pop('PHITXT')
-    except Exception:
-        pass
+    # try:        
+    #     radar.fields.pop('PHITXT')
+    # except Exception:
+    #     pass
 
     return gf_despeckeld
 
