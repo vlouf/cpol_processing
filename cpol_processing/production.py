@@ -479,8 +479,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     except KeyError:
         # Creating a fake NCP field.
         ncp = pyart.config.get_metadata('normalized_coherent_power')
-        emr2 = np.zeros_like(snr['data'])
-        emr2[snr['data'] > 7.5] = 1
+        emr2 = np.zeros_like(radar.fields['RHOHV']['data'])
+        emr2[emr2 > 0.5] = 1
         ncp['data'] = emr2
         ncp['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
         radar.add_field('NCP', ncp)
