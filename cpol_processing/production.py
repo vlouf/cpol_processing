@@ -88,8 +88,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         return outfilename
 
     # Older version had this argument
-    if is_seapol is not None:
-        warnings.warn("'is_seapol' argument is deprecated.", DeprecationWarning)
+    # if is_seapol is not None:
+    #     warnings.warn("'is_seapol' argument is deprecated.", DeprecationWarning)
 
     # Create directories.
     try:
@@ -124,7 +124,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
-    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol)
+    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol, is_seapol=is_seapol)
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
         return None
@@ -338,7 +338,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
+def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, is_seapol=None):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -514,6 +514,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     # if half_phi:
     #     radar.fields['PHIDP']['data'] *= 2
     #     logger.info("PHIDP corrected from half-circle.")
+
+    if is_seapol:
+        radar.fields['PHIDP']['data'] = - radar.fields['PHIDP']['data']
 
     # Bringi unfolding.
     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
