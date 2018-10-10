@@ -104,10 +104,17 @@ def hydrometeor_classification(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
     zdr = radar.fields[zdr_name]['data'].copy()
     kdp = radar.fields[kdp_name]['data'].copy()
     rhohv = radar.fields[rhohv_name]['data'].copy()
-    radar_T = radar.fields[temperature_name]['data'].copy()
-    radar_z = radar.fields[height_name]['data'].copy()
+    try:
+        radar_T = radar.fields[temperature_name]['data'].copy()
+        radar_z = radar.fields[height_name]['data'].copy()
+        use_temperature = True
+    except Exception:
+        use_temperature = False
 
-    scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=True, band='C', T=radar_T)
+    if use_temperature:
+        scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=True, band='C', T=radar_T)
+    else:
+        scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=False, band='C')
 
     hydro = np.argmax(scores, axis=0) + 1
     fill_value = -32768

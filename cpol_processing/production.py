@@ -41,7 +41,7 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir=None, is_cpol=True, is_seapol=None):
+def process_and_save(radar_file_name, outpath, outpath_grid, figure_path=None, sound_dir=None, is_cpol=True, is_seapol=None):
     """
     Call processing function and write data.
 
@@ -100,10 +100,12 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         os.mkdir(outpath_grid)
     except FileExistsError:
         pass
-    try:
-        os.mkdir(figure_path)
-    except FileExistsError:
-        pass
+
+    if figure_path is not None:
+        try:
+            os.mkdir(figure_path)
+        except FileExistsError:
+            pass
 
     outdir_150km = os.path.join(outpath_grid, "GRID_150km_2500m")
     outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")
@@ -281,11 +283,11 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
         the_ax[6].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        gr.plot_ppi('corrected_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        the_ax[7].set_title(gr.generate_title('corrected_differential_phase', sweep=0,
+        gr.plot_ppi('giangrande_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        the_ax[7].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
                                               datetime_format='%Y-%m-%dT%H:%M'))
 
-        gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+        gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
         the_ax[8].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
                                               datetime_format='%Y-%m-%dT%H:%M'))
 
@@ -296,8 +298,8 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         try:
-            gr.plot_ppi('giangrande_differential_phase', ax=the_ax[10], vmin=-180, vmax=180, cmap='pyart_Wild25')
-            the_ax[10].set_title(gr.generate_title('giangrande_differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('corrected_differential_phase', ax=the_ax[10], vmin=-180, vmax=180, cmap='pyart_Wild25')
+            the_ax[10].set_title(gr.generate_title('differential_phase_bringi', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
@@ -409,7 +411,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
-    radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)
+    if sound_dir is not None:
+        radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)        
 
     # Correct Doppler velocity units.
     try:
@@ -420,10 +423,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         vel_missing = True
         pass
 
-    if not vel_missing:
-        # Compute the velocity texture.
-        velocity_texture = filtering.velocity_texture(radar)
-        radar.add_field("TVEL", velocity_texture, replace_existing=True)
+    # if not vel_missing:
+    #     # Compute the velocity texture.
+    #     velocity_texture = filtering.velocity_texture(radar)
+    #     radar.add_field("TVEL", velocity_texture, replace_existing=True)
 
     # Looking for RHOHV field
     # For CPOL, season 09/10, there are no RHOHV fields before March!!!!
@@ -442,16 +445,17 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         logger.critical("RHOHV field not found, creating a fake RHOHV")
         print(f"RHOHV field not found, creating a fake RHOHV {radar_file_name}")
 
-    # Compute SNR and extract radiosounding temperature.
-    try:
-        height, temperature, snr = radar_codes.snr_and_sounding(radar, radiosonde_fname)
-        radar.add_field('temperature', temperature, replace_existing=True)
-        radar.add_field('height', height, replace_existing=True)
-    except ValueError:
-        traceback.print_exc()
-        logger.error("Impossible to compute SNR")
-        print(f"Impossible to compute SNR {radar_file_name}")
-        return None
+    if sound_dir is not None:
+        # Compute SNR and extract radiosounding temperature.
+        try:
+            height, temperature, snr = radar_codes.snr_and_sounding(radar, radiosonde_fname)
+            radar.add_field('temperature', temperature, replace_existing=True)
+            radar.add_field('height', height, replace_existing=True)
+        except ValueError:
+            traceback.print_exc()
+            logger.error("Impossible to compute SNR")
+            print(f"Impossible to compute SNR {radar_file_name}")
+            return None
 
     # Looking for SNR
     try:
@@ -502,16 +506,16 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
 
     # PHIDP ############
     # Check PHIDP:
-    half_phi = phase.check_phidp(radar)
-    if half_phi:
-        radar.fields['PHIDP']['data'] *= 2
-        logger.info("PHIDP corrected from half-circle.")
+    # half_phi = phase.check_phidp(radar)
+    # if half_phi:
+    #     radar.fields['PHIDP']['data'] *= 2
+    #     logger.info("PHIDP corrected from half-circle.")
 
     # Bringi unfolding.
     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
-    if half_phi:
-        phimeta['data'] /= 2
-        kdpmeta['data'] /= 2
+    # if half_phi:
+    #     phimeta['data'] /= 2
+    #     kdpmeta['data'] /= 2
     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
     radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
@@ -526,19 +530,20 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     logger.info('KDP/PHIDP Giangrande estimated.')
 
 #     # Resetting PHIDP.
-    if half_phi:
-        radar.fields['PHI_UNF']['data'] /= 2
-        radar.fields['PHIDP']['data'] /= 2
+    # if half_phi:
+    #     radar.fields['PHI_UNF']['data'] /= 2
+    #     radar.fields['PHIDP']['data'] /= 2
 
     # VELOCITY
     # Simulate wind profile
-    try:
-        sim_vel = velocity.get_simulated_wind_profile(radar, radiosonde_fname)
-        radar.add_field("sim_velocity", sim_vel)
-        has_simvel = True
-    except Exception:
-        has_simvel = False
-        pass
+    if sound_dir is not None:
+        try:
+            sim_vel = velocity.get_simulated_wind_profile(radar, radiosonde_fname)
+            radar.add_field("sim_velocity", sim_vel)
+            has_simvel = True
+        except Exception:
+            has_simvel = False
+            pass
 
     # Unfold VELOCITY
     if not vel_missing:
