@@ -354,6 +354,7 @@ def read_radar(radar_file_name):
                     ('DBZH', "DBZ"),
                     ("DBZH_CLEAN", "DBZ"),
                     ('reflectivity', "DBZ"),
+                    ('WRADH', "WIDTH"),
                     ('WIDTHH', "WIDTH"),
                     ('sprectrum_width', "WIDTH"),
                     ('UH', "DBZ"),

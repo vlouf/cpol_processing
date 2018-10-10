@@ -1,5 +1,5 @@
 """
-CPOL Level 1b main production line.
+CPOL Level 1b main production line. These are the drivers function.
 
 @title: CPOL_PROD_1b
 @author: Valentin Louf <valentin.louf@monash.edu>
@@ -20,6 +20,7 @@ import uuid
 import logging
 import datetime
 import traceback
+import warnings
 
 # Other Libraries -- Matplotlib must be imported before pyart.
 import netCDF4
@@ -40,7 +41,7 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir, is_cpol=True):
+def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_dir=None, is_cpol=True, is_seapol=None):
     """
     Call processing function and write data.
 
@@ -71,7 +72,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
         ========
         outfilename: str
             Corrected output file name.
-        """
+        """        
+ 
         outfilename = outfilename.replace("level1a", "level1b")
 
         # Correct occasional missing suffix.
@@ -84,6 +86,10 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
             outfilename = outfilename.replace("SUR", "PPI")
 
         return outfilename
+
+    # Older version had this argument
+    if is_seapol is not None:
+        warnings.warn("'is_seapol' argument is deprecated.", DeprecationWarning)
 
     # Create directories.
     try:
@@ -113,7 +119,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid, figure_path, sound_
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
-    radar = production_line(radar_file_name, sound_dir, figure_path)
+    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol)
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
         return None
@@ -327,7 +333,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None):
+def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -399,7 +405,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
 
     # Getting radar's date and time.
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
-    datestr = radar_start_date.strftime("%Y%m%d_%H%M")
     logger.info("%s read.", radar_file_name)
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
@@ -481,42 +486,39 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # GateFilter
-    gatefilter = filtering.do_gatefilter(radar,
-                                         refl_name='DBZ',
-                                         phidp_name="PHIDP",
-                                         rhohv_name='RHOHV_CORR',
-                                         zdr_name="ZDR")
-    logger.info('Filter initialized.')
-
-    # # Removing ground clutter.
-    # corr_dbz = filtering.compare_refl_3D(radar, gatefilter)
-    # radar.add_field_like('DBZ', 'DBZ', corr_dbz, replace_existing=True)
-    # logger.info('3D continuity checked.')
+    logger.info('Filtering data.')    
+    if is_cpol:
+        gatefilter = filtering.do_gatefilter_cpol(radar,
+                                                  refl_name='DBZ',
+                                                  phidp_name="PHIDP",
+                                                  rhohv_name='RHOHV_CORR',
+                                                  zdr_name="ZDR")
+    else:
+        gatefilter = filtering.do_gatefilter(radar,
+                                             refl_name='DBZ',
+                                             phidp_name="PHIDP",
+                                             rhohv_name='RHOHV_CORR',
+                                             zdr_name="ZDR")
 
     # PHIDP ############
     # Check PHIDP:
-#     half_phi = phase.check_phidp(radar)
-#     if half_phi:
-#         radar.fields['PHIDP']['data'] *= 2
-#         logger.info("PHIDP corrected from half-circle.")
-
-    # Unfold PHIDP:
-#     phi_unfold = phase.unfold_raw_phidp(radar, phi_name="PHIDP")
-#     radar.add_field("PHI_UNF", phi_unfold, replace_existing=True)
-#     logger.info('Raw PHIDP unfolded.')
+    half_phi = phase.check_phidp(radar)
+    if half_phi:
+        radar.fields['PHIDP']['data'] *= 2
+        logger.info("PHIDP corrected from half-circle.")
 
     # Bringi unfolding.
     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
-#     if half_phi:
-#         phimeta['data'] /= 2
-#         kdpmeta['data'] /= 2
+    if half_phi:
+        phimeta['data'] /= 2
+        kdpmeta['data'] /= 2
     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
     radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
     radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP_BRINGI', rhv_field='RHOHV_CORR')
+    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
@@ -524,9 +526,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None):
     logger.info('KDP/PHIDP Giangrande estimated.')
 
 #     # Resetting PHIDP.
-#     if half_phi:
-#         radar.fields['PHI_UNF']['data'] /= 2
-#         radar.fields['PHIDP']['data'] /= 2
+    if half_phi:
+        radar.fields['PHI_UNF']['data'] /= 2
+        radar.fields['PHIDP']['data'] /= 2
 
     # VELOCITY
     # Simulate wind profile
