@@ -505,7 +505,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         gatefilter = filtering.do_gatefilter(radar,
                                              refl_name='DBZ',
                                              phidp_name="PHIDP",
-                                             rhohv_name='RHOHV_CORR',
+                                             rhohv_name='RHOHV',
                                              zdr_name="ZDR")
 
     # PHIDP ############
