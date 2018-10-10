@@ -515,9 +515,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     #     radar.fields['PHIDP']['data'] *= 2
     #     logger.info("PHIDP corrected from half-circle.")
 
-    if is_seapol:
-        radar.fields['PHIDP']['data'] = - radar.fields['PHIDP']['data']
-
     # Bringi unfolding.
     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
     # if half_phi:
