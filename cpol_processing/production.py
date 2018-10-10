@@ -41,7 +41,7 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None, sound_dir=None, is_cpol=True, is_seapol=None):
+def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None, sound_dir=None, instrument='CPOL', use_giangrande=True):
     """
     Call processing function and write data.
 
@@ -87,10 +87,11 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
 
         return outfilename
 
-    # Older version had this argument
-    # if is_seapol is not None:
-    #     warnings.warn("'is_seapol' argument is deprecated.", DeprecationWarning)
-
+    if instrument == 'CPOL':
+        is_cpol = True
+    else:
+        is_cpol = False
+        
     # Create directories.
     try:
         os.mkdir(outpath)
@@ -124,7 +125,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
-    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol, is_seapol=is_seapol)
+    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol, use_giangrande=use_giangrande)
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
         return None
@@ -338,7 +339,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, is_seapol=None):
+def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, use_giangrande=False):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -426,11 +427,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         vel_missing = True
         pass
 
-    # if not vel_missing:
-    #     # Compute the velocity texture.
-    #     velocity_texture = filtering.velocity_texture(radar)
-    #     radar.add_field("TVEL", velocity_texture, replace_existing=True)
-
     # Looking for RHOHV field
     # For CPOL, season 09/10, there are no RHOHV fields before March!!!!
     try:
@@ -505,38 +501,30 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         gatefilter = filtering.do_gatefilter(radar,
                                              refl_name='DBZ',
                                              phidp_name="PHIDP",
-                                             rhohv_name='RHOHV',
+                                             rhohv_name='RHOHV_CORR',
                                              zdr_name="ZDR")
-
-    # PHIDP ############
-    # Check PHIDP:
-    # half_phi = phase.check_phidp(radar)
-    # if half_phi:
-    #     radar.fields['PHIDP']['data'] *= 2
-    #     logger.info("PHIDP corrected from half-circle.")
 
     # Bringi unfolding.
     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
-    # if half_phi:
-    #     phimeta['data'] /= 2
-    #     kdpmeta['data'] /= 2
     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
     radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
     radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
     logger.info('KDP/PHIDP Bringi estimated.')
 
-    phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
-    radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
-    radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
-    radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
-    radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
-    logger.info('KDP/PHIDP Giangrande estimated.')
+    kdp_field_name = 'KDP_BRINGI'
+    phidp_field_name = 'PHIDP_BRINGI'
 
-#     # Resetting PHIDP.
-    # if half_phi:
-    #     radar.fields['PHI_UNF']['data'] /= 2
-    #     radar.fields['PHIDP']['data'] /= 2
+    if use_giangrande:
+        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
+        radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
+        radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
+        radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
+        radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
+        logger.info('KDP/PHIDP Giangrande estimated.')
+
+        kdp_field_name = 'KDP_GG'
+        phidp_field_name = 'PHIDP_GG'
 
     # VELOCITY
     # Simulate wind profile
@@ -551,12 +539,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
     # Unfold VELOCITY
     if not vel_missing:
-        # Correct velocity from phase artifacts. (CPOL only)
-        vdop_corr = velocity.corr_velocity_from_phidp_artifacts(radar, gatefilter, vel_name="VEL", raw_phi_name="PHIDP")
-        if vdop_corr is not None:
-            radar.add_field_like("VEL", "RAW_VEL", radar.fields['VEL']['data'].copy())
-            radar.add_field_like("RAW_VEL", "VEL", vdop_corr, replace_existing=True)
-
         # Dealias velocity.
         vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
@@ -569,30 +551,30 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         logger.info('Doppler velocity unfolded.')
 
     # Correct Attenuation ZH
-    atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar)
+    atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
     radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
     logger.info('Attenuation on reflectivity corrected.')
 
     # Correct Attenuation ZDR
-    atten_spec_zdr, zdr_corr = attenuation.correct_attenuation_zdr(radar)
+    atten_spec_zdr, zdr_corr = attenuation.correct_attenuation_zdr(radar, kdp_name=kdp_field_name)
     radar.add_field_like('ZDR', 'ZDR_CORR', zdr_corr, replace_existing=True)
     radar.add_field('specific_attenuation_differential_reflectivity', atten_spec_zdr,
                     replace_existing=True)
     logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification
-    hydro_class = hydrometeors.hydrometeor_classification(radar)
+    hydro_class = hydrometeors.hydrometeor_classification(radar, kdp_name=kdp_field_name)
     radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
     logger.info('Hydrometeors classification estimated.')
 
     # Rainfall rate
-    rainfall = hydrometeors.rainfall_rate(radar, gatefilter)
+    rainfall = hydrometeors.rainfall_rate(radar, gatefilter, kdp_name=kdp_field_name)
     radar.add_field("radar_estimated_rain_rate", rainfall)
     logger.info('Rainfall rate estimated.')
 
     # DSD retrieval
-    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter)
+    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter, kdp_name=kdp_field_name)
     radar.add_field("D0", d0_dict)
     radar.add_field("NW", nw_dict)
     logger.info('DSD estimated.')

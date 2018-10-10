@@ -27,56 +27,6 @@ import numpy as np
 from netCDF4 import num2date
 
 
-def corr_velocity_from_phidp_artifacts(radar, gatefilter, vel_name="VEL", raw_phi_name="PHIDP"):
-    """
-    On CPOL data, the unfolding of one phase (but not the other) causes
-    artifacts that are present on both PHIDP and the Velocity.
-    In order to correct these artifacts, you need to find where the phase flips
-    on PHIDP and correct the velocity at those positions.
-
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        gatefilter:
-            The gate filter.
-        vel_name: str
-            Doppler velocity field name.
-        raw_phi_name: str
-            Original differential phase field name.
-
-    Returns:
-    ========
-        vel: array
-            Doppler velocity corrected from phase artifacts..
-
-    """
-    #  Check date.
-    dtime = num2date(radar.time['data'][0], radar.time['units'])
-    if dtime.year < 2011:
-        return None
-
-    # Extract data
-    phi = radar.fields[raw_phi_name]['data'].copy()
-    vel = radar.fields[vel_name]['data'].copy()
-    try:
-        vnyq = radar.get_nyquist_vel(0)
-    except Exception:
-        vnyq = np.max(np.abs(vel))
-
-    # Find wrong phases.
-    cphi =  2 * ( + 90)
-    cphi += 45
-    pos = cphi > 360
-
-    posmin = vel < 0
-    posmax = vel > 0
-    vel[(pos) & posmin] += vnyq
-    vel[(pos) & posmax] -= vnyq
-
-    return vel
-
-
 def correct_velocity_unfolding(radar, vel_name="VEL_UNFOLDED", simvel_name="sim_velocity"):
     """
     Use radiosounding to constrain to the dominant wind the dealiased velocity.

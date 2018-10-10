@@ -72,53 +72,54 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', kdp_name='KDP_GG', alpha
     return atten_meta, zdr_corr
 
 
-def correct_attenuation_zh(radar, dbz_name='DBZ', kdp_name='KDP_GG', alpha=0.08):
-    """
-    Correct attenuation on differential reflectivity. KDP_GG has been
-    cleaned of noise, that's why we use it.
+# Bringi method.
+# def correct_attenuation_zh(radar, dbz_name='DBZ', kdp_name='KDP_GG', alpha=0.08):
+#     """
+#     Correct attenuation on differential reflectivity. KDP_GG has been
+#     cleaned of noise, that's why we use it.
 
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        zdr_name: str
-            Differential reflectivity field name.
-        kdp_name: str
-            KDP field name.
+#     Parameters:
+#     ===========
+#         radar:
+#             Py-ART radar structure.
+#         zdr_name: str
+#             Differential reflectivity field name.
+#         kdp_name: str
+#             KDP field name.
 
-    Returns:
-    ========
-        atten_meta: dict
-            Specific attenuation.
-        zdr_corr: array
-            Attenuation corrected differential reflectivity.
-    """
-    r = radar.range['data']
-    zh = radar.fields[dbz_name]['data'].copy()
-    kdp = radar.fields[kdp_name]['data'].copy()
-    kdp[:, -35:] = 0  # Window problem
+#     Returns:
+#     ========
+#         atten_meta: dict
+#             Specific attenuation.
+#         zdr_corr: array
+#             Attenuation corrected differential reflectivity.
+#     """
+#     r = radar.range['data']
+#     zh = radar.fields[dbz_name]['data'].copy()
+#     kdp = radar.fields[kdp_name]['data'].copy()
+#     kdp[:, -35:] = 0  # Window problem
 
-    dr = (r[1] - r[0]) / 1000  # km
+#     dr = (r[1] - r[0]) / 1000  # km
 
-    # 0 is the neutral value for the sum
-    # kdp = np.ma.masked_where((kdp < 0) | np.isnan(kdp), kdp).filled(0)
+#     # 0 is the neutral value for the sum
+#     # kdp = np.ma.masked_where((kdp < 0) | np.isnan(kdp), kdp).filled(0)
 
-    atten_specific = alpha * kdp  # Bringi relationship
-    atten_specific = np.ma.masked_where((atten_specific < 0) | (atten_specific > 1), atten_specific).filled(0)
-    # Path integrated attenuation
-    atten = 2 * np.cumsum(atten_specific, axis=1) * dr
+#     atten_specific = alpha * kdp  # Bringi relationship
+#     atten_specific = np.ma.masked_where((atten_specific < 0) | (atten_specific > 1), atten_specific).filled(0)
+#     # Path integrated attenuation
+#     atten = 2 * np.cumsum(atten_specific, axis=1) * dr
 
-    atten_meta = {'data': atten_specific, 'units': 'dB/km',
-                  'standard_name': 'specific_attenuation_reflectivity',
-                  'long_name': 'Specific attenuation', 'valid_max': 1.0,
-                  'valid_min': 0.0}
+#     atten_meta = {'data': atten_specific, 'units': 'dB/km',
+#                   'standard_name': 'specific_attenuation_reflectivity',
+#                   'long_name': 'Specific attenuation', 'valid_max': 1.0,
+#                   'valid_min': 0.0}
 
-    zh_corr = {'data': zh + atten,
-               'long_name': 'Corrected reflectivity',
-               'standard_name': 'corrected_equivalent_reflectivity_factor',
-               'units': 'dBZ'}
+#     zh_corr = {'data': zh + atten,
+#                'long_name': 'Corrected reflectivity',
+#                'standard_name': 'corrected_equivalent_reflectivity_factor',
+#                'units': 'dBZ'}
 
-    return atten_meta, zh_corr
+#     return atten_meta, zh_corr
 
 
 def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
