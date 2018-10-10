@@ -182,31 +182,3 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     kdp_gg['data'][:, -20:] = 0
 
     return phidp_gg, kdp_gg
-
-
-def unfold_raw_phidp(radar, phi_name="PHIDP", refl_field='DBZ', ncp_field='NCP', rhv_field='RHOHV'):
-    """
-    Unfold raw PHIDP
-
-    Parameters:
-    ===========
-    radar:
-        Py-ART radar structure.
-    gatefilter:
-        Gate filter.
-    phi_name: str
-        Name of the PHIDP field.
-
-    Returns:
-    ========
-    tru_phi: ndarray
-        Unfolded raw PHIDP.
-    """
-    nphi = pyart.correct.phase_proc.get_phidp_unf(radar, ncpts=2, refl_field=refl_field,
-                                                  ncp_field=ncp_field, rhv_field=rhv_field,
-                                                  phidp_field=phi_name)
-
-    my_new_ph = copy.deepcopy(radar.fields[phi_name])
-    my_new_ph['data'][:, :nphi.shape[1]] = nphi
-
-    return my_new_ph
