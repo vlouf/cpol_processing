@@ -126,11 +126,11 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
     # Compute KDP bringi.
     kdpb, phidpb, _ = csu_kdp.calc_kdp_bringi(dp, dz, R / 1e3, gs=dgate, bad=-9999, thsd=12, window=3.0, std_gate=11)
 
-    kdpb[kdpb == -9999] = 0
-    kdpb[kdpb < 0] = 0
-    kdpb[kdpb > 14] = 0
+    # kdpb[kdpb == -9999] = 0
+    # kdpb[kdpb < 0] = 0
+    # kdpb[kdpb > 14] = 0
 
-    phidpb = np.cumsum(kdpb, axis=1)
+    # phidpb = np.cumsum(kdpb, axis=1)
 
     # Mask array
 #     phidpb = np.ma.masked_where(phidpb == -9999, phidpb)
