@@ -349,7 +349,7 @@ def read_radar(radar_file_name):
     try:
         radar.fields['DBZ']
     except KeyError:
-        myfields = [('SQIH', 'NCP')
+        myfields = [('SQIH', 'NCP'),
                     ('NCPH', "NCP"),
                     ('SNRH', 'SNR'),
                     ('normalized_coherent_power', "NCP"),
