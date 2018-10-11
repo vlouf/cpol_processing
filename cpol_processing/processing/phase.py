@@ -17,8 +17,6 @@ Codes for correcting the differential phase and estimating KDP.
 """
 # Python Standard Library
 import copy
-import time
-import datetime
 
 # Other Libraries
 import pyart
@@ -54,35 +52,33 @@ def check_phidp(radar, phi_name="PHIDP"):
     return half_phi
 
 
-# def fix_phidp_from_kdp(radar, gatefilter, kdp_name="KDP_BRINGI", phidp_name="PHIDP_BRINGI"):
-#     """
-#     Correct PHIDP and KDP from spider webs.
-#
-#     Parameters
-#     ==========
-#     radar:
-#         Py-ART radar data structure.
-#     gatefilter:
-#         Gate filter.
-#     kdp_name: str
-#         Differential phase key name.
-#     phidp_name: str
-#         Differential phase key name.
-#
-#     Returns:
-#     ========
-#     phidp: ndarray
-#         Differential phase array.
-#     """
-#     kdp = radar.fields[kdp_name]['data'].copy()
-#     phidp = radar.fields[phidp_name]['data'].copy()
-#     kdp[gatefilter.gate_excluded] = 0
-#     kdp[(kdp < -4)] = 0
-#     kdp[kdp > 15] = 15
-#     interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
-#
-#     phidp[:, :-1] = interg / (len(radar.range['data']))
-#     return phidp
+def fix_phidp_from_kdp(phidp, kdp, gatefilter):
+    """
+    Correct PHIDP and KDP from spider webs.
+
+    Parameters
+    ==========
+    radar:
+        Py-ART radar data structure.
+    gatefilter:
+        Gate filter.
+    kdp_name: str
+        Differential phase key name.
+    phidp_name: str
+        Differential phase key name.
+
+    Returns:
+    ========
+    phidp: ndarray
+        Differential phase array.
+    """    
+    kdp[gatefilter.gate_excluded] = 0
+    kdp[(kdp < -4)] = 0
+    kdp[kdp > 15] = 15
+    interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
+
+    phidp[:, :-1] = interg / (len(radar.range['data']))
+    return phidp, kdp
 
 
 def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
@@ -164,15 +160,21 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         kdp_gg: dict
             Field dictionary containing recalculated differential phases.
     """
-    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
-                                                   min_rhv=0.95,
-                                                   LP_solver='cylp',
-                                                   refl_field=refl_field,
-                                                   ncp_field=ncp_field,
-                                                   rhv_field=rhv_field,
-                                                   phidp_field=phidp_field)
+    # Pyart version 1.10.
+    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar, 
+                                                      gatefilter=gatefilter,
+                                                      LP_solver='cylp',
+                                                      refl_field=refl_field,
+                                                      ncp_field=ncp_field,
+                                                      rhv_field=rhv_field,
+                                                      phidp_field=phidp_field)
 
     # Removing the last 20 gates due to filter effect.
-    kdp_gg['data'][:, -20:] = 0
+    # kdp_gg['data'][:, -20:] = 0
+
+    # if np.nanmax(phidp_gg['data']) > 360:    
+    #     phidp_gg['data'], kdp_gg['data'] = fix_phidp_from_kdp(phidp_gg['data'], 
+    #                                                           kdp_gg['data'], 
+    #                                                           gatefilter)
 
     return phidp_gg, kdp_gg
