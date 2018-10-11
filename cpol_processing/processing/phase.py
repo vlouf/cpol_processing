@@ -165,8 +165,6 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                       gatefilter=gatefilter,
                                                       LP_solver='cylp',
                                                       refl_field=refl_field,
-                                                      ncp_field=ncp_field,
-                                                      rhv_field=rhv_field,
                                                       phidp_field=phidp_field)
 
     # Removing the last 20 gates due to filter effect.
