@@ -283,13 +283,15 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         gr.plot_ppi('differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
         the_ax[6].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        gr.plot_ppi('giangrande_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        the_ax[7].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
-                                              datetime_format='%Y-%m-%dT%H:%M'))
+        try:
+            gr.plot_ppi('giangrande_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
+            the_ax[7].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
+                                                datetime_format='%Y-%m-%dT%H:%M'))
 
-        gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
-        the_ax[8].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
-                                              datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+            the_ax[8].set_title(gr.generate_title('giangrande_specific_differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+        except KeyError:
+            pass
 
         try:
             gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
