@@ -9,63 +9,33 @@ Codes for creating and manipulating gate filters.
 .. autosummary::
     :toctree: generated/
 
+    texture
+    do_gatefilter_cpol
     do_gatefilter
     filter_hardcoding
     velocity_texture
 """
-# Python Standard Library
-import time
-import datetime
-
-# Other Libraries
+# Libraries
 import pyart
-import scipy
 import netCDF4
 import numpy as np
 
 
-def _mask_rhohv(radar, rhohv_name, tight=True):
-    nrays = radar.nrays
-    ngate = radar.ngates
-    oneray = np.zeros((ngate))
-    oneray[:(ngate // 2)] = 1 - np.linspace(0.05, 0.4, ngate // 2)
-    oneray[(ngate // 2):] = 0.3
-    emr = np.vstack([oneray for e in range(nrays)])
-    rho = radar.fields[rhohv_name]['data']
-    emr2 = np.zeros(rho.shape)
-    emr2[rho > emr] = 1
-    return emr2
-
-
-def _noise_th(x, max_range=90):
-    n, bins = np.histogram(x.flatten(), bins=150, range=(5, max_range))
-    cnt = 10
-    peaks = []
-    while (len(peaks) < 1) or (cnt == 0):
-        peaks = scipy.signal.find_peaks_cwt(n, [cnt])
-        cnt - 1
-
-    centers = bins[0:-1] + (bins[1] - bins[0])
-    search_data = n[peaks[0]:peaks[1]]
-    search_centers = centers[peaks[0]:peaks[1]]
-    locs = search_data.argsort()
-    noise_threshold = search_centers[locs[0]]
-
-    return noise_threshold
-
-
 def texture(data):
-    """Compute the texture of data.
+    """
+    Compute the texture of data.
     Compute the texture of the data by comparing values with a 3x3 neighborhood
     (based on :cite:`Gourley2007`). NaN values in the original array have
-    NaN textures.
-    Parameters
-    ----------
+    NaN textures. (Wradlib function)
+
+    Parameters:
+    ==========
     data : :class:`numpy:numpy.ndarray`
         multi-dimensional array with shape (..., number of beams, number
         of range bins)
-    Returns
-    ------
+
+    Returns:
+    =======
     texture : :class:`numpy:numpy.ndarray`
         array of textures with the same shape as data
     """
@@ -188,20 +158,24 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
     """
-    gf = pyart.filters.GateFilter(radar)
-    # gf.exclude_below(snr_name, 9)
+    # Initialize gatefilter
+    gf = pyart.filters.GateFilter(radar)    
 
+    # Remove obviously wrong data.
     gf.exclude_outside(zdr_name, -6.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
     
+    # Compute texture of PHIDP and remove noise.
     dphi = texture(radar.fields[phidp_name]['data'])
     radar.add_field_like(phidp_name, 'PHITXT', dphi)
     gf.exclude_above('PHITXT', 20)
     gf.exclude_below(rhohv_name, 0.6)
     
+    # Despeckle
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
     
     try:
+        # Remove PHIDP texture
         radar.fields.pop('PHITXT')
     except Exception:
         pass
@@ -229,9 +203,8 @@ def filter_hardcoding(my_array, nuke_filter, bad=-9999):
             excluded.
     """
     filt_array = np.ma.masked_where(nuke_filter.gate_excluded, my_array.copy())
-    filt_array = filt_array.filled(fill_value=bad)
-    to_return = np.ma.masked_where(filt_array == bad, filt_array)
-    return to_return
+    filt_array = filt_array.filled(fill_value=bad)    
+    return np.ma.masked_where(filt_array == bad, filt_array)
 
 
 def velocity_texture(radar, vel_name='VEL'):
