@@ -100,13 +100,12 @@ def hydrometeor_classification(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
         hydro_meta: dict
             Hydrometeor classification.
     """
-    refl = radar.fields[refl_name]['data'].copy()
-    zdr = radar.fields[zdr_name]['data'].copy()
-    kdp = radar.fields[kdp_name]['data'].copy()
-    rhohv = radar.fields[rhohv_name]['data'].copy()
+    refl = radar.fields[refl_name]['data']
+    zdr = radar.fields[zdr_name]['data']
+    kdp = radar.fields[kdp_name]['data']
+    rhohv = radar.fields[rhohv_name]['data']
     try:
-        radar_T = radar.fields[temperature_name]['data'].copy()
-        radar_z = radar.fields[height_name]['data'].copy()
+        radar_T = radar.fields[temperature_name]['data']
         use_temperature = True
     except Exception:
         use_temperature = False
@@ -127,49 +126,6 @@ def hydrometeor_classification(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
                   'standard_name': 'Hydrometeor_ID', 'comments': the_comments}
 
     return hydro_meta
-
-
-def liquid_ice_mass(radar, refl_name='DBZ_CORR', zdr_name='ZDR_CORR',
-                    temperature_name='temperature', height_name='height'):
-    """
-    Compute the liquid/ice water content using the csu library.
-
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        refl_name: str
-            Reflectivity field name.
-        zdr_name: str
-            ZDR field name.
-        temperature_name: str
-            Sounding temperature field name.
-        height: str
-            Gate height field name.
-
-    Returns:
-    ========
-        liquid_water_mass: dict
-            Liquid water content.
-        ice_mass: dict
-            Ice water content.
-    """
-    refl = radar.fields[refl_name]['data'].copy()
-    zdr = radar.fields[zdr_name]['data'].copy()
-    radar_T = radar.fields[temperature_name]['data'].copy()
-    radar_z = radar.fields[height_name]['data'].copy()
-
-    liquid_water_mass, ice_mass = csu_liquid_ice_mass.calc_liquid_ice_mass(refl, zdr, radar_z / 1000.0, T=radar_T)
-
-    liquid_water_mass = {'data': liquid_water_mass, 'units': 'g m-3',
-                         'long_name': 'Liquid Water Content',
-                         'standard_name': 'liquid_water_content',
-                         'description': "Liquid Water Content using Carey and Rutledge (2000) algorithm."}
-    ice_mass = {'data': ice_mass, 'units': 'g m-3', 'long_name': 'Ice Water Content',
-                'standard_name': 'ice_water_content',
-                'description': "Ice Water Content using Carey and Rutledge (2000) algorithm."}
-
-    return liquid_water_mass, ice_mass
 
 
 def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimated_rain_rate",
@@ -248,7 +204,7 @@ def rainfall_rate(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', 
     except AttributeError:
         kdp = radar.fields[kdp_name]['data']
 
-    rain, method = csu_blended_rain.calc_blended_rain_tropical(dz=dbz, zdr=zdr, kdp=kdp, fhc=fhc, band='C')
+    rain, _ = csu_blended_rain.calc_blended_rain_tropical(dz=dbz, zdr=zdr, kdp=kdp, fhc=fhc, band='C')
 
     rain[gatefilter.gate_excluded] = 0
 
