@@ -252,11 +252,7 @@ def get_field_names():
             Containing [(old key, new key), ...]
     """
     fields_names = [('VEL', 'velocity'),
-                    ('VEL_CORR', 'corrected_velocity'),
-                    ('VEL_UNFOLDED', 'region_dealias_velocity'),
-                    ("RAW_VEL", "raw_velocity"),
-                    ('TVEL', "velocity_texture"),
-                    ('TPHI', "differential_phase_texture"),
+                    ('VEL_UNFOLDED', 'region_dealias_velocity'),                    
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'reflectivity'),
                     ('RHOHV_CORR', 'RHOHV'),
@@ -264,14 +260,19 @@ def get_field_names():
                     ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
                     ('PHIDP', 'differential_phase'),
-                    ('PHIDP_BRINGI', 'corrected_differential_phase'),
+                    ('PHIDP_BRINGI', 'bringi_differential_phase'),
                     ('PHIDP_GG', 'giangrande_differential_phase'),
                     ('KDP', 'specific_differential_phase'),
-                    ('KDP_BRINGI', 'corrected_specific_differential_phase'),
+                    ('KDP_BRINGI', 'bringi_specific_differential_phase'),
                     ('KDP_GG', 'giangrande_specific_differential_phase'),
                     ('WIDTH', 'spectrum_width'),
                     ('SNR', 'signal_to_noise_ratio'),
-                    ('NCP', 'normalized_coherent_power')]
+                    ('NCP', 'normalized_coherent_power'),
+                    ('DBZV', 'reflectivity_v'),
+                    ('WRADV', 'spectrum_width_v'),
+                    ('SNRV', 'signal_to_noise_ratio_v'),
+                    ('SQIV', 'normalized_coherent_power_v'),
+                    ]
 
     return fields_names
 

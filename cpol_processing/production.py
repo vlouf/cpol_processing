@@ -179,19 +179,15 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     logger.info("Gridding started.")
     unwanted_keys = []
     goodkeys = ['corrected_differential_reflectivity',
-                'cross_correlation_ratio',
-                'temperature',
-                'giangrande_differential_phase',
-                'giangrande_specific_differential_phase',
+                'cross_correlation_ratio',                
                 'radar_echo_classification',
                 'radar_estimated_rain_rate',
                 'D0',
                 'NW',
                 'reflectivity',
                 'velocity',
-                'region_dealias_velocity',
-                'velocity_texture',
-                'total_power']
+                'region_dealias_velocity']
+
     for mykey in radar.fields.keys():
         if mykey not in goodkeys:
             unwanted_keys.append(mykey)
@@ -299,19 +295,19 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             the_ax[9].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
-            pass
+            pass        
 
         try:
-            gr.plot_ppi('corrected_differential_phase', ax=the_ax[10], vmin=-180, vmax=180, cmap='pyart_Wild25')
-            the_ax[10].set_title(gr.generate_title('differential_phase_bringi', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter,
+                        cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            the_ax[10].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
+                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('region_dealias_velocity', ax=the_ax[11], gatefilter=gatefilter,
-                        cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            the_ax[11].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
-                                                   datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('signal_to_noise_ratio', ax=the_ax[11])
+            the_ax[11].set_title(gr.generate_title('signal_to_noise_ratio', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
@@ -471,20 +467,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
         logger.info('RHOHV corrected.')
 
-    # Looking for NCP field
-    try:
-        radar.fields['NCP']
-        fake_ncp = False
-    except KeyError:
-        # Creating a fake NCP field.
-        ncp = pyart.config.get_metadata('normalized_coherent_power')
-        emr2 = np.zeros_like(radar.fields['RHOHV']['data'])
-        emr2[emr2 > 0.5] = 1
-        ncp['data'] = emr2
-        ncp['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
-        radar.add_field('NCP', ncp)
-        fake_ncp = True
-
     # Correct ZDR
     corr_zdr = radar_codes.correct_zdr(radar)
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
@@ -504,16 +486,16 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
                                              rhohv_name='RHOHV_CORR',
                                              zdr_name="ZDR")
 
-    # Bringi unfolding.
-    phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
-    radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
-    radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
-    radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
-    radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
-    logger.info('KDP/PHIDP Bringi estimated.')
-
-    kdp_field_name = 'KDP_BRINGI'
-    phidp_field_name = 'PHIDP_BRINGI'
+    # Check if NCP exists.
+    try:
+        radar.fields['NCP']
+        fake_ncp = False
+    except KeyError:
+        ncp = pyart.config.get_metadata('normalized_coherent_power')
+        ncp['data'] =  np.zeros_like(radar.fields['RHOHV']['data'])
+        ncp['data'][gatefilter.gate_included] = 1
+        radar.add_field('NCP', ncp)
+        fake_ncp = True    
 
     if use_giangrande:
         phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
@@ -525,6 +507,17 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
         kdp_field_name = 'KDP_GG'
         phidp_field_name = 'PHIDP_GG'
+    else:
+        # Bringi unfolding.
+        phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
+        radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
+        radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
+        radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
+        radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
+        logger.info('KDP/PHIDP Bringi estimated.')
+
+        kdp_field_name = 'KDP_BRINGI'
+        phidp_field_name = 'PHIDP_BRINGI'
 
     # VELOCITY
     # Simulate wind profile
@@ -590,8 +583,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     # Rename fields to pyart defaults.
     radar = radar_codes.rename_radar_fields(radar)
 
-    # Remove obsolete fields:
-    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height"]:
+    # Remove obsolete fields:    
+    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV']:
         try:
             radar.fields.pop(obsolete_key)
         except KeyError:

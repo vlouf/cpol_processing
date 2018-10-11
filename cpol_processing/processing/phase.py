@@ -167,12 +167,4 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                       refl_field=refl_field,
                                                       phidp_field=phidp_field)
 
-    # Removing the last 20 gates due to filter effect.
-    # kdp_gg['data'][:, -20:] = 0
-
-    # if np.nanmax(phidp_gg['data']) > 360:    
-    #     phidp_gg['data'], kdp_gg['data'] = fix_phidp_from_kdp(phidp_gg['data'], 
-    #                                                           kdp_gg['data'], 
-    #                                                           gatefilter)
-
     return phidp_gg, kdp_gg
