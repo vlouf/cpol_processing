@@ -104,16 +104,12 @@ def check_azimuth(radar, refl_field_name='DBZ'):
 
     Return:
     =======
-        is_good: bool
-            True if radar has a proper azimuth field.
-    """
-    is_good = True
-    dbz = radar.fields[refl_field_name]['data']
+        True if radar has a proper azimuth field.
+    """    
+    if radar.fields[refl_field_name]['data'].shape[0] < 360:
+        return False
 
-    if dbz.shape[0] < 360:
-        is_good = False
-
-    return is_good
+    return True
 
 
 def check_reflectivity(radar, refl_field_name='DBZ'):
@@ -130,18 +126,16 @@ def check_reflectivity(radar, refl_field_name='DBZ'):
 
     Return:
     =======
-        is_good: bool
-            True if radar has a proper azimuth field.
-    """
-    is_good = True
+    True if radar has a non-empty reflectivity field.
+    """    
     dbz = radar.fields[refl_field_name]['data']
 
     if np.ma.isMaskedArray(dbz):
         if dbz.count() == 0:
             # Reflectivity field is empty.
-            is_good = False
+            return False
 
-    return is_good
+    return True
 
 
 def correct_azimuth(radar):
@@ -209,9 +203,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     natural_snr = natural_snr.filled(-9999)
     rho_corr = rhohv * (1 + 1 / natural_snr)
 
-    # Not allowing the corrected RHOHV to be lower than the raw rhohv
-    # pos = rho_corr < rhohv
-    # rho_corr[pos] = rhohv[pos]
+    # Not allowing the corrected RHOHV to be lower than the raw rhohv        
     rho_corr[np.isnan(rho_corr) | (rho_corr < 0) | (rho_corr > 1)] = 1
     try:
         rho_corr = rho_corr.filled(1)
@@ -447,8 +439,8 @@ def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="
         temperatures = temperatures.filled(np.NaN)
     except AttributeError:
         pass
-    times = interp_sonde.variables['time'][:]
-    heights = interp_sonde.variables['height'][:]
+    # times = interp_sonde.variables['time'][:]
+    # heights = interp_sonde.variables['height'][:]
 
     # Height profile corresponding to radar.
     my_profile = pyart.retrieve.fetch_radar_time_profile(interp_sonde, radar)
