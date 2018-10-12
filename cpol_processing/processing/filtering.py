@@ -159,21 +159,21 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
             Gate filter (excluding all bad data).
     """
     # Initialize gatefilter
-    gf = pyart.filters.GateFilter(radar)    
+    gf = pyart.filters.GateFilter(radar)
 
     # Remove obviously wrong data.
     gf.exclude_outside(zdr_name, -6.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
-    
+
     # Compute texture of PHIDP and remove noise.
     dphi = texture(radar.fields[phidp_name]['data'])
     radar.add_field_like(phidp_name, 'PHITXT', dphi)
     gf.exclude_above('PHITXT', 20)
     gf.exclude_below(rhohv_name, 0.6)
-    
+
     # Despeckle
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
-    
+
     try:
         # Remove PHIDP texture
         radar.fields.pop('PHITXT')
@@ -203,7 +203,7 @@ def filter_hardcoding(my_array, nuke_filter, bad=-9999):
             excluded.
     """
     filt_array = np.ma.masked_where(nuke_filter.gate_excluded, my_array.copy())
-    filt_array = filt_array.filled(fill_value=bad)    
+    filt_array = filt_array.filled(fill_value=bad)
     return np.ma.masked_where(filt_array == bad, filt_array)
 
 

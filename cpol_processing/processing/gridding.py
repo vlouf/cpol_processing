@@ -32,7 +32,7 @@ def mkdir(dirpath):
             os.mkdir(dirpath)
         except FileExistsError:
             return None
-        
+
     return None
 
 
@@ -87,13 +87,13 @@ def gridding_radar_150km(radar, radar_date, outpath):
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
     fname = "CPOL_{}_GRIDS_2500m.nc".format(datetimestr)
 
-    # Output directory            
+    # Output directory
     outdir_150km = os.path.join(outpath, year)
     mkdir(outdir_150km)
-    
+
     outdir_150km = os.path.join(outdir_150km, datestr)
     mkdir(outdir_150km)
-    
+
     # Output file name
     outfilename = os.path.join(outdir_150km, fname)
 
@@ -141,13 +141,13 @@ def gridding_radar_70km(radar, radar_date, outpath):
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
     fname = "CPOL_{}_GRIDS_1000m.nc".format(datetimestr)
 
-    # Output directory        
+    # Output directory
     outdir_70km = os.path.join(outpath, year)
     mkdir(outdir_70km)
-    
+
     outdir_70km = os.path.join(outdir_70km, datestr)
     mkdir(outdir_70km)
-    
+
     # Output file name
     outfilename = os.path.join(outdir_70km, fname)
 

@@ -105,7 +105,7 @@ def check_azimuth(radar, refl_field_name='DBZ'):
     Return:
     =======
         True if radar has a proper azimuth field.
-    """    
+    """
     if radar.fields[refl_field_name]['data'].shape[0] < 360:
         return False
 
@@ -127,7 +127,7 @@ def check_reflectivity(radar, refl_field_name='DBZ'):
     Return:
     =======
     True if radar has a non-empty reflectivity field.
-    """    
+    """
     dbz = radar.fields[refl_field_name]['data']
 
     if np.ma.isMaskedArray(dbz):
@@ -203,7 +203,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     natural_snr = natural_snr.filled(-9999)
     rho_corr = rhohv * (1 + 1 / natural_snr)
 
-    # Not allowing the corrected RHOHV to be lower than the raw rhohv        
+    # Not allowing the corrected RHOHV to be lower than the raw rhohv
     rho_corr[np.isnan(rho_corr) | (rho_corr < 0) | (rho_corr > 1)] = 1
     try:
         rho_corr = rho_corr.filled(1)
@@ -252,7 +252,7 @@ def get_field_names():
             Containing [(old key, new key), ...]
     """
     fields_names = [('VEL', 'velocity'),
-                    ('VEL_UNFOLDED', 'region_dealias_velocity'),                    
+                    ('VEL_UNFOLDED', 'region_dealias_velocity'),
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'reflectivity'),
                     ('RHOHV_CORR', 'RHOHV'),

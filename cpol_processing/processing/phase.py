@@ -71,7 +71,7 @@ def fix_phidp_from_kdp(phidp, kdp, gatefilter):
     ========
     phidp: ndarray
         Differential phase array.
-    """    
+    """
     kdp[gatefilter.gate_excluded] = 0
     kdp[(kdp < -4)] = 0
     kdp[kdp > 15] = 15
@@ -161,7 +161,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
             Field dictionary containing recalculated differential phases.
     """
     # Pyart version 1.10.
-    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar, 
+    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar,
                                                       gatefilter=gatefilter,
                                                       LP_solver='cylp',
                                                       refl_field=refl_field,

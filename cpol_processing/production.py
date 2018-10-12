@@ -72,8 +72,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         ========
         outfilename: str
             Corrected output file name.
-        """        
- 
+        """
+
         outfilename = outfilename.replace("level1a", "level1b")
 
         # Correct occasional missing suffix.
@@ -91,13 +91,13 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         is_cpol = True
     else:
         is_cpol = False
-        
+
     # Create directories.
     try:
         os.mkdir(outpath)
     except FileExistsError:
         pass
-        
+
     if outpath_grid is None:
         outpath_grid = os.paht.join(outpath, 'GRIDDED')
     try:
@@ -179,7 +179,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     logger.info("Gridding started.")
     unwanted_keys = []
     goodkeys = ['corrected_differential_reflectivity',
-                'cross_correlation_ratio',                
+                'cross_correlation_ratio',
                 'radar_echo_classification',
                 'radar_estimated_rain_rate',
                 'D0',
@@ -297,7 +297,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             gr.plot_ppi('velocity', ax=the_ax[9], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             the_ax[9].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
-            pass        
+            pass
 
         try:
             gr.plot_ppi('region_dealias_velocity', ax=the_ax[10], gatefilter=gatefilter,
@@ -414,7 +414,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
     # Get radiosoundings:
     if sound_dir is not None:
-        radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)        
+        radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)
 
     # Correct Doppler velocity units.
     try:
@@ -444,7 +444,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
     # Compute SNR and extract radiosounding temperature.
     # Requires radiosoundings
-    if sound_dir is not None:        
+    if sound_dir is not None:
         try:
             height, temperature, snr = radar_codes.snr_and_sounding(radar, radiosonde_fname)
             radar.add_field('temperature', temperature, replace_existing=True)
@@ -474,7 +474,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
     # GateFilter
-    logger.info('Filtering data.')    
+    logger.info('Filtering data.')
     if is_cpol:
         gatefilter = filtering.do_gatefilter_cpol(radar,
                                                   refl_name='DBZ',
@@ -497,7 +497,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         ncp['data'] =  np.zeros_like(radar.fields['RHOHV']['data'])
         ncp['data'][gatefilter.gate_included] = 1
         radar.add_field('NCP', ncp)
-        fake_ncp = True    
+        fake_ncp = True
 
     half_phi = False
     if phase.check_phidp(radar):
@@ -539,7 +539,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
             sim_vel = velocity.get_simulated_wind_profile(radar, radiosonde_fname)
             radar.add_field("sim_velocity", sim_vel)
             has_simvel = True
-        except Exception:            
+        except Exception:
             pass
 
     # Unfold VELOCITY
@@ -595,7 +595,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     # Rename fields to pyart defaults.
     radar = radar_codes.rename_radar_fields(radar)
 
-    # Remove obsolete fields:    
+    # Remove obsolete fields:
     for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV']:
         try:
             radar.fields.pop(obsolete_key)
