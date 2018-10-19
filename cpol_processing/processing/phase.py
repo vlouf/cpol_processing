@@ -142,23 +142,25 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
 
     Parameters:
     ===========
-        radar:
-            Py-ART radar structure.
-        refl_field: str
-            Reflectivity field name.
-        ncp_field: str
-            Normalised coherent power field name.
-        rhv_field: str
-            Cross correlation ration field name.
-        phidp_field: str
-            Phase field name.
+    radar:
+        Py-ART radar structure.
+    gatefilter:
+        Gate filter.
+    refl_field: str
+        Reflectivity field label.
+    ncp_field: str
+        Normalised coherent power field label.
+    rhv_field: str
+        Cross correlation ration field label.
+    phidp_field: str
+        Differential phase label.
 
     Returns:
     ========
-        phidp_gg: dict
-            Field dictionary containing processed differential phase shifts.
-        kdp_gg: dict
-            Field dictionary containing recalculated differential phases.
+    phidp_gg: dict
+        Field dictionary containing processed differential phase shifts.
+    kdp_gg: dict
+        Field dictionary containing recalculated differential phases.
     """
     # Pyart version 1.10.
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar,
@@ -168,3 +170,27 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                       phidp_field=phidp_field)
 
     return phidp_gg, kdp_gg
+
+
+def phidp_preprocessing(radar, gatefilter=gatefilter, phidp_field=phidp_field):
+    """
+    Preprocessing for the differential phase.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    gatefilter: gatefilter object.
+        Bad data filter
+    phidp_field: str
+        Differential phase label.
+
+    Returns:
+    ========
+    phidp_unf: dict
+        Pre-processed differential phase.
+    """
+    phidp_unf = pyart.config.get_metadata('differential_phase')
+    unfphi = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
+    phidp_unf['data'] = unfphi
+    return phidp_unf
