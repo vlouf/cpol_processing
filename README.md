@@ -3,7 +3,7 @@
 
 This dataset is supported by a funding from the U.S. Department of Energy as part of the Atmospheric Radiation Measurement (ARM) Climate Research Facility, an Office of Science user facility.
 
-If you use this dataset to prepare a publication, please consider adding me (Valentin Louf) as a co-author and add the following line in the acknowledgments:
+If you use this dataset to prepare a publication, please consider offering me (Valentin Louf) co-authorship and add the following line in the acknowledgments:
 
 > This work has been supported by the U.S. Department of Energy Atmospheric Systems Research Program through the grant DE-SC0014063.
 
