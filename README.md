@@ -94,7 +94,8 @@ The following fields are available:
 
 The gridded product in level 1b contains 2D array of latitude/longitude. Here are the georeferencing information that you can find in the level 2 files metadata:
 
-```:geospatial_bounds = "(129.70320368213441, 132.3856852067545, -13.552905831511362, -10.941777804922253)" ;
+``` 
+:geospatial_bounds = "(129.70320368213441, 132.3856852067545, -13.552905831511362, -10.941777804922253)" ;
 :geospatial_lat_min = "-13.552905831511362" ;
 :geospatial_lat_max = "-10.941777804922253" ;
 :geospatial_lat_units = "degrees_north" ;
@@ -108,7 +109,8 @@ The gridded product in level 1b contains 2D array of latitude/longitude. Here ar
 :origin_latitude = "-12.249" ;
 :origin_longitude = "131.044" ;
 :origin_altitude = "50" ;
-:geospatial_projection = "Azimuthal equidistant projection" ;```
+:geospatial_projection = "Azimuthal equidistant projection" ; 
+```
 
 In the next version of the CPOL level 2 data, these 2D lat/lon arrays will also be included.
 
@@ -188,13 +190,6 @@ import dask.bag as db
 from dask.diagnostics import ProgressBar
 warnings.simplefilter('ignore')
 ```
-
-    /short/en0/vhl548/miniconda3/envs/radar/lib/python3.6/site-packages/pyart/graph/cm.py:104: FutureWarning: elementwise comparison failed; returning scalar instead, but in the future will perform elementwise comparison
-      if 'red' in spec:
-    /short/en0/vhl548/miniconda3/envs/radar/lib/python3.6/site-packages/pyart/graph/cm_colorblind.py:32: FutureWarning: elementwise comparison failed; returning scalar instead, but in the future will perform elementwise comparison
-      if 'red' in spec:
-
-
 
 ```python
 radar = pyart.io.read('/g/data2/rr5/CPOL_radar/CPOL_level_1a/2006/20060103/cfrad.20060103_001000.000_to_20060103_001816.000_CPOL_PPI_level1a.nc')
