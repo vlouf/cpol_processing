@@ -11,24 +11,24 @@ If you use this dataset to prepare a publication, please consider offering me (V
 
 (Excerpt of my calibration paper)
 
-> CPOL is a dual-polarization, Doppler radar, working at a frequency of 5.6 GHz with a pulse repetition frequency of 1000 Hz and a beamwidth of 1°. CPOL is located at Gunn Pt (-12.245°N, 131.045°E), about 25 km North-East from Darwin airport. CPOL performs a set of scans with an update time of 10 minutes. This includes, nominally, a volume scan, vertically pointing scan and two RHI scans. The scan comprises 15 elevations: 0.5°, 0.9°, 1.3°, 1.8°, 2.4°, 3.1°, 4.2°, 5.6°, 7.4°, 10°, 13.3°, 17.9°, 23.9°, 32°, and 43.1°. An additional series of scans at 90° is also performed regularly. The periodicity of the vertically pointing scan changes from season to season, and there are no such scans for seasons 2009/2010 and 2010/2011. The observed parameters are $Z_h$, $Z_{dr}$, Doppler velocity $v$, differential phase $\phi_{dp}$, spectrum width $\sigma_v$, and cross-correlation coefficient at zero lag $\rho_{hv}$. The maximum unambiguous range of the volume scan is 140 km with a range gate spacing of 250 m and an azimuthal beam spacing of 1°. Between 2001 and 2007, to reduce the data size and allow real-time transmission to the regional forecasting office, the radar gate range was changed to 300 m, and data were sampled with an azimuthal resolution of 1.5°. Before 2007, the azimuthal indexing had to be corrected while, after 2007, the data are generated with the data synced to the azimuthal sampling. CPOL has produced more than 350,000 plan position indicator scans over 17 wet seasons (November to May) between 1998 to 2017. During that period, three seasons are missing: 2000/2001, 2007/2008, and 2008/2009. The first season is missing because the radar was moved to Sydney to support the 2000 Sydney Olympic games. The two latter seasons are missing because the radar antenna and receiver needed replacement. 
+> CPOL is a dual-polarization, Doppler radar, working at a frequency of 5.6 GHz with a pulse repetition frequency of 1000 Hz and a beamwidth of 1°. CPOL is located at Gunn Pt (-12.245°N, 131.045°E), about 25 km North-East from Darwin airport. CPOL performs a set of scans with an update time of 10 minutes. This includes, nominally, a volume scan, vertically pointing scan and two RHI scans. The scan comprises 15 elevations: 0.5°, 0.9°, 1.3°, 1.8°, 2.4°, 3.1°, 4.2°, 5.6°, 7.4°, 10°, 13.3°, 17.9°, 23.9°, 32°, and 43.1°. An additional series of scans at 90° is also performed regularly. The periodicity of the vertically pointing scan changes from season to season, and there are no such scans for seasons 2009/2010 and 2010/2011. The observed parameters are Z<sub>h</sub>, Z<sub>dr</sub>, Doppler velocity (v), differential phase φ<sub>dp</sub>, spectrum width σ<sub>v</sub>, and cross-correlation coefficient at zero lag ρ<sub>hv</sub>. The maximum unambiguous range of the volume scan is 140 km with a range gate spacing of 250 m and an azimuthal beam spacing of 1°. Between 2001 and 2007, to reduce the data size and allow real-time transmission to the regional forecasting office, the radar gate range was changed to 300 m, and data were sampled with an azimuthal resolution of 1.5°. Before 2007, the azimuthal indexing had to be corrected while, after 2007, the data are generated with the data synced to the azimuthal sampling. CPOL has produced more than 350,000 plan position indicator scans over 17 wet seasons (November to May) between 1998 to 2017. During that period, three seasons are missing: 2000/2001, 2007/2008, and 2008/2009. The first season is missing because the radar was moved to Sydney to support the 2000 Sydney Olympic games. The two latter seasons are missing because the radar antenna and receiver needed replacement.
 
 The CPOL data are available at several levels. If you're not a radar guy, then you are probably interested in the level 2 data, as knowledge in radars and in signal processing are implicitly required to use the level 1 data. All levels use the netCDF format. The level 1 uses the CF/radial convention, while the level 2 tries to follow the CF convention.
 
 ## Level 1a
 
-The level 1a are for the radar peoples who want to play with the raw data. At this level, nothing has been processed, nothing has been removed (artifacts, noise, and clutter are presents), and nothing has passed through any quality check. Only use it if you know what you're doing. $\rho_{hv}$ is missing from season 09/10, seasons after 2012 might contain a normalised coherent power field. The signal-to-noise ratio has to be computed for all seasons (radiosoundings are used for this).
+The level 1a are for the radar peoples who want to play with the raw data. At this level, nothing has been processed, nothing has been removed (artifacts, noise, and clutter are presents), and nothing has passed through any quality check. Only use it if you know what you're doing. $\rho_{hv}$ is missing from season 09/10, seasons after 2012 might contain a normalized coherent power field. The signal-to-noise ratio has to be computed for all seasons (radiosoundings are used for this).
 
 On Raijin, the data are found here: `/g/data2/rr5/CPOL_radar/CPOL_level_1a`
 
 ## Level 1b
 
-These are the processed data. It comes in 3 versions: 
+These are the processed data. It comes in 3 versions:
 -	PPI (radar coordinates, i.e. polar). On Raijin, it is found here: `/g/data2/rr5/CPOL_radar/CPOL_level_1b/PPI`
 -	GRIDDED (In Cartesian coordinates). For the gridded data, <b>the z-axis goes from 0 to 20 km of altitude by step of 0.5 km.</b>
     -	GRID_150km_2500m: Full domain, with a 2.5 km grid resolution: `/g/data2/rr5/CPOL_radar/CPOL_level_1b/GRIDDED/GRID_150km_2500m`
     -	GRID_70km_1000m: Half the domain, with a 1 km grid resolution: `/g/data2/rr5/CPOL_radar/CPOL_level_1b/GRIDDED/GRID_70km_1000m`
-    
+
 The PPIs contain the following fields:
 -	D0, median diameter
 -	NW, intercept parameter
@@ -67,13 +67,13 @@ The gridded data are made using the Barnes at al. algorithm from Py-ART with a c
 
 If you are interested in the gridding technique, please read Rob's post on github: [https://github.com/ARM-DOE/pyart/issues/753]
 
-Quicklooks and animation for the lowest elevation of the PPI data are available in the folders `FIGURE_CHECK` and `ANIMATED_GIF`, respectively. 
+Quicklooks and animation for the lowest elevation of the PPI data are available in the folders `FIGURE_CHECK` and `ANIMATED_GIF`, respectively.
 
 ## Level 2
 
 The level 2 are daily files, i.e. all the data for one day have been copied into a single file. Because the radar temporal resolution is 10 minutes, the time dimension length is 144 and it is set as constant in these files. These are 2D fields, but if 3D fields are a things of interest, then I'll consider adding them.
 
-The data have constant dimensions: 
+The data have constant dimensions:
 
 - (time, y, x) -> (144, 117, 117) for the 2.5 km resolution files: `/g/data2/rr5/CPOL_radar/CPOL_level_2`
 - (time, y, x) -> (144, 141, 141) for the 1 km resolution files: `/g/data2/rr5/CPOL_radar/CPOL_level_2_1km`
@@ -88,13 +88,13 @@ The following fields are available:
 
 <b>If you want more level 2 fields (that are already present on level 1b), like velocity, D0, $Z_{dr}$, or else, just ask for it ;-) </b>
 
-<b> IMPORTANT:</b> because we use a set of constant dimensions for all level 2 files, some time slices may be empty if no measurements have been made at this particular timestep. The variable called `isfile` will help you to know if measurements exist or not at a particular timestep. It is equal to 0 if there is no data and 1 if there is data. 
+<b> IMPORTANT:</b> because we use a set of constant dimensions for all level 2 files, some time slices may be empty if no measurements have been made at this particular timestep. The variable called `isfile` will help you to know if measurements exist or not at a particular timestep. It is equal to 0 if there is no data and 1 if there is data.
 
 # Georeferencing information
 
 The gridded product in level 1b contains 2D array of latitude/longitude. Here are the georeferencing information that you can find in the level 2 files metadata:
 
-``` 
+```
 :geospatial_bounds = "(129.70320368213441, 132.3856852067545, -13.552905831511362, -10.941777804922253)" ;
 :geospatial_lat_min = "-13.552905831511362" ;
 :geospatial_lat_max = "-10.941777804922253" ;
@@ -109,7 +109,7 @@ The gridded product in level 1b contains 2D array of latitude/longitude. Here ar
 :origin_latitude = "-12.249" ;
 :origin_longitude = "131.044" ;
 :origin_altitude = "50" ;
-:geospatial_projection = "Azimuthal equidistant projection" ; 
+:geospatial_projection = "Azimuthal equidistant projection" ;
 ```
 
 In the next version of the CPOL level 2 data, these 2D lat/lon arrays will also be included.
@@ -123,8 +123,8 @@ At level 1b: the hydrometeors retreivals, namely D0, NW, and the rainfall rate a
 
 At level 2: a post processing has been applied, the rainfalls has been put to zero instead of NaN. What is NaN is outside the CPOL domain. Inside the domain the rainfall rates have real values.
 
-Moreover, Robert Jackson (Argonne Laboratory) as recently worked CPOL rainfall rate retrievals and made comparison with impact and video disdrometers. Here are his conclusion:
-> The best estimate we have for rainfall so far is from the Thompson et al. blended technique .Thankfully, this is the one that Valentin already has in his processing code, so literally no work needs to be done to put that in the latest version. The only thing we are working on now is collaborating with Elizabeth Thompson on using her disdrometer data to estimate the retrieval random uncertainty by looking at the P.D.F. of rainfall rate as a function of the various moments and calculating the quartiles of the P.D.F at the given moments. 
+Moreover, [Bobby Jackson][https://github.com/rcjackson] (Argonne Laboratory) recently worked CPOL rainfall rate retrievals and made comparisons with impact and video disdrometers. Here are his conclusion:
+> The best estimate we have for rainfall so far is from the Thompson et al. blended technique .Thankfully, this is the one that Valentin already has in his processing code, so literally no work needs to be done to put that in the latest version. The only thing we are working on now is collaborating with Elizabeth Thompson on using her disdrometer data to estimate the retrieval random uncertainty by looking at the P.D.F. of rainfall rate as a function of the various moments and calculating the quartiles of the P.D.F at the given moments.
 
 ## How to cite CPOL and/or the different products
 
@@ -165,7 +165,7 @@ For other products, like the dual-polarisation radar products, just contact me (
 Level 2:
 - Only 1D arrays of latitude/longitude (the lat/lon crossing the radar origin) are available in the level 2, this should be fix in the next version. For now, use the georeferencing information in the metadata to rebuild the lat/lon arrays, or read the lat/lon arrays from the gridded level 1b files (next version).
 
-Level 1b and potentially future level 2: 
+Level 1b and potentially future level 2:
 - There are problems with the velocity dealiasing, due to a lack of <i> competent </i> dealiasing algorithms. We developped a new and promising method of dealiasing that hopefully will solve this issue (next version).
 
 Level 1b:
@@ -241,7 +241,7 @@ radar.info('compact')
     	title: PPI volume from Australia Bureau of Meteorology
     	institution: Australia Bureau of Meteorology
     	references: If you use this dataset, please cite: 'An integrated approach to weather radar calibration and monitoring using ground clutter and satellite comparisons' by Louf et al. 2018 Journal of Atmospheric and Oceanic Technology.
-    	source: 
+    	source:
     	comment: This dataset has been created by Valentin Louf at the Bureau of Meteorology for Monash University and ARM.
     	instrument_name: CPOL
     	original_container: UF
@@ -258,7 +258,7 @@ radar.info('compact')
     	description: This dataset was processed using the ARM PyART toolbox, the trmm_rsl library, the NCO toolbox, and RadX from NCAR.
     	state: NT
     	history: October 2017 recalibration: Thu Aug  3 11:40:07 2017: ncrename -v .total_power,DBZ -v velocity,VEL -v spectrum_width,WIDTH -v differential_reflectivity,ZDR -v differential_phase,PHIDP -v cross_correlation_ratio,RHOHV -v .corrected_reflectivity,Refl cfrad.20060103_001000.000_to_20060103_001816.000_CPOL_PPI_level0.nc
-    
+
     	volume_number: 0
     	platform_type: fixed
     	instrument_type: radar
@@ -299,22 +299,22 @@ Read all files during a day and plot some QVPs.
 def retrieve_qvp(filename, fields=None, desired_angle=20.0):
     if fields == None:
         fields = ['differential_phase', 'cross_correlation_ratio', 'total_power', 'differential_reflectivity']
-    
+
     try:
-        radar = pyart.io.read(filename)        
+        radar = pyart.io.read(filename)
     except Exception:
         return None
     index = abs(radar.fixed_angle['data'] - desired_angle).argmin()
-        
+
     qvp = {}
     for field in fields:
         data = radar.get_field(index, field).mean(axis = 0)
         qvp.update({field: data})
-        
+
     qvp.update({'range': radar.range['data'], 'time': radar.time})
     z = qvp['range'] / 1000.0 * np.sin(radar.fixed_angle['data'][index] * np.pi / 180)
     qvp.update({'height': z})
-    
+
     del radar
     return qvp
 ```
@@ -330,7 +330,7 @@ bag = db.from_sequence(flist)
 dbobj = bag.map(retrieve_qvp)
 with ProgressBar():
     rslt = dbobj.compute()
-    
+
 rslt = [r for r in rslt if r is not None]
 ```
 
@@ -399,12 +399,12 @@ def read_data(infile, key='radar_estimated_rain_rate'):
 ```python
 def proc_file(inargs):
     file_eth, file_stein, file_refl = inargs
-    
+
     eth = read_data(file_eth, 'echo_top_height')
-    stein = read_data(file_stein, 'steiner_echo_classification')    
-    refl = read_data(file_refl, 'reflectivity')    
+    stein = read_data(file_stein, 'steiner_echo_classification')
+    refl = read_data(file_refl, 'reflectivity')
     pos = stein == 2
-    
+
     return eth[pos], refl[pos]
 ```
 
@@ -436,11 +436,11 @@ refl = np.zeros((ct))
 pos = 0
 for a, b in rslt:
     if len(a) == 0:
-        continue    
+        continue
     eth[pos: pos + len(a)] = a
     refl[pos: pos + len(a)] = b
     pos += len(a)
-    
+
 pos = refl > 0
 eth = eth[pos]
 refl = refl[pos]
