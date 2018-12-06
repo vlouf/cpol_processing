@@ -296,13 +296,13 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         try:
-            gr.plot_ppi('velocity', ax=the_ax[7], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('folded_velocity', ax=the_ax[7], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             the_ax[7].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('region_dealias_velocity', ax=the_ax[8], gatefilter=gatefilter,
+            gr.plot_ppi('velocity', ax=the_ax[8], gatefilter=gatefilter,
                         cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             the_ax[8].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))

@@ -251,8 +251,8 @@ def get_field_names():
         fields_names: array
             Containing [(old key, new key), ...]
     """
-    fields_names = [('VEL', 'velocity'),
-                    ('VEL_UNFOLDED', 'region_dealias_velocity'),
+    fields_names = [('VEL', 'folded_velocity'),
+                    ('VEL_UNFOLDED', 'velocity'),
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'reflectivity'),
                     ('RHOHV_CORR', 'cross_correlation_ratio'),
