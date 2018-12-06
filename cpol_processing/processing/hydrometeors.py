@@ -55,8 +55,8 @@ def dsd_retrieval(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', 
     d0, Nw, mu = csu_dsd.calc_dsd(dz=dbz, zdr=zdr, kdp=kdp, band='C')
 
     Nw = np.log10(Nw)
-    Nw = np.ma.masked_where(np.isnan(Nw) | (gatefilter.gate_excluded), Nw)
-    d0 = np.ma.masked_where(np.isnan(d0) | (gatefilter.gate_excluded), d0)
+    Nw[np.isnan(Nw) | (gatefilter.gate_excluded)] = 0
+    d0[np.isnan(d0) | (gatefilter.gate_excluded)] = 0
 
     nw_dict = {'data': Nw,
                'units': 'AU', 'long_name': 'Normalized Intercept Parameter',
@@ -206,7 +206,7 @@ def rainfall_rate(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', 
 
     rain, _ = csu_blended_rain.calc_blended_rain_tropical(dz=dbz, zdr=zdr, kdp=kdp, fhc=fhc, band='C')
 
-    rain[gatefilter.gate_excluded] = 0
+    rain[(gatefilter.gate_excluded) | np.isnan(rain) | (rain < 0)] = 0
 
     rainrate = {"long_name": 'Blended Rainfall Rate',
                 "units": "mm h-1",
