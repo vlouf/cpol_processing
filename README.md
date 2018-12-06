@@ -123,7 +123,7 @@ At level 1b: the hydrometeors retreivals, namely D0, NW, and the rainfall rate a
 
 At level 2: a post processing has been applied, the rainfalls has been put to zero instead of NaN. What is NaN is outside the CPOL domain. Inside the domain the rainfall rates have real values.
 
-Moreover, [Bobby Jackson][https://github.com/rcjackson] (Argonne Laboratory) recently worked CPOL rainfall rate retrievals and made comparisons with impact and video disdrometers. Here are his conclusion:
+Moreover, [Bobby Jackson](https://github.com/rcjackson) (Argonne Laboratory) recently worked CPOL rainfall rate retrievals and made comparisons with impact and video disdrometers. Here are his conclusion:
 > The best estimate we have for rainfall so far is from the Thompson et al. blended technique .Thankfully, this is the one that Valentin already has in his processing code, so literally no work needs to be done to put that in the latest version. The only thing we are working on now is collaborating with Elizabeth Thompson on using her disdrometer data to estimate the retrieval random uncertainty by looking at the P.D.F. of rainfall rate as a function of the various moments and calculating the quartiles of the P.D.F at the given moments.
 
 ## How to cite CPOL and/or the different products
@@ -171,6 +171,10 @@ Level 1b and potentially future level 2:
 Level 1b:
 - Processing of dual-polar products are always a struggle that is incrementally improved, the next version should use a more performing PHIDP/KDP processing.
 - The level 1b rainfall rates don't contain true zero values, but NaN values instead, it's not a bug, it's a feature (direct processing output). Use the level 2 rainfalls, or filled the array with zero and put to NaN all values outside of the radar domain.
+
+# Other libraries that use CPOL_processing
+
+- [PyHail](https://github.com/joshua-wx/PyHail)
 
 # Example with the level 1a
 
