@@ -159,7 +159,7 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
     classification[(indexa >= -0.1) & (indexa <= 0.1)] = 3
 
     # Masking invalid data.
-    classification = np.ma.masked_where(~pos0 | ~pos1 | dbz.mask, classification)
+    # classification = np.ma.masked_where(~pos0 | ~pos1 | dbz.mask, classification)
 
     # Generate metada.
     class_meta = {'data': classification,
