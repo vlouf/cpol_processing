@@ -14,6 +14,8 @@ Codes for correcting the differential phase and estimating KDP.
     phidp_bringi
     phidp_giangrande
     unfold_raw_phidp
+
+TODO: Implement correction of PHIDP using region based as preprocessing for unfolding.
 """
 # Python Standard Library
 import copy
