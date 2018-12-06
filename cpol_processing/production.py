@@ -135,8 +135,8 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
 
     # Generate output file name.
     outfilename = os.path.basename(radar_file_name)
-    if "cfrad" in outfilename:
-        outfilename = correct_output_filename(outfilename)
+    if instrument == 'CPOL':
+        outfilename = "twpcpolppiX1.c1.{}.nc".format(radar_start_date.strftime("%Y%m%d_%H%M"))
     else:
         outfilename = "cfrad." + radar_start_date.strftime("%Y%m%d_%H%M%S") + ".nc"
 
@@ -198,7 +198,6 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         global_metadata['origin_latitude'] = origin_latitude
         global_metadata['origin_longitude'] = origin_longitude
         global_metadata['origin_altitude'] = origin_altitude
-
 
         for k, v in global_metadata.items():
             radar.metadata[k] = v

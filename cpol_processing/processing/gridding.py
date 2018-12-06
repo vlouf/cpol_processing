@@ -85,7 +85,7 @@ def gridding_radar_150km(radar, radar_date, outpath):
     year = str(radar_date.year)
     datestr = radar_date.strftime("%Y%m%d")
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
-    fname = "CPOL_{}_GRIDS_2500m.nc".format(datetimestr)
+    fname = "cpol_{}_grids_2500m.nc".format(datetimestr)
 
     # Output directory
     outdir_150km = os.path.join(outpath, year)
@@ -104,15 +104,24 @@ def gridding_radar_150km(radar, radar_date, outpath):
 
     # Gridding
     grid_150km = pyart.map.grid_from_radars(
-        radar, gatefilters=my_gatefilter,
-        grid_shape=(41, 117, 117),
-        grid_limits=((0, 20000), (-145000.0, 145000.0), (-145000.0, 145000.0)),
-        roi_func='constant', constant_roi=2500)
+        radar, gatefilters=my_gatefilter, grid_shape=(41, 117, 117),
+        grid_limits=((0, 20000.0), (-145000, 145000), (-145000, 145000)),
+        gridding_algo="map_gates_to_grid", fields=fields_to_keep,
+        weighting_function='CRESSMAN',
+        map_roi=True, toa=20000.0, copy_field_data=True, algorithm='kd_tree',
+        leafsize=10., roi_func='dist_beam', constant_roi=2500.,
+        z_factor=0.05, xy_factor=0.02, min_radius=500.0,
+        h_factor=1.0, nb=1.5, bsp=1.0, skip_transform=False)
 
     # Latitude Longitude field for each point.
     longitude, latitude = _get_latlon(grid_150km)
     grid_150km.add_field('longitude', longitude)
     grid_150km.add_field('latitude', latitude)
+
+    try:
+        grid_150km.fields.pop('ROI')
+    except Exception:
+        pass
 
     # Saving data.
     grid_150km.write(outfilename, arm_time_variables=True)
@@ -139,7 +148,7 @@ def gridding_radar_70km(radar, radar_date, outpath):
     year = str(radar_date.year)
     datestr = radar_date.strftime("%Y%m%d")
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
-    fname = "CPOL_{}_GRIDS_1000m.nc".format(datetimestr)
+    fname = "cpol_{}_grids_1000m.nc".format(datetimestr)
 
     # Output directory
     outdir_70km = os.path.join(outpath, year)
@@ -158,15 +167,24 @@ def gridding_radar_70km(radar, radar_date, outpath):
 
     # Gridding
     grid_70km = pyart.map.grid_from_radars(
-        radar, gatefilters=my_gatefilter,
-        grid_shape=(41, 141, 141),
+        radar, gatefilters=my_gatefilter, grid_shape=(41, 141, 141),
         grid_limits=((0, 20000), (-70000.0, 70000.0), (-70000.0, 70000.0)),
-        roi_func='constant', constant_roi=1000)
+        gridding_algo="map_gates_to_grid", fields=fields_to_keep,
+        weighting_function='CRESSMAN',
+        map_roi=True, toa=20000.0, copy_field_data=True, algorithm='kd_tree',
+        leafsize=10., roi_func='dist_beam', constant_roi=1000.,
+        z_factor=0.05, xy_factor=0.02, min_radius=500.0,
+        h_factor=1.0, nb=1.5, bsp=1.0, skip_transform=False)
 
     # Latitude Longitude field for each point.
     longitude, latitude = _get_latlon(grid_70km)
     grid_70km.add_field('longitude', longitude)
     grid_70km.add_field('latitude', latitude)
+
+    try:
+        grid_70km.fields.pop('ROI')
+    except Exception:
+        pass
 
     # Saving data.
     grid_70km.write(outfilename, arm_time_variables=True)
