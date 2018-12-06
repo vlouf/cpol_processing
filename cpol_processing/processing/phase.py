@@ -174,7 +174,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     return phidp_gg, kdp_gg
 
 
-def phidp_preprocessing(radar, gatefilter=gatefilter, phidp_field=phidp_field):
+def phidp_preprocessing(radar, gatefilter, phidp_field):
     """
     Preprocessing for the differential phase.
 
@@ -193,6 +193,7 @@ def phidp_preprocessing(radar, gatefilter=gatefilter, phidp_field=phidp_field):
         Pre-processed differential phase.
     """
     phidp_unf = pyart.config.get_metadata('differential_phase')
-    unfphi = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
+    unfphi = pyart.correct.dealias_region_based(
+        radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
     phidp_unf['data'] = unfphi
     return phidp_unf
