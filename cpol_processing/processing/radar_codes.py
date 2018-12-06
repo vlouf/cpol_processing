@@ -5,7 +5,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 04/04/2017
-@date: 14/11/2017
+@date: 6/12/2018
 
 .. autosummary::
     :toctree: generated/
@@ -255,16 +255,14 @@ def get_field_names():
                     ('VEL_UNFOLDED', 'region_dealias_velocity'),
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'reflectivity'),
-                    ('RHOHV_CORR', 'RHOHV'),
-                    ('RHOHV', 'cross_correlation_ratio'),
-                    ('ZDR', 'differential_reflectivity'),
+                    ('RHOHV_CORR', 'cross_correlation_ratio'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
                     ('PHIDP', 'differential_phase'),
                     ('PHIDP_BRINGI', 'bringi_differential_phase'),
-                    ('PHIDP_GG', 'giangrande_differential_phase'),
+                    ('PHIDP_GG', 'corrected_differential_phase'),
                     ('KDP', 'specific_differential_phase'),
                     ('KDP_BRINGI', 'bringi_specific_differential_phase'),
-                    ('KDP_GG', 'giangrande_specific_differential_phase'),
+                    ('KDP_GG', 'corrected_specific_differential_phase'),
                     ('WIDTH', 'spectrum_width'),
                     ('SNR', 'signal_to_noise_ratio'),
                     ('NCP', 'normalized_coherent_power'),

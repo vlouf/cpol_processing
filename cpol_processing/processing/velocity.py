@@ -103,8 +103,8 @@ def get_simulated_wind_profile(radar, radiosonde_fname, height_name="height", sp
     return sim_vel
 
 
-def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding=False, vel_name='VEL', rhohv_name='RHOHV_CORR',
-                    sounding_name='sim_velocity'):
+def unfold_velocity(radar, my_gatefilter, bobby_params=False, constrain_sounding=False,
+                    vel_name='VEL', rhohv_name='RHOHV_CORR', sounding_name='sim_velocity'):
     """
     Unfold Doppler velocity using Py-ART region based algorithm. Automatically
     searches for a folding-corrected velocity field.

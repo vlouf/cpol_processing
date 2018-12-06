@@ -604,7 +604,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     radar = radar_codes.rename_radar_fields(radar)
 
     # Remove obsolete fields:
-    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV']:
+    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV',
+                         'RHOHV', 'ZDR']:
         try:
             radar.fields.pop(obsolete_key)
         except KeyError:
