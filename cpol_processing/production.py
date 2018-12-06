@@ -41,7 +41,8 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None, sound_dir=None, instrument='CPOL', use_giangrande=True):
+def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None,
+                     sound_dir=None, instrument='CPOL', use_giangrande=True):
     """
     Call processing function and write data.
 
@@ -286,10 +287,12 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         try:
             gr.plot_ppi('giangrande_differential_phase', ax=the_ax[7], vmin=-180, vmax=180, cmap='pyart_Wild25')
             the_ax[7].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
-                                                datetime_format='%Y-%m-%dT%H:%M'))
+                                                  datetime_format='%Y-%m-%dT%H:%M'))
 
-            gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5, cmap='pyart_Theodore16')
-            the_ax[8].set_title(gr.generate_title('giangrande_specific_differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('giangrande_specific_differential_phase', ax=the_ax[8], vmin=-2, vmax=5,
+                        cmap='pyart_Theodore16')
+            the_ax[8].set_title(gr.generate_title('giangrande_specific_differential_phase', sweep=0,
+                                                  datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
@@ -494,7 +497,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         fake_ncp = False
     except KeyError:
         ncp = pyart.config.get_metadata('normalized_coherent_power')
-        ncp['data'] =  np.zeros_like(radar.fields['RHOHV']['data'])
+        ncp['data'] = np.zeros_like(radar.fields['RHOHV']['data'])
         ncp['data'][gatefilter.gate_included] = 1
         radar.add_field('NCP', ncp)
         fake_ncp = True
