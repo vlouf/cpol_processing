@@ -154,13 +154,22 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         global_metadata['naming_authority'] = 'au.org.nci'
         global_metadata['source'] = "Australian Bureau of Meteorology and Monash University"
         global_metadata['processing_level'] = "L1B"
+        global_metadata['disclaimer'] = "This dataset is supported by a funding from the U.S. Department of Energy " + \
+                                        "as part of the Atmospheric Radiation Measurement (ARM) Climate Research " + \
+                                        "Facility, an Office of Science user facility. If you use this dataset " + \
+                                        "to prepare a publication, please consider offering me (Valentin Louf)" + \
+                                        "co-authorship."
         global_metadata['acknowledgement'] = "This work has been supported by the U.S. Department " + \
                                              "of Energy Atmospheric Systems Research Program through " + \
                                              "the grant DE-SC0014063. Data may be freely distributed."
         global_metadata['product_version'] = datetime.datetime.now().strftime("%Y.%m")
-        global_metadata['references'] = "Contact V. Louf <valentin.louf@bom.gov.au>"
+        global_metadata['references'] = "Louf, V., A. Protat, R. A. Warren, S. M. Collis, D. B. Wolff, S. Raunyiar, " +\
+                                        "C. Jakob, and W. A. Petersen, 2018: An integrated approach to weather " + \
+                                        "radar calibration and monitoring using ground clutter and satellite " + \
+                                        "comparisons. J. Atmos. Ocean. Technol., JTECH-D-18-0007.1, " +\
+                                        "doi:10.1175/JTECH-D-18-0007.1."
         global_metadata['creator_name'] = "Valentin Louf"
-        global_metadata['creator_email'] = "valentin.louf@bom.gov.au"
+        global_metadata['creator_email'] = "valentin.louf@monash.edu"
         global_metadata['creator_url'] = "github.com/vlouf"
         global_metadata['institution'] = "Australian Bureau of Meteorology"
         global_metadata['publisher_name'] = "NCI - National Computing Infrastructure"
@@ -169,6 +178,27 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         global_metadata['site_name'] = "Gunn_Pt"
         global_metadata['country'] = "Australia"
         global_metadata['state'] = "NT"
+
+        # Lat/lon informations
+        maxlon = '132.3856852067545'
+        minlon = '129.70320368213441'
+        maxlat = '-10.941777804922253'
+        minlat = '-13.552905831511362'
+        origin_altitude = '50'
+        origin_latitude = '-12.249'
+        origin_longitude = '131.044'
+
+        global_metadata['geospatial_bounds'] = f"({minlon}, {maxlon}, {minlat}, {maxlat})"
+        global_metadata['geospatial_lat_min'] = minlat
+        global_metadata['geospatial_lat_max'] = maxlat
+        global_metadata['geospatial_lat_units'] = "degrees_north"
+        global_metadata['geospatial_lon_min'] = minlon
+        global_metadata['geospatial_lon_max'] = maxlon
+        global_metadata['geospatial_lon_units'] = "degrees_east"
+        global_metadata['origin_latitude'] = origin_latitude
+        global_metadata['origin_longitude'] = origin_longitude
+        global_metadata['origin_altitude'] = origin_altitude
+
 
         for k, v in global_metadata.items():
             radar.metadata[k] = v
