@@ -1,5 +1,5 @@
 """
-Codes for gridding radar data using Py-ART.
+Gridding radar data on a Cartesian grid using Py-ART.
 
 @title: gridding
 @author: Valentin Louf <valentin.louf@monash.edu>
@@ -9,10 +9,9 @@ Codes for gridding radar data using Py-ART.
 .. autosummary::
     :toctree: generated/
 
+    mkdir
     _get_latlon
-    gridding_radar_150km
-    gridding_radar_150km_highresolution
-    gridding_radar_70km
+    gridding_radar
 """
 # Python Standard Library
 import os
@@ -69,68 +68,8 @@ def _get_latlon(radgrid):
     return longitude, latitude
 
 
-def gridding_radar_150km(radar, radar_date, outpath):
-    """
-    Map a single radar to a Cartesian grid of 150 km range and 2.5 km resolution.
-
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        radar_date: datetime
-            Datetime stucture of the radar data.
-        outpath: str
-            Ouput directory.
-    """
-    # Extracting year, date, and datetime.
-    year = str(radar_date.year)
-    datestr = radar_date.strftime("%Y%m%d")
-    datetimestr = radar_date.strftime("%Y%m%d_%H%M")
-    fname = "cpol_{}_grids_2500m.nc".format(datetimestr)
-
-    # Output directory
-    outdir_150km = os.path.join(outpath, year)
-    mkdir(outdir_150km)
-
-    outdir_150km = os.path.join(outdir_150km, datestr)
-    mkdir(outdir_150km)
-
-    # Output file name
-    outfilename = os.path.join(outdir_150km, fname)
-
-    # exclude masked gates from the gridding
-    my_gatefilter = pyart.filters.GateFilter(radar)
-    my_gatefilter.exclude_transition()
-    my_gatefilter.exclude_masked('reflectivity')
-
-    # Gridding
-    grid_150km = pyart.map.grid_from_radars(
-        radar, gatefilters=my_gatefilter, grid_shape=(41, 117, 117),
-        grid_limits=((0, 20000.0), (-145000, 145000), (-145000, 145000)),
-        gridding_algo="map_gates_to_grid", fields=fields_to_keep,
-        weighting_function='CRESSMAN',
-        map_roi=True, toa=20000.0, copy_field_data=True, algorithm='kd_tree',
-        leafsize=10., roi_func='dist_beam', constant_roi=2500.,
-        z_factor=0.05, xy_factor=0.02, min_radius=500.0,
-        h_factor=1.0, nb=1.5, bsp=1.0, skip_transform=False)
-
-    # Latitude Longitude field for each point.
-    longitude, latitude = _get_latlon(grid_150km)
-    grid_150km.add_field('longitude', longitude)
-    grid_150km.add_field('latitude', latitude)
-
-    try:
-        grid_150km.fields.pop('ROI')
-    except Exception:
-        pass
-
-    # Saving data.
-    grid_150km.write(outfilename, arm_time_variables=True)
-
-    return None
-
-
-def gridding_radar_150km_highresolution(radar, radar_date, outpath):
+def gridding_radar(radar, radar_date, outpath, rmax=145e3, xyres=1000,
+                   maxheight=20e3, zres=500, azimuthal_res=1):
     """
     Map a single radar to a Cartesian grid of 150 km range and 1 km resolution.
 
@@ -142,113 +81,66 @@ def gridding_radar_150km_highresolution(radar, radar_date, outpath):
             Datetime stucture of the radar data.
         outpath: str
             Ouput directory.
+        rmax: int
+            Maximum range in meters
+        xyres: int
+            Grid x/y resolution in meters
+        maxheight: int
+            Maximum altitude of the grid in meters.
+        zres: int
+            Grid z-axis resolution in meters
+        azimuthal_res: float
+            Beamwidth angle in degree.
     """
     # Extracting year, date, and datetime.
     year = str(radar_date.year)
     datestr = radar_date.strftime("%Y%m%d")
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
-    fname = "cpol_{}_grids_1000m.nc".format(datetimestr)
+    fname = "cpol_{}_grids_{}m.nc".format(datetimestr, resolution)
 
     # Output directory
-    outdir_150km = os.path.join(outpath, year)
-    mkdir(outdir_150km)
+    outdir = os.path.join(outpath, year)
+    mkdir(outdir)
 
-    outdir_150km = os.path.join(outdir_150km, datestr)
-    mkdir(outdir_150km)
+    outdir = os.path.join(outdir, datestr)
+    mkdir(outdir)
 
     # Output file name
-    outfilename = os.path.join(outdir_150km, fname)
+    outfilename = os.path.join(outdir, fname)
 
     # exclude masked gates from the gridding
     my_gatefilter = pyart.filters.GateFilter(radar)
     my_gatefilter.exclude_transition()
     my_gatefilter.exclude_masked('reflectivity')
 
+    grid_len = len(np.arange(-rmax, rmax + 1, xyres))
+    grid_len_z = len(np.arange(0, maxheight + 1, zres))
+
+    width = rmax * azimuthal_res * np.pi / 180.
+    width = 1000 * np.round(2 * width / 1000) / 2  # rounding to the nearest 500 m.
+
     # Gridding
-    grid_150km = pyart.map.grid_from_radars(
-        radar, gatefilters=my_gatefilter, grid_shape=(41, 291, 291),
-        grid_limits=((0, 20000.0), (-145000, 145000), (-145000, 145000)),
+    grid = pyart.map.grid_from_radars(
+        radar, gatefilters=my_gatefilter, grid_shape=(grid_len_z, grid_len, grid_len),
+        grid_limits=((0, maxheight), (-rmax, rmax), (-rmax, rmax)),
         gridding_algo="map_gates_to_grid", fields=fields_to_keep,
         weighting_function='CRESSMAN',
-        map_roi=True, toa=20000.0, copy_field_data=True, algorithm='kd_tree',
-        leafsize=10., roi_func='dist_beam', constant_roi=2500.,
+        map_roi=True, toa=maxheight, copy_field_data=True, algorithm='kd_tree',
+        leafsize=10., roi_func='dist_beam', constant_roi=width,
         z_factor=0.05, xy_factor=0.02, min_radius=500.0,
         h_factor=1.0, nb=1.5, bsp=1.0, skip_transform=False)
 
     # Latitude Longitude field for each point.
-    longitude, latitude = _get_latlon(grid_150km)
-    grid_150km.add_field('longitude', longitude)
-    grid_150km.add_field('latitude', latitude)
+    longitude, latitude = _get_latlon(grid)
+    grid.add_field('longitude', longitude)
+    grid.add_field('latitude', latitude)
 
     try:
-        grid_150km.fields.pop('ROI')
+        grid.fields.pop('ROI')
     except Exception:
         pass
 
     # Saving data.
-    grid_150km.write(outfilename, arm_time_variables=True)
-
-    return None
-
-
-def gridding_radar_70km(radar, radar_date, outpath):
-    """
-    Map a single radar to a Cartesian grid of 70 km range and 1 km resolution.
-
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        my_gatefilter:
-            The Gate filter.
-        radar_date: datetime
-            Datetime stucture of the radar data.
-        outpath: str
-            Ouput directory.
-    """
-    # Extracting year, date, and datetime.
-    year = str(radar_date.year)
-    datestr = radar_date.strftime("%Y%m%d")
-    datetimestr = radar_date.strftime("%Y%m%d_%H%M")
-    fname = "cpol_{}_grids_1000m.nc".format(datetimestr)
-
-    # Output directory
-    outdir_70km = os.path.join(outpath, year)
-    mkdir(outdir_70km)
-
-    outdir_70km = os.path.join(outdir_70km, datestr)
-    mkdir(outdir_70km)
-
-    # Output file name
-    outfilename = os.path.join(outdir_70km, fname)
-
-    # exclude masked gates from the gridding
-    my_gatefilter = pyart.filters.GateFilter(radar)
-    my_gatefilter.exclude_transition()
-    my_gatefilter.exclude_masked('reflectivity')
-
-    # Gridding
-    grid_70km = pyart.map.grid_from_radars(
-        radar, gatefilters=my_gatefilter, grid_shape=(41, 141, 141),
-        grid_limits=((0, 20000), (-70000.0, 70000.0), (-70000.0, 70000.0)),
-        gridding_algo="map_gates_to_grid", fields=fields_to_keep,
-        weighting_function='CRESSMAN',
-        map_roi=True, toa=20000.0, copy_field_data=True, algorithm='kd_tree',
-        leafsize=10., roi_func='dist_beam', constant_roi=1000.,
-        z_factor=0.05, xy_factor=0.02, min_radius=500.0,
-        h_factor=1.0, nb=1.5, bsp=1.0, skip_transform=False)
-
-    # Latitude Longitude field for each point.
-    longitude, latitude = _get_latlon(grid_70km)
-    grid_70km.add_field('longitude', longitude)
-    grid_70km.add_field('latitude', latitude)
-
-    try:
-        grid_70km.fields.pop('ROI')
-    except Exception:
-        pass
-
-    # Saving data.
-    grid_70km.write(outfilename, arm_time_variables=True)
+    grid.write(outfilename, arm_time_variables=True)
 
     return None
