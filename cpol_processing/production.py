@@ -544,9 +544,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
 
         # Correct dealiased velocity using radiosounding profiles.
-        if has_simvel:
-            vdop_corr = velocity.correct_velocity_unfolding(radar)
-            radar.add_field('VEL_UNFOLDED', vdop_corr, replace_existing=True)
+        # if has_simvel:
+        #     vdop_corr = velocity.correct_velocity_unfolding(radar)
+        #     radar.add_field('VEL_UNFOLDED', vdop_corr, replace_existing=True)
 
         logger.info('Doppler velocity unfolded.')
 
