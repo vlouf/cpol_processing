@@ -85,7 +85,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     _mkdir(outpath)
 
     if outpath_grid is None:
-        outpath_grid = os.paht.join(outpath, 'GRIDDED')
+        outpath_grid = os.path.join(outpath, 'GRIDDED')
     _mkdir(outpath_grid)
 
     if figure_path is not None:
