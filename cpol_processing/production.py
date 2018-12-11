@@ -284,22 +284,20 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         the_ax[3].set_title(gr.generate_title('corrected_differential_reflectivity',
                                               sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        # Seasons 0910: No RHOHV available.
+        gr.plot_ppi('differential_phase', ax=the_ax[4], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        the_ax[4].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
         try:
-            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[4], vmin=0.5, vmax=1.05)
-            the_ax[4].set_title(gr.generate_title('cross_correlation_ratio',
-                                                  sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('corrected_differential_phase', ax=the_ax[5], vmin=-180, vmax=180, cmap='pyart_Wild25')
+            the_ax[5].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
+                                                  datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
-        gr.plot_ppi('differential_phase', ax=the_ax[5], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        the_ax[5].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
         try:
-            gr.plot_ppi('corrected_differential_phase', ax=the_ax[6], vmin=-180, vmax=180, cmap='pyart_Wild25')
-            the_ax[6].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
-                                                  datetime_format='%Y-%m-%dT%H:%M'))
-
+            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[6], vmin=0.5, vmax=1.05)
+            the_ax[6].set_title(gr.generate_title('cross_correlation_ratio',
+                                                  sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
