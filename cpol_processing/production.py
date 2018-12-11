@@ -41,6 +41,22 @@ from .processing import radar_codes
 from .processing import velocity
 
 
+def _mkdir(dir):
+    """
+    Make directory. Might seem redundant but you might have concurrency issue
+    when dealing with multiprocessing.
+    """
+    if os.path.exists(dir):
+        return None
+
+    try:
+        os.mkdir(dir)
+    except FileExistsError:
+        pass
+
+    return None
+
+
 def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None,
                      sound_dir=None, instrument='CPOL', use_giangrande=True):
     """
@@ -94,34 +110,21 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         is_cpol = False
 
     # Create directories.
-    try:
-        os.mkdir(outpath)
-    except FileExistsError:
-        pass
+    _mkdir(outpath)
 
     if outpath_grid is None:
         outpath_grid = os.paht.join(outpath, 'GRIDDED')
-    try:
-        os.mkdir(outpath_grid)
-    except FileExistsError:
-        pass
+    _mkdir(outpath_grid)
 
     if figure_path is not None:
-        try:
-            os.mkdir(figure_path)
-        except FileExistsError:
-            pass
+        _mkdir(figure_path)
 
     outdir_150km = os.path.join(outpath_grid, "GRID_150km_2500m")
     outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")
-    try:
-        os.mkdir(outdir_150km)
-    except FileExistsError:
-        pass
-    try:
-        os.mkdir(outdir_70km)
-    except FileExistsError:
-        pass
+    outdir_150km_highres = os.path.join(outpath_grid, "GRID_150km_1000m")
+    _mkdir(outdir_150km)
+    _mkdir(outdir_70km)
+    _mkdir(outdir_150km_highres)
 
     # Get logger.
     logger = logging.getLogger()
@@ -228,8 +231,13 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         # Gridding (and saving)
         # Full radar range with a 2.5 km grid resolution
         gridding.gridding_radar_150km(radar, radar_start_date, outpath=outdir_150km)
+
+        # Full radar range with a 1 km grid resolution
+        gridding.gridding_radar_150km_highresolution(radar, radar_start_date, outpath=outdir_150km_highres)
+
         # Half-range with a 1 km grid resolution
         gridding.gridding_radar_70km(radar, radar_start_date, outpath=outdir_70km)
+
         logger.info('Gridding done.')
     except Exception:
         traceback.print_exc()
