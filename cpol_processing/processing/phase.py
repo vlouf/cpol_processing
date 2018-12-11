@@ -170,12 +170,11 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
 
     radar.add_field_like('PHIDP', 'PHITMP', unfphi['data'])
     # Pyart version 1.10.
-    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
-                                                   # gatefilter=gatefilter,
-                                                   LP_solver='cylp',
-                                                   refl_field=refl_field,
-                                                   ncp_field=ncp_field, rhv_field=rhv_field,
-                                                   phidp_field='PHITMP')
+    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar,
+                                                      gatefilter=gatefilter,
+                                                      LP_solver='cylp',
+                                                      refl_field=refl_field,
+                                                      phidp_field='PHITMP')
 
     radar.fields.pop('PHITMP')
     try:

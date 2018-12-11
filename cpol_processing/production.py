@@ -524,27 +524,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         # Restore original data.
         radar.fields['PHIDP']['data'] /= 2
 
-    # VELOCITY
-    # Simulate wind profile
-    # has_simvel = False
-    # if sound_dir is not None:
-    #     try:
-    #         sim_vel = velocity.get_simulated_wind_profile(radar, radiosonde_fname)
-    #         radar.add_field("sim_velocity", sim_vel)
-    #         has_simvel = True
-    #     except Exception:
-    #         pass
-
     # Unfold VELOCITY
     if not vel_missing:
         # Dealias velocity.
         vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-
-        # Correct dealiased velocity using radiosounding profiles.
-        # if has_simvel:
-        #     vdop_corr = velocity.correct_velocity_unfolding(radar)
-        #     radar.add_field('VEL_UNFOLDED', vdop_corr, replace_existing=True)
 
         logger.info('Doppler velocity unfolded.')
 
