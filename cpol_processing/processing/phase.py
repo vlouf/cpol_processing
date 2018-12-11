@@ -178,5 +178,9 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                    phidp_field='PHITMP')
 
     radar.fields.pop('PHITMP')
+    try:
+        radar.fields.pop('unfolded_differential_phase')
+    except Exception:
+        pass
 
     return phidp_gg, kdp_gg
