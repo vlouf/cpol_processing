@@ -69,7 +69,8 @@ def _get_latlon(radgrid):
 
 
 def gridding_radar(radar, radar_date, outpath, rmax=145e3, xyres=1000,
-                   maxheight=20e3, zres=500, azimuthal_res=1):
+                   maxheight=20e3, zres=500, azimuthal_res=1, refl_name='reflectivity',
+                   linearz=False):
     """
     Map a single radar to a Cartesian grid of 150 km range and 1 km resolution.
 
@@ -91,6 +92,10 @@ def gridding_radar(radar, radar_date, outpath, rmax=145e3, xyres=1000,
             Grid z-axis resolution in meters
         azimuthal_res: float
             Beamwidth angle in degree.
+        refl_name: str
+            Name of the reflectivity field
+        linearz: bool
+            Use linear-Z reflectivity for the gridding.
     """
     # Extracting year, date, and datetime.
     year = str(radar_date.year)
@@ -119,6 +124,10 @@ def gridding_radar(radar, radar_date, outpath, rmax=145e3, xyres=1000,
     width = rmax * azimuthal_res * np.pi / 180.
     width = 1000 * np.round(2 * width / 1000) / 2  # rounding to the nearest 500 m.
 
+    # Convert to linear Z for gridding.
+    if linearz:
+        radar.fields[refl_name]['data'] = 10 ** (radar.fields[refl_name]['data'] / 10.)
+
     # Gridding
     grid = pyart.map.grid_from_radars(
         radar, gatefilters=my_gatefilter, grid_shape=(grid_len_z, grid_len, grid_len),
@@ -134,6 +143,11 @@ def gridding_radar(radar, radar_date, outpath, rmax=145e3, xyres=1000,
     longitude, latitude = _get_latlon(grid)
     grid.add_field('longitude', longitude)
     grid.add_field('latitude', latitude)
+
+    if linearz:
+        # Convert back to dBZ
+        radar.fields[refl_name]['data'] = 10 * np.log10(radar.fields[refl_name]['data'])
+        grid.fields[refl_name]['data'] = 10 * np.log10(grid.fields[refl_name]['data'])
 
     try:
         grid.fields.pop('ROI')
