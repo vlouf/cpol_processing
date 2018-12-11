@@ -75,35 +75,6 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         sound_dir: str
             Path to radiosoundings directory.
     """
-    def correct_output_filename(outfilename):
-        """
-        Some level 0 and/or level 1a treatment did not generate the right file names.
-        Correcting these here.
-
-        Parameter:
-        ==========
-        outfilename: str
-            Output file name.
-
-        Returns:
-        ========
-        outfilename: str
-            Corrected output file name.
-        """
-
-        outfilename = outfilename.replace("level1a", "level1b")
-
-        # Correct occasional missing suffix.
-        if "level1b" not in outfilename:
-            outfilename = outfilename.replace(".nc", "_level1b.nc")
-        # Correct an occasional mislabelling from RadX.
-        if "SURV" in outfilename:
-            outfilename = outfilename.replace("SURV", "PPI")
-        if "SUR" in outfilename:
-            outfilename = outfilename.replace("SUR", "PPI")
-
-        return outfilename
-
     if instrument == 'CPOL':
         is_cpol = True
     else:
