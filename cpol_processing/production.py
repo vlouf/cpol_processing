@@ -601,9 +601,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     logger.info('DSD estimated.')
 
     # Merhala classification:
-    echo_class = hydrometeors.merhala_class_convstrat(radar)
-    radar.add_field('thurai_echo_classification', echo_class)
-    logger.info('Thurai classification estimated.')
+#     echo_class = hydrometeors.merhala_class_convstrat(radar)
+#     radar.add_field('thurai_echo_classification', echo_class)
+#     logger.info('Thurai classification estimated.')
 
     # Removing fake and useless fields.
     if fake_ncp:
