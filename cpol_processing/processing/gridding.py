@@ -101,7 +101,7 @@ def gridding_radar(radar, radar_date, outpath, rmax=145e3, xyres=1000,
     year = str(radar_date.year)
     datestr = radar_date.strftime("%Y%m%d")
     datetimestr = radar_date.strftime("%Y%m%d_%H%M")
-    fname = "cpol_{}_grids_{}m.nc".format(datetimestr, resolution)
+    fname = "cpol_{}_grids_{}m.nc".format(datetimestr, xyres)
 
     # Output directory
     outdir = os.path.join(outpath, year)
