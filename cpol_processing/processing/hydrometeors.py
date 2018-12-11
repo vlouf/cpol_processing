@@ -55,17 +55,19 @@ def dsd_retrieval(radar, gatefilter, refl_name='DBZ_CORR', zdr_name='ZDR_CORR', 
     d0, Nw, mu = csu_dsd.calc_dsd(dz=dbz, zdr=zdr, kdp=kdp, band='C')
 
     Nw = np.log10(Nw)
-    Nw[np.isnan(Nw) | (gatefilter.gate_excluded)] = 0
-    d0[np.isnan(d0) | (gatefilter.gate_excluded)] = 0
+    Nw[np.isnan(Nw) | (gatefilter.gate_excluded)] = -9999
+    d0[np.isnan(d0) | (gatefilter.gate_excluded)] = -9999
 
     nw_dict = {'data': Nw,
                'units': 'AU', 'long_name': 'Normalized Intercept Parameter',
                'standard_name': 'Normalized Intercept Parameter',
+               '_FillValue': -9999,
                'description': "Log10 of the NW. Retrieval based on Bringi et al. (2009)."}
 
     d0_dict = {'data': d0,
                'units': 'mm', 'long_name': 'Median Volume Diameter',
                'standard_name': 'Median Volume Diameter',
+               '_FillValue': -9999,
                'description': "D0 retrieval based on Bringi et al. (2009)."}
 
     return nw_dict, d0_dict
