@@ -161,24 +161,25 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
 
     radar.fields[phidp_field]['data'] = unfphi['data']
     # Pyart version 1.10.
-    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar,
-                                                      # 0.0,
-                                                      gatefilter=gatefilter,
+    phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar,
+                                                      0.0,
+                                                      # gatefilter=gatefilter,
                                                       LP_solver='cylp',
-                                                      # ncp_field=ncp_field,
+                                                      ncp_field=ncp_field,
                                                       refl_field=refl_field,
-                                                      # rhv_field=rhv_field,
+                                                      rhv_field=rhv_field,
                                                       phidp_field=phidp_field)
 
     # radar.fields.pop('PHITMP')
     phidp_gg.pop('valid_min')
-    if phidp_gg['data'].min() < 0:
-        phidp_gg['data'] += -(phidp_gg['data'].min())
 
     if half_phi:
         unfphi['data'] /= 2
         phidp_gg['data'] /= 2
         kdp_gg['data'] /= 2
+
+    phidp_gg['data'], kdp_gg['data'] = fix_phidp_from_kdp(phidp_gg['data'],
+                                                          kdp_gg['data'], gatefilter)
 
     try:
         radar.fields.pop('unfolded_differential_phase')
