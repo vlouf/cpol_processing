@@ -156,7 +156,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     if half_phi:
         unfphi['data'] *= 2
 
-    radar.add_field(phidp_field, unfphi['data'], replace_existing=True)
+    radar.fields[phidp_field]['data'] = unfphi['data']
     # Pyart version 1.10.
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar,
                                                       gatefilter=gatefilter,
