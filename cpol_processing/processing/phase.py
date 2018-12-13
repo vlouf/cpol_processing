@@ -140,18 +140,21 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     kdp_gg: dict
         Field dictionary containing recalculated differential phases.
     """
+    #  Preprocessing
+    unfphi = pyart.correct.dealias_region_based(
+        radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
+
     phi = radar.fields[phidp_field]['data']
     if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
         half_phi = True
     else:
         half_phi = False
 
-    #  Preprocessing
-    unfphi = pyart.correct.dealias_region_based(
-        radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
-
-    if np.nanmin(unfphi['data']) < 0:
-        unfphi['data'] += np.nanmin(unfphi['data'])
+    try:
+        if np.nanmean(phi[gatefilter.gate_included]) < 0:
+            unfphi['data'] += 90
+    except ValueError:
+        pass
 
     if half_phi:
         unfphi['data'] *= 2
