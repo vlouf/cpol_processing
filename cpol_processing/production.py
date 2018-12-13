@@ -492,12 +492,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         radar.add_field('NCP', ncp)
         fake_ncp = True
 
-    half_phi = False
-    if phase.check_phidp(radar):
-        # Fix
-        half_phi = True
-        radar.fields['PHIDP']['data'] *= 2
-
     if use_giangrande:
         phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
         radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
@@ -519,10 +513,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
         kdp_field_name = 'KDP_BRINGI'
         phidp_field_name = 'PHIDP_BRINGI'
-
-    if half_phi:
-        # Restore original data.
-        radar.fields['PHIDP']['data'] /= 2
 
     # Unfold VELOCITY
     if not vel_missing:
