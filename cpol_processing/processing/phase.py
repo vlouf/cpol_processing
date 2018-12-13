@@ -167,6 +167,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                    LP_solver='cylp',
                                                    ncp_field=ncp_field,
                                                    refl_field=refl_field,
+                                                   rhv_field=rhv_field,
                                                    phidp_field=phidp_field)
 
     # radar.fields.pop('PHITMP')
