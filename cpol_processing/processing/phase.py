@@ -159,7 +159,6 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     if half_phi:
         unfphi['data'] *= 2
 
-    unfphi['data'][:, :50] = 0
     radar.fields[phidp_field]['data'] = unfphi['data']
     # Pyart version 1.10.
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar,
@@ -172,6 +171,10 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                       phidp_field=phidp_field)
 
     # radar.fields.pop('PHITMP')
+    phidp_gg.pop('valid_min')
+    if phidp_gg['data'].min() < 0:
+        phidp_gg['data'] += -(phidp_gg['data'].min())
+
     if half_phi:
         unfphi['data'] /= 2
         phidp_gg['data'] /= 2
