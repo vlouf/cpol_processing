@@ -173,6 +173,8 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     # radar.fields.pop('PHITMP')
     if half_phi:
         unfphi['data'] /= 2
+        phidp_gg['data'] /= 2
+        kdp_gg['data'] /= 2
 
     try:
         radar.fields.pop('unfolded_differential_phase')
