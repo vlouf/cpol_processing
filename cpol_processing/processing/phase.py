@@ -30,30 +30,6 @@ from scipy import integrate, ndimage
 from csu_radartools import csu_kdp
 
 
-def check_phidp(radar, phi_name="PHIDP"):
-    """
-    Check if PHIDP range is 180 degrees (half-circle) or 360 degrees.
-    Parameters:
-    ===========
-    radar:
-        Py-ART radar structure.
-    phi_name: str
-        Name of the PHIDP field.
-
-    Return:
-    =======
-    half_phi: bool
-        Is PHIDP range is half circle.
-    """
-    phi = radar.fields[phi_name]['data']
-    if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
-        half_phi = True
-    else:
-        half_phi = False
-
-    return half_phi
-
-
 def fix_phidp_from_kdp(phidp, kdp, gatefilter):
     """
     Correct PHIDP and KDP from spider webs.
@@ -138,7 +114,7 @@ def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
 
 
 def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
-                     rhv_field='RHOHV_CORR', phidp_field='PHI_UNF'):
+                     rhv_field='RHOHV_CORR', phidp_field='PHIDP'):
     """
     Phase processing using the LP method in Py-ART. A LP solver is required,
 
@@ -164,11 +140,23 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     kdp_gg: dict
         Field dictionary containing recalculated differential phases.
     """
+    phi = radar.fields[phidp_field]['data']
+    if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
+        half_phi = True
+    else:
+        half_phi = False
+
     #  Preprocessing
     unfphi = pyart.correct.dealias_region_based(
         radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
 
-    radar.add_field_like('PHIDP', 'PHITMP', unfphi['data'])
+    if np.nanmin(unfphi['data']) < 0:
+        unfphi['data'] += np.nanmin(unfphi['data'])
+
+    if half_phi:
+        radar.fields[phidp_field]['data'] *= 2
+
+    radar.add_field_like(phidp_field, 'PHITMP', unfphi['data'])
     # Pyart version 1.10.
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp_gf(radar,
                                                       gatefilter=gatefilter,
