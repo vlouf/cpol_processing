@@ -162,7 +162,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                       gatefilter=gatefilter,
                                                       LP_solver='cylp',
                                                       refl_field=refl_field,
-                                                      phidp_field='PHITMP')
+                                                      phidp_field=phidp_field)
 
     # radar.fields.pop('PHITMP')
     if half_phi:
