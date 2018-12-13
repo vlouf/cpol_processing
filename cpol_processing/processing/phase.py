@@ -30,14 +30,14 @@ from scipy import integrate, ndimage
 from csu_radartools import csu_kdp
 
 
-def fix_phidp_from_kdp(phidp, kdp, gatefilter):
+def fix_phidp_from_kdp(phidp, kdp, r, gatefilter):
     """
     Correct PHIDP and KDP from spider webs.
 
     Parameters
     ==========
-    radar:
-        Py-ART radar data structure.
+    r:
+        Radar range.
     gatefilter:
         Gate filter.
     kdp_name: str
@@ -53,9 +53,9 @@ def fix_phidp_from_kdp(phidp, kdp, gatefilter):
     kdp[gatefilter.gate_excluded] = 0
     kdp[(kdp < -4)] = 0
     kdp[kdp > 15] = 15
-    interg = integrate.cumtrapz(kdp, radar.range['data'], axis=1)
+    interg = integrate.cumtrapz(kdp, r, axis=1)
 
-    phidp[:, :-1] = interg / (len(radar.range['data']))
+    phidp[:, :-1] = interg / (len(r))
     return phidp, kdp
 
 
@@ -179,7 +179,9 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         kdp_gg['data'] /= 2
 
     phidp_gg['data'], kdp_gg['data'] = fix_phidp_from_kdp(phidp_gg['data'],
-                                                          kdp_gg['data'], gatefilter)
+                                                          kdp_gg['data'],
+                                                          radar.range['data'],
+                                                          gatefilter)
 
     try:
         radar.fields.pop('unfolded_differential_phase')
