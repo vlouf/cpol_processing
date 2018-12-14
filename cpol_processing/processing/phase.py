@@ -52,7 +52,7 @@ def fix_phidp_from_kdp(phidp, kdp, r, gatefilter):
     """
     kdp[gatefilter.gate_excluded] = 0
     kdp[(kdp < -4)] = 0
-    kdp[kdp > 15] = 15
+    kdp[kdp > 15] = 0
     interg = integrate.cumtrapz(kdp, r, axis=1)
 
     phidp[:, :-1] = interg / (len(r))
