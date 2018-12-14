@@ -59,7 +59,7 @@ def _mkdir(dir):
 
 
 def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None,
-                     sound_dir=None, instrument='CPOL', use_giangrande=True):
+                     sound_dir=None, instrument='CPOL', use_giangrande=True, linearz=True):
     """
     Call processing function and write data.
 
@@ -75,6 +75,12 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
             Path for saving figures.
         sound_dir: str
             Path to radiosoundings directory.
+        instrument: str
+            Name of radar (only CPOL will change something).
+        use_giangrande: bool
+            Use Scott G's technique for unfolding PHIDP and KDP.
+        linearz: bool
+            Gridding reflectivity in linear unit (True) or dBZ (False).
     """
     if instrument == 'CPOL':
         is_cpol = True
@@ -202,12 +208,12 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     try:
         # Gridding (and saving)
         # Full radar range with a 2.5 km grid resolution
-        gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km, rmax=145e3, xyres=2500, linearz=True)
+        gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km, rmax=145e3, xyres=2500, linearz=linearz)
         # Full radar range with a 1 km grid resolution
         gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km_highres,
-                                rmax=145e3, xyres=1000, linearz=True)
+                                rmax=145e3, xyres=1000, linearz=linearz)
         # Half-range with a 1 km grid resolution
-        gridding.gridding_radar(radar, radar_start_date, outpath=outdir_70km, rmax=70e3, xyres=1000, linearz=True)
+        gridding.gridding_radar(radar, radar_start_date, outpath=outdir_70km, rmax=70e3, xyres=1000, linearz=linearz)
 
         logger.info('Gridding done.')
     except Exception:
