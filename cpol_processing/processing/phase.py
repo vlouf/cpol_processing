@@ -218,7 +218,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
 
     vflag = np.zeros_like(phi)
     vflag[gatefilter.gate_excluded] = -3
-    unfphi = filter_data(phi, vflag, 90, 180, 40)
+    unfphi, vflag = filter_data(phi, vflag, 90, 180, 40)
 
     try:
         if np.nanmean(phi[gatefilter.gate_included]) < 0:
@@ -228,6 +228,8 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
 
     if half_phi:
         unfphi *= 2
+
+    unfphi[vflag == -3] = 0
 
     # unfphi['data'][unfphi['data'] >= 340] = np.NaN
     radar.add_field_like(phidp_field, 'PHIDP_TMP', unfphi)
