@@ -315,4 +315,8 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
 
     phi_unfold = pyart.config.get_metadata('differential_phase')
     phi_unfold['data'] = phitot
-    return phitot
+
+    # Computing KDP
+    kdp = _compute_kdp_from_phidp(x, phi_unfold)
+
+    return phitot, kdp
