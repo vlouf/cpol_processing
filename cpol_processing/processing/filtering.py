@@ -114,8 +114,8 @@ def do_gatefilter_cpol(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='R
     gf.exclude_above(zdr_name, 7)
     gf.exclude_outside(refl_name, -20.0, 80.0)
 
-    dphi = texture(radar.fields[zdr_name]['data'])
-    radar.add_field_like(zdr_name, 'PHITXT', dphi)
+    dphi = texture(radar.fields[phidp_name]['data'])
+    radar.add_field_like(phidp_name, 'PHITXT', dphi)
     gf.exclude_above('PHITXT', 10)
     gf.exclude_below(rhohv_name, 0.4)
 
