@@ -203,6 +203,35 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     return phidp_gg, kdp_gg
 
 
+def _compute_kdp_from_phidp(r, phidp, window_len=35):
+    """
+    Compute KDP from PHIDP using Sobel filter. This is coming from pyart.
+
+    Parameters:
+    ===========
+    r: ndarray
+        Radar range.
+    phidp: ndarray
+        PhiDP field.
+    window_len: int
+        Size of the window for the Sobel filter.
+
+    Returns:
+    ========
+    kdp_meta: dict
+        KDP dictionary field.
+    """
+    sobel = 2. * np.arange(window_len) / (window_len - 1.0) - 1.0
+    sobel = sobel / (abs(sobel).sum())
+    sobel = sobel[::-1]
+    gate_spacing = (r[1] - r[0]) / 1000.
+    kdp = (scipy.ndimage.filters.convolve1d((phidp), sobel, axis=1) / ((window_len / 3) * 2 * gate_spacing))
+    kdp_meta = pyart.config.get_metadata('specific_differential_phase')
+    kdp_meta['data'] = kdp
+
+    return kdp_meta
+
+
 def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 360]):
     """
     Differential phase processing using machine learning technique.
