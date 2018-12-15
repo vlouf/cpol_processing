@@ -24,7 +24,8 @@ import pyart
 import numpy as np
 
 
-def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', kdp_name='KDP_GG', alpha=0.016):
+def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
+                            kdp_name='KDP_GG', alpha=0.016):
     """
     Correct attenuation on differential reflectivity. KDP_GG has been
     cleaned of noise, that's why we use it.
@@ -47,7 +48,9 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', kdp_name='KDP_GG', alpha
     """
     r = radar.range['data']
     zdr = deepcopy(radar.fields[zdr_name]['data'])
-    kdp = deepcopy(radar.fields[kdp_name]['data'])
+    kdp = radar.fields[kdp_name]['data']
+    phi = radar.fields[phidp_name]['data']
+    atten = alpha * phi
 
     dr = (r[1] - r[0]) / 1000  # km
 
@@ -60,7 +63,7 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', kdp_name='KDP_GG', alpha
     atten_specific = alpha * kdp  # Bringi relationship
     atten_specific[np.isnan(atten_specific)] = 0
     # Path integrated attenuation
-    atten = 2 * np.cumsum(atten_specific, axis=1) * dr
+    # atten = 2 * np.cumsum(atten_specific, axis=1) * dr
 
     zdr_corr = zdr + atten
 
