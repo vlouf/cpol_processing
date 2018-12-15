@@ -498,27 +498,33 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         radar.add_field('NCP', ncp)
         fake_ncp = True
 
-    if use_giangrande:
-        phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
-        radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
-        radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
-        radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
-        radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
-        logger.info('KDP/PHIDP Giangrande estimated.')
+    phidp, kdp = phase.valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP')
+    radar.add_field('PHIDP_VAL', phidp, replace_existing=True)
+    radar.add_field('KDP_VAL', kdp, replace_existing=True)
+    radar.fields['PHIDP_VAL']['long_name'] = "corrected_differential_phase"
+    radar.fields['KDP_VAL']['long_name'] = "corrected_specific_differential_phase"
 
-        kdp_field_name = 'KDP_GG'
-        phidp_field_name = 'PHIDP_GG'
-    else:
-        # Bringi unfolding.
-        phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
-        radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
-        radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
-        radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
-        radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
-        logger.info('KDP/PHIDP Bringi estimated.')
-
-        kdp_field_name = 'KDP_BRINGI'
-        phidp_field_name = 'PHIDP_BRINGI'
+    # if use_giangrande:
+    #     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
+    #     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
+    #     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
+    #     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
+    #     radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
+    #     logger.info('KDP/PHIDP Giangrande estimated.')
+    #
+    #     kdp_field_name = 'KDP_GG'
+    #     phidp_field_name = 'PHIDP_GG'
+    # else:
+    #     # Bringi unfolding.
+    #     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
+    #     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
+    #     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
+    #     radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
+    #     radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
+    #     logger.info('KDP/PHIDP Bringi estimated.')
+    #
+    #     kdp_field_name = 'KDP_BRINGI'
+    #     phidp_field_name = 'PHIDP_BRINGI'
 
     # Unfold VELOCITY
     if not vel_missing:

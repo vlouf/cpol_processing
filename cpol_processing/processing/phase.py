@@ -317,6 +317,10 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
     phi_unfold['data'] = phitot
 
     # Computing KDP
-    kdp = _compute_kdp_from_phidp(x, phi_unfold)
+    kdp = _compute_kdp_from_phidp(x, phitot)
+    phi_unfold
 
-    return phitot, kdp
+    kdp['description'] = "Phase processing algorithm by Valentin Louf"
+    phi_unfold['description'] = "Phase processing algorithm by Valentin Louf"
+
+    return phi_unfold, kdp
