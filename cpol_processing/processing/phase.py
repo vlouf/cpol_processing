@@ -296,7 +296,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
 
         # Taking the average the direct neighbours of each ray.
         y = np.nanmean(unfphi[(ray - nposm): (ray + nposp), :], axis=0)
-        y[x < 5e3] = np.NaN  # Close to the radar is always extremly noisy
+        y[x < 5e3] = 0  # Close to the radar is always extremly noisy
 
         y = np.ma.masked_invalid(y)
         pos = ~y.mask
@@ -307,7 +307,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
 
         x_nomask = x[pos].filled(np.NaN)
         y_nomask = y[pos].filled(np.NaN)
-        y_nomask = y_nomask - y_nomask.min()
+        y_nomask = y_nomask - y_nomask[x_nomask > 5e3].min()
 
         # y_nomask[x < 5e3] = 0
         # Machine learning stuff.
