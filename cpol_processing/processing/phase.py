@@ -26,9 +26,12 @@ import scipy
 import netCDF4
 import numpy as np
 
-from numba import jit
 from scipy import integrate, ndimage
 from csu_radartools import csu_kdp
+
+from pyart.correct.phase_proc import smooth_and_trim_scan
+from sklearn.linear_model import LinearRegression
+from sklearn.isotonic import IsotonicRegression
 
 
 def fix_phidp_from_kdp(phidp, kdp, r, gatefilter):
@@ -201,6 +204,23 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
 
 
 def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP'):
+    """
+    Differential phase processing using machine learning technique.
+
+    Parameters:
+    ===========
+    radar: struct
+        Py-ART radar object structure.
+    gatefilter: GateFilter
+        Py-ART GateFilter object.
+    phidp_name: str
+        Name of the differential phase field.
+
+    Returns:
+    ========
+        phitot: dict
+            Processed differential phase.
+    """
     if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
         half_phi = True
         nyquist = 90
