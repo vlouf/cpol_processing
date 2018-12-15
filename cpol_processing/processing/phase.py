@@ -315,15 +315,18 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
         y_fit = ir.fit_transform(x_nomask, y_nomask)
 
         y_fit = y_fit - y_fit.min()
+        y_map = np.zeros((unfphi.shape[1])) + np.NaN
+        y_map[pos] = y_fit
+
         y_rslt = np.zeros((unfphi.shape[1]))
         last_valid = 0
 
-        for idx in range(len(y_rslt)):
-            if np.isnan(y_fit[idx]):
+        for idx, value in enumerate(y_map):
+            if np.isnan(value):
                 y_rslt[idx] = last_valid
             else:
-                y_rslt[idx] = y_fit[idx]
-                last_valid = y_fit[idx]
+                y_rslt[idx] = value
+                last_valid = value
 
         phitot[ray, :] = y_rslt
 
