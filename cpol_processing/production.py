@@ -280,11 +280,11 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         # gr.plot_ppi('radar_echo_classification', ax=the_ax[2], gatefilter=gatefilter)
         # the_ax[2].set_title(gr.generate_title('radar_echo_classification', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[2])
-        the_ax[2].set_title(gr.generate_title('radar_estimated_rain_rate', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+        # gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[2])
+        # the_ax[2].set_title(gr.generate_title('radar_estimated_rain_rate', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        # gr.plot_ppi('differential_reflectivity', ax=the_ax[3])
-        # the_ax[3].set_title(gr.generate_title('differential_reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+        gr.plot_ppi('differential_reflectivity', ax=the_ax[2])
+        the_ax[2].set_title(gr.generate_title('differential_reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
         gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[3], gatefilter=gatefilter)
         the_ax[3].set_title(gr.generate_title('corrected_differential_reflectivity',
@@ -555,7 +555,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     logger.info('Hydrometeors classification estimated.')
 
     # Rainfall rate
-    rainfall = hydrometeors.rainfall_rate(radar, gatefilter, kdp_name=kdp_field_name)
+    rainfall = hydrometeors.rainfall_rate(radar, gatefilter, kdp_name=kdp_field_name,
+                                          refl_name='DBZ_CORR', zdr_name='ZDR_CORR')
     radar.add_field("radar_estimated_rain_rate", rainfall)
     logger.info('Rainfall rate estimated.')
 
@@ -583,7 +584,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
     # Remove obsolete fields:
     for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV',
-                         'RHOHV', 'ZDR']:
+                         'RHOHV']:
         try:
             radar.fields.pop(obsolete_key)
         except KeyError:
