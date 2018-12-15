@@ -203,7 +203,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     return phidp_gg, kdp_gg
 
 
-def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP'):
+def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 360]):
     """
     Differential phase processing using machine learning technique.
 
@@ -215,12 +215,15 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP'):
         Py-ART GateFilter object.
     phidp_name: str
         Name of the differential phase field.
+    bounds: list
+        Bounds, in degree, for PHIDP (0, 360).
 
     Returns:
     ========
         phitot: dict
             Processed differential phase.
     """
+    # Check if PHIDP is in a 180 deg or 360 deg interval.
     if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
         half_phi = True
         nyquist = 90
@@ -237,6 +240,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP'):
     except Exception:
         pass
 
+    # Dealiasing PHIDP using velocity dealiasing technique.
     unfphidict = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter,
                                                     vel_field=phidp_name, nyquist_vel=nyquist)
     unfphi = unfphidict['data'].copy()
@@ -260,8 +264,9 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP'):
         if ray == nraymax - 1:
             nposp = 0
 
+        # Taking the average the direct neighbours of each ray.
         y = np.nanmean(unfphi[(ray - nposm): (ray + nposp), :], axis=0)
-        y[x < 5e3] = np.NaN
+        y[x < 5e3] = np.NaN  # Close to the radar is always extremly noisy
 
         y = np.ma.masked_invalid(y)
         pos = ~y.mask
@@ -269,11 +274,15 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP'):
         x_nomask = x[pos].filled(np.NaN)
         y_nomask = y[pos].filled(np.NaN)
 
-        ir = IsotonicRegression(0, 360)
+        # Machine learning stuff.
+        ir = IsotonicRegression(bounds[0], bounds[1])
         y_fit = ir.fit_transform(x_nomask, y_nomask - y_nomask.min())
 
         phitot[ray, pos] = y_fit - y_fit.min()
         phitot[ray, x < 5e3] = 0
+
+    if half_phi:
+        phitot /= 2
 
     phi_unfold = pyart.config.get_metadata('differential_phase')
     phi_unfold['data'] = phitot
