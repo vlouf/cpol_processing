@@ -198,3 +198,63 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         pass
 
     return phidp_gg, kdp_gg
+
+
+def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP'):
+    if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
+        half_phi = True
+        nyquist = 90
+        cutoff = 80
+    else:
+        half_phi = False
+        nyquist = 180
+        cutoff = 160
+
+    scale_phi = True
+    try:
+        if np.nanmean(radar.fields[phidp_name]['data'][gatefilter.gate_included][:, :50]) > 0:
+            scale_phi = False
+    except Exception:
+        pass
+
+    unfphidict = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter,
+                                                    vel_field=phidp_name, nyquist_vel=nyquist)
+    unfphi = unfphidict['data'].copy()
+    if half_phi:
+        unfphi *= 2
+    if scale_phi:
+        unfphi += 90
+
+    # Remove noise
+    unfphi[(unfphi < 0) | (radar.fields[phidp_name]['data'] > cutoff)] = np.NaN
+
+    phitot = np.zeros_like(unfphi) + np.NaN
+    unfphi[gatefilter.gate_excluded] = np.NaN
+    nraymax = unfphi.shape[0]
+    x = radar.range['data']
+
+    for ray in range(0, nraymax):
+        nposm, nposp = 1, 1
+        if ray == 0:
+            nposm = 0
+        if ray == nraymax - 1:
+            nposp = 0
+
+        y = np.nanmean(unfphi[(ray - nposm): (ray + nposp), :], axis=0)
+        y[x < 5e3] = np.NaN
+
+        y = np.ma.masked_invalid(y)
+        pos = ~y.mask
+
+        x_nomask = x[pos].filled(np.NaN)
+        y_nomask = y[pos].filled(np.NaN)
+
+        ir = IsotonicRegression(0, 360)
+        y_fit = ir.fit_transform(x_nomask, y_nomask - y_nomask.min())
+
+        phitot[ray, pos] = y_fit - y_fit.min()
+        phitot[ray, x < 5e3] = 0
+
+    phi_unfold = pyart.config.get_metadata('differential_phase')
+    phi_unfold['data'] = phitot
+    return phitot
