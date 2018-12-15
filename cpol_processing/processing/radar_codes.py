@@ -256,6 +256,7 @@ def get_field_names():
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'reflectivity'),
                     ('RHOHV_CORR', 'cross_correlation_ratio'),
+                    ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR', 'corrected_differential_reflectivity'),
                     ('PHIDP', 'differential_phase'),
                     ('PHIDP_BRINGI', 'bringi_differential_phase'),
