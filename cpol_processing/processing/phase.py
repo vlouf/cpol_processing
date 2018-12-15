@@ -253,6 +253,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
             Processed differential phase.
     """
     # Check if PHIDP is in a 180 deg or 360 deg interval.
+    phi = radar.fields[phidp_name]['data']
     if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
         half_phi = True
         nyquist = 90
