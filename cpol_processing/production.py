@@ -543,11 +543,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     logger.info('Attenuation on reflectivity corrected.')
 
     # Correct Attenuation ZDR
-    atten_spec_zdr, zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name,
-                                                                   kdp_name=kdp_field_name)
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, kdp_name=kdp_field_name)
     radar.add_field_like('ZDR', 'ZDR_CORR', zdr_corr, replace_existing=True)
-    radar.add_field('specific_attenuation_differential_reflectivity', atten_spec_zdr,
-                    replace_existing=True)
+    # radar.add_field('specific_attenuation_differential_reflectivity', atten_spec_zdr,
+    #                 replace_existing=True)
     logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification

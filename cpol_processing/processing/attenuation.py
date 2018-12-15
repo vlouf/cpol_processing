@@ -48,30 +48,30 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
     """
     r = radar.range['data']
     zdr = deepcopy(radar.fields[zdr_name]['data'])
-    kdp = radar.fields[kdp_name]['data']
+    # kdp = radar.fields[kdp_name]['data']
     phi = radar.fields[phidp_name]['data']
     atten = 2 * alpha * phi
 
-    dr = (r[1] - r[0]) / 1000  # km
+    # dr = (r[1] - r[0]) / 1000  # km
 
     # Check if KDP is a masked array.
-    if np.ma.isMaskedArray(kdp):
-        kdp = kdp.filled(0)  # 0 is the neutral value for a sum
-    else:
-        kdp[np.isnan(kdp)] = 0
-
-    atten_specific = alpha * kdp  # Bringi relationship
-    atten_specific[np.isnan(atten_specific)] = 0
+    # if np.ma.isMaskedArray(kdp):
+    #     kdp = kdp.filled(0)  # 0 is the neutral value for a sum
+    # else:
+    #     kdp[np.isnan(kdp)] = 0
+    #
+    # atten_specific = alpha * kdp  # Bringi relationship
+    # atten_specific[np.isnan(atten_specific)] = 0
     # Path integrated attenuation
     # atten = 2 * np.cumsum(atten_specific, axis=1) * dr
 
     zdr_corr = zdr + atten
 
-    atten_meta = {'data': atten_specific, 'units': 'dB/km',
-                  'standard_name': 'specific_attenuation_zdr',
-                  'long_name': 'Differential reflectivity specific attenuation'}
+    # atten_meta = {'data': atten_specific, 'units': 'dB/km',
+    #               'standard_name': 'specific_attenuation_zdr',
+    #               'long_name': 'Differential reflectivity specific attenuation'}
 
-    return atten_meta, zdr_corr
+    return zdr_corr
 
 
 def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
