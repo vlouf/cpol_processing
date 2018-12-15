@@ -301,12 +301,12 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
         y = np.ma.masked_invalid(y)
         pos = ~y.mask
 
-        if len(y[pos]) == 0:
-            phitot[ray, :] = 0
-            continue
-
         x_nomask = x[pos].filled(np.NaN)
         y_nomask = y[pos].filled(np.NaN)
+
+        if len(y_nomask[x_nomask > 5e3]) == 0:
+            phitot[ray, :] = 0
+            continue
         y_nomask = y_nomask - y_nomask[x_nomask > 5e3].min()
 
         # y_nomask[x < 5e3] = 0
