@@ -326,7 +326,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
                 y_rslt[idx] = y_fit[idx]
                 last_valid = y_fit[idx]
 
-        phitot[ray, pos] = y_rslt
+        phitot[ray, :] = y_rslt
 
     if half_phi:
         phitot /= 2
