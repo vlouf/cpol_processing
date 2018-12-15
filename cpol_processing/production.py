@@ -506,7 +506,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     kdp_field_name = 'PHIDP_VAL'
     phidp_field_name = 'KDP_VAL'
 
-
     # if use_giangrande:
     #     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
     #     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)

@@ -303,16 +303,30 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
 
         x_nomask = x[pos].filled(np.NaN)
         y_nomask = y[pos].filled(np.NaN)
+        y_nomask = y_nomask - y_nomask.min()
 
         if len(y_nomask) == 0:
             phitot[ray, :] = 0
             continue
+
+        # y_nomask[x < 5e3] = 0
         # Machine learning stuff.
         ir = IsotonicRegression(bounds[0], bounds[1])
-        y_fit = ir.fit_transform(x_nomask, y_nomask - y_nomask.min())
+        y_fit = ir.fit_transform(x_nomask, y_nomask)
 
-        phitot[ray, pos] = y_fit - y_fit.min()
-        phitot[ray, x < 5e3] = 0
+        y_fit = y_fit - y_fit.min()
+        y_fit[x < 5e3] = 0
+        y_rslt = np.zeros((unfphi.shape[1]))
+        last_valid = 0
+
+        for idx in len(y_rslt):
+            if np.isnan(y_fit[idx]):
+                y_rslt[idx] = last_valid
+            else:
+                y_rslt[idx] = y_fit[idx]
+                last_valid = y_fit[idx]
+
+        phitot[ray, pos] = y_rslt
 
     if half_phi:
         phitot /= 2
