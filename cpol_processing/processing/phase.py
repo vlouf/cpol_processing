@@ -315,7 +315,6 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
         y_fit = ir.fit_transform(x_nomask, y_nomask)
 
         y_fit = y_fit - y_fit.min()
-        y_fit[x < 5e3] = 0
         y_rslt = np.zeros((unfphi.shape[1]))
         last_valid = 0
 
