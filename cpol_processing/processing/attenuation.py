@@ -41,19 +41,17 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
 
     Returns:
     ========
-        atten_meta: dict
-            Specific attenuation.
         zdr_corr: array
             Attenuation corrected differential reflectivity.
     """
     r = radar.range['data']
-    zdr = radar.fields[zdr_name]['data'].copy()
-    phi = radar.fields[phidp_name]['data'].copy()
+    zdr = radar.fields[zdr_name]['data']
+    phi = radar.fields[phidp_name]['data']
 
-    atten = 0.016 * phi  # Z-PHI coefficient from Bringi et al. 2001
-    zdr_corr = zdr + atten
+    # Z-PHI coefficient from Bringi et al. 2001
+    zdr_corr = zdr + 0.016 * phi
 
-    return zdr_corr
+    return zdr_corr.copy()
 
 
 def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',

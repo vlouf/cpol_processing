@@ -268,7 +268,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     # Initializing figure.
     with pl.style.context('seaborn-paper'):
         gr = pyart.graph.RadarDisplay(radar)
-        fig, the_ax = pl.subplots(3, 3, figsize=(12, 10), sharex=True, sharey=True)
+        fig, the_ax = pl.subplots(4, 3, figsize=(12, 15), sharex=True, sharey=True)
         the_ax = the_ax.flatten()
         # Plotting reflectivity
         gr.plot_ppi('total_power', ax=the_ax[0])
@@ -277,49 +277,49 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         gr.plot_ppi('reflectivity', ax=the_ax[1], gatefilter=gatefilter)
         the_ax[1].set_title(gr.generate_title('reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        # gr.plot_ppi('radar_echo_classification', ax=the_ax[2], gatefilter=gatefilter)
-        # the_ax[2].set_title(gr.generate_title('radar_echo_classification', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[2])
+        the_ax[2].set_title(gr.generate_title('radar_estimated_rain_rate', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        # gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[2])
-        # the_ax[2].set_title(gr.generate_title('radar_estimated_rain_rate', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('differential_reflectivity', ax=the_ax[2])
-        the_ax[2].set_title(gr.generate_title('differential_reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[3], gatefilter=gatefilter)
-        the_ax[3].set_title(gr.generate_title('corrected_differential_reflectivity',
-                                              sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('differential_phase', ax=the_ax[4], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        the_ax[4].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+        gr.plot_ppi('differential_phase', ax=the_ax[3], vmin=-180, vmax=180, cmap='pyart_Wild25')
+        the_ax[3].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
         try:
-            gr.plot_ppi('corrected_differential_phase', ax=the_ax[5], vmin=-180, vmax=180, cmap='pyart_Wild25')
-            the_ax[5].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
+            gr.plot_ppi('corrected_differential_phase', ax=the_ax[4], vmin=-180, vmax=180, cmap='pyart_Wild25')
+            the_ax[4].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[6], vmin=0.5, vmax=1.05)
-            the_ax[6].set_title(gr.generate_title('cross_correlation_ratio',
+            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[5], vmin=0.5, vmax=1.05)
+            the_ax[5].set_title(gr.generate_title('cross_correlation_ratio',
                                                   sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('folded_velocity', ax=the_ax[7], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            the_ax[7].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('folded_velocity', ax=the_ax[6], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            the_ax[6].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('velocity', ax=the_ax[8], gatefilter=gatefilter,
+            gr.plot_ppi('velocity', ax=the_ax[7], gatefilter=gatefilter,
                         cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            the_ax[8].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
+            the_ax[7].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
+
+        gr.plot_ppi('differential_reflectivity', ax=the_ax[9])
+        the_ax[9].set_title(gr.generate_title('differential_reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
+        gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[10], gatefilter=gatefilter)
+        the_ax[10].set_title(gr.generate_title('corrected_differential_reflectivity',
+                                              sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+
+        gr.plot_ppi('radar_echo_classification', ax=the_ax[11])
+        the_ax[11].set_title(gr.generate_title('radar_echo_classification', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
         for ax_sl in the_ax:
             gr.plot_range_rings([50, 100, 150], ax=ax_sl)
