@@ -50,6 +50,9 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
     zdr = radar.fields[zdr_name]['data'].copy()
     kdp = radar.fields[kdp_name]['data'].copy()
     phi = radar.fields[phidp_name]['data']
+
+    kdp[(kdp < -4)] = 0
+    kdp[kdp > 15] = 0
     # atten = 2 * alpha * phi
 
     dr = (r[1] - r[0]) / 1000  # km

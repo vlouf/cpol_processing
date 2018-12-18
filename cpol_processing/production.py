@@ -98,10 +98,10 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         _mkdir(figure_path)
 
     outdir_150km = os.path.join(outpath_grid, "GRID_150km_2500m")
-    outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")
+    # outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")
     outdir_150km_highres = os.path.join(outpath_grid, "GRID_150km_1000m")
     _mkdir(outdir_150km)
-    _mkdir(outdir_70km)
+    # _mkdir(outdir_70km)
     _mkdir(outdir_150km_highres)
 
     # Get logger.
@@ -213,7 +213,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km_highres,
                                 rmax=145e3, xyres=1000, linearz=linearz)
         # Half-range with a 1 km grid resolution
-        gridding.gridding_radar(radar, radar_start_date, outpath=outdir_70km, rmax=70e3, xyres=1000, linearz=linearz)
+        # gridding.gridding_radar(radar, radar_start_date, outpath=outdir_70km, rmax=70e3, xyres=1000, linearz=linearz)
 
         logger.info('Gridding done.')
     except Exception:
