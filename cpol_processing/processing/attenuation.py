@@ -18,8 +18,7 @@ import pyart
 import numpy as np
 
 
-def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
-                            kdp_name='KDP_GG', alpha=0.016):
+def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', alpha=0.016):
     """
     Correct attenuation on differential reflectivity. KDP_GG has been
     cleaned of noise, that's why we use it.
@@ -51,7 +50,11 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
     # Z-PHI coefficient from Bringi et al. 2001
     zdr_corr = zdr + 0.016 * phi
 
-    return zdr_corr.copy()
+    zdr_meta = pyart.config.get_metadata('differential_reflectivity')
+    zdr_meta['description'] = 'Attenuation corrected differential reflectivity using Bringi et al. 2001.'
+    zdr_meta['data'] = zdr_corr.copy()
+
+    return zdr_meta
 
 
 def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',

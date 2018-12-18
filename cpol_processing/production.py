@@ -285,15 +285,15 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
 
         try:
             gr.plot_ppi('corrected_differential_phase', ax=the_ax[4], vmin=-180, vmax=180, cmap='pyart_Wild25')
-            the_ax[4].set_title(gr.generate_title('giangrande_differential_phase', sweep=0,
+            the_ax[4].set_title(gr.generate_title('corrected_differential_phase', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[5], vmin=0.5, vmax=1.05)
-            the_ax[5].set_title(gr.generate_title('cross_correlation_ratio',
-                                                  sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
+            gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[4], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+            the_ax[4].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
+                                                  datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
@@ -308,6 +308,13 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
                         cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             the_ax[7].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))
+        except KeyError:
+            pass
+
+        try:
+            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[8], vmin=0.5, vmax=1.05)
+            the_ax[8].set_title(gr.generate_title('cross_correlation_ratio',
+                                                  sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
@@ -533,7 +540,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         # Dealias velocity.
         vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-
         logger.info('Doppler velocity unfolded.')
 
     # Correct Attenuation ZH
@@ -543,8 +549,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     logger.info('Attenuation on reflectivity corrected.')
 
     # Correct Attenuation ZDR
-    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, kdp_name=kdp_field_name, zdr_name='ZDR_CORR')
-    radar.add_field_like('ZDR_CORR', 'ZDR_CORR_ATTEN', zdr_corr, replace_existing=True)
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
+    radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
     logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification
