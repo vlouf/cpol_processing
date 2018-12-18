@@ -30,6 +30,12 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
     Correct attenuation on differential reflectivity. KDP_GG has been
     cleaned of noise, that's why we use it.
 
+    V. N. Bringi, T. D. Keenan and V. Chandrasekar, "Correcting C-band radar
+    reflectivity and differential reflectivity data for rain attenuation: a
+    self-consistent method with constraints," in IEEE Transactions on Geoscience
+    and Remote Sensing, vol. 39, no. 9, pp. 1906-1915, Sept. 2001.
+    doi: 10.1109/36.951081
+
     Parameters:
     ===========
         radar:
@@ -48,31 +54,10 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
     """
     r = radar.range['data']
     zdr = radar.fields[zdr_name]['data'].copy()
-    kdp = radar.fields[kdp_name]['data'].copy()
-    phi = radar.fields[phidp_name]['data']
+    phi = radar.fields[phidp_name]['data'].copy()
 
-    kdp[(kdp < -4)] = 0
-    kdp[kdp > 15] = 0
-    # atten = 2 * alpha * phi
-
-    dr = (r[1] - r[0]) / 1000  # km
-
-    # Check if KDP is a masked array.
-    if np.ma.isMaskedArray(kdp):
-        kdp = kdp.filled(0)  # 0 is the neutral value for a sum
-    else:
-        kdp[np.isnan(kdp)] = 0
-
-    atten_specific = alpha * kdp  # Bringi relationship
-    atten_specific[np.isnan(atten_specific)] = 0
-    # Path integrated attenuation
-    atten = 2 * np.cumsum(atten_specific, axis=1) * dr
-
+    atten = 0.016 * phi  # Z-PHI coefficient from Bringi et al. 2001
     zdr_corr = zdr + atten
-
-    # atten_meta = {'data': atten_specific, 'units': 'dB/km',
-    #               'standard_name': 'specific_attenuation_zdr',
-    #               'long_name': 'Differential reflectivity specific attenuation'}
 
     return zdr_corr
 
