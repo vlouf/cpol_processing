@@ -232,8 +232,8 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
         corr_zdr: array
             Corrected differential reflectivity.
     """
-    zdr = radar.fields[zdr_name]['data']
-    snr = radar.fields[snr_name]['data']
+    zdr = radar.fields[zdr_name]['data'].copy()
+    snr = radar.fields[snr_name]['data'].copy()
     alpha = 1.48
     natural_zdr = 10**(0.1 * zdr)
     natural_snr = 10**(0.1 * snr)
