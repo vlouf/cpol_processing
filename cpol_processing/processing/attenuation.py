@@ -13,12 +13,6 @@ Codes for correcting and estimating attenuation on ZH and ZDR.
     correct_attenuation_zh
     correct_attenuation_zh_pyart
 """
-
-# Python Standard Library
-import copy
-import datetime
-from copy import deepcopy
-
 # Other Libraries
 import pyart
 import numpy as np

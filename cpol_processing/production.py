@@ -543,25 +543,23 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     logger.info('Attenuation on reflectivity corrected.')
 
     # Correct Attenuation ZDR
-    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, kdp_name=kdp_field_name)
-    radar.add_field_like('ZDR', 'ZDR_CORR', zdr_corr, replace_existing=True)
-    # radar.add_field('specific_attenuation_differential_reflectivity', atten_spec_zdr,
-    #                 replace_existing=True)
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, kdp_name=kdp_field_name, , zdr_name='ZDR_CORR')
+    radar.add_field_like('ZDR_CORR', 'ZDR_CORR_ATTEN', zdr_corr, replace_existing=True)
     logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification
-    hydro_class = hydrometeors.hydrometeor_classification(radar, kdp_name=kdp_field_name)
+    hydro_class = hydrometeors.hydrometeor_classification(radar, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
     radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
     logger.info('Hydrometeors classification estimated.')
 
     # Rainfall rate
     rainfall = hydrometeors.rainfall_rate(radar, gatefilter, kdp_name=kdp_field_name,
-                                          refl_name='DBZ_CORR', zdr_name='ZDR_CORR')
+                                          refl_name='DBZ_CORR', zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("radar_estimated_rain_rate", rainfall)
     logger.info('Rainfall rate estimated.')
 
     # DSD retrieval
-    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter, kdp_name=kdp_field_name)
+    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("D0", d0_dict)
     radar.add_field("NW", nw_dict)
     logger.info('DSD estimated.')
@@ -583,7 +581,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     radar = radar_codes.rename_radar_fields(radar)
 
     # Remove obsolete fields:
-    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV',
+    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV', 'ZDR_CORR',
                          'RHOHV']:
         try:
             radar.fields.pop(obsolete_key)
