@@ -5,7 +5,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 04/04/2017
-@date: 6/12/2018
+@date: 19/12/2018
 
 .. autosummary::
     :toctree: generated/
@@ -16,10 +16,8 @@ Codes for correcting and estimating various radar and meteorological parameters.
     check_reflectivity
     correct_rhohv
     correct_zdr
-    get_field_names
     get_radiosoundings
     read_radar
-    rename_radar_fields
     snr_and_sounding
 """
 # Python Standard Library
@@ -242,43 +240,6 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
     return corr_zdr
 
 
-def get_field_names():
-    """
-    Fields name definition.
-
-    Returns:
-    ========
-        fields_names: array
-            Containing [(old key, new key), ...]
-    """
-    fields_names = [('VEL', 'folded_velocity'),
-                    ('VEL_UNFOLDED', 'velocity'),
-                    ('DBZ', 'total_power'),
-                    ('DBZ_CORR', 'reflectivity'),
-                    ('RHOHV_CORR', 'cross_correlation_ratio'),
-                    ('ZDR', 'differential_reflectivity'),
-                    ('ZDR_CORR', 'differential_reflectivity'),
-                    ('ZDR_CORR_ATTEN', 'corrected_differential_reflectivity'),
-                    ('PHIDP', 'differential_phase'),
-                    ('PHIDP_BRINGI', 'bringi_differential_phase'),
-                    ('PHIDP_GG', 'giangrande_differential_phase'),
-                    ('PHIDP_VAL', 'corrected_differential_phase'),
-                    ('KDP', 'specific_differential_phase'),
-                    ('KDP_BRINGI', 'bringi_specific_differential_phase'),
-                    ('KDP_GG', 'giangrande_specific_differential_phase'),
-                    ('KDP_VAL', 'corrected_specific_differential_phase'),
-                    ('WIDTH', 'spectrum_width'),
-                    ('SNR', 'signal_to_noise_ratio'),
-                    ('NCP', 'normalized_coherent_power'),
-                    ('DBZV', 'reflectivity_v'),
-                    ('WRADV', 'spectrum_width_v'),
-                    ('SNRV', 'signal_to_noise_ratio_v'),
-                    ('SQIV', 'normalized_coherent_power_v'),
-                    ]
-
-    return fields_names
-
-
 def get_radiosoundings(sound_dir, radar_start_date):
     """
     Find the radiosoundings
@@ -368,39 +329,6 @@ def read_radar(radar_file_name):
                 radar.add_field(newkey, radar.fields.pop(mykey))
             except Exception:
                 continue
-
-    return radar
-
-
-def rename_radar_fields(radar):
-    """
-    Rename radar fields from their old name to the Py-ART default name.
-
-    Parameter:
-    ==========
-        radar:
-            Py-ART radar structure.
-
-    Returns:
-    ========
-        radar:
-            Py-ART radar structure.
-    """
-    fields_names = get_field_names()
-
-    # Try to remove occasional fields.
-    try:
-        vdop_art = radar.fields['PHIDP_CORR']
-        radar.add_field('PHIDP', radar.fields.pop('PHIDP_CORR'), replace_existing=True)
-    except KeyError:
-        pass
-
-    # Parse array old_key, new_key
-    for old_key, new_key in fields_names:
-        try:
-            radar.add_field(new_key, radar.fields.pop(old_key), replace_existing=True)
-        except KeyError:
-            continue
 
     return radar
 

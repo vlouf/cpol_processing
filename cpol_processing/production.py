@@ -583,14 +583,42 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         radar.fields.pop("RHOHV")
         radar.fields.pop("RHOHV_CORR")
 
-    # Rename fields to pyart defaults.
-    radar = radar_codes.rename_radar_fields(radar)
-
     # Remove obsolete fields:
     for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV', 'ZDR_CORR',
                          'RHOHV']:
         try:
             radar.fields.pop(obsolete_key)
+        except KeyError:
+            continue
+
+    # Rename fields to pyart defaults.
+    fields_names = [('VEL', 'folded_velocity'),
+                    ('VEL_UNFOLDED', 'velocity'),
+                    ('DBZ', 'total_power'),
+                    ('DBZ_CORR', 'reflectivity'),
+                    ('RHOHV_CORR', 'cross_correlation_ratio'),
+                    ('ZDR', 'differential_reflectivity'),
+                    ('ZDR_CORR_ATTEN', 'corrected_differential_reflectivity'),
+                    ('PHIDP', 'differential_phase'),
+                    ('PHIDP_BRINGI', 'bringi_differential_phase'),
+                    ('PHIDP_GG', 'giangrande_differential_phase'),
+                    ('PHIDP_VAL', 'corrected_differential_phase'),
+                    ('KDP', 'specific_differential_phase'),
+                    ('KDP_BRINGI', 'bringi_specific_differential_phase'),
+                    ('KDP_GG', 'giangrande_specific_differential_phase'),
+                    ('KDP_VAL', 'corrected_specific_differential_phase'),
+                    ('WIDTH', 'spectrum_width'),
+                    ('SNR', 'signal_to_noise_ratio'),
+                    ('NCP', 'normalized_coherent_power'),
+                    ('DBZV', 'reflectivity_v'),
+                    ('WRADV', 'spectrum_width_v'),
+                    ('SNRV', 'signal_to_noise_ratio_v'),
+                    ('SQIV', 'normalized_coherent_power_v'),
+                   ]
+
+    for old_key, new_key in fields_names:
+        try:
+            radar.add_field(new_key, radar.fields.pop(old_key), replace_existing=True)
         except KeyError:
             continue
 
