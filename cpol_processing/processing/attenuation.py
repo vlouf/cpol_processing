@@ -62,7 +62,7 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
 
     atten_specific = alpha * kdp  # Bringi relationship
     atten_specific[np.isnan(atten_specific)] = 0
-    Path integrated attenuation
+    # Path integrated attenuation
     atten = 2 * np.cumsum(atten_specific, axis=1) * dr
 
     zdr_corr = zdr + atten
