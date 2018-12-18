@@ -543,7 +543,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     logger.info('Attenuation on reflectivity corrected.')
 
     # Correct Attenuation ZDR
-    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, kdp_name=kdp_field_name, , zdr_name='ZDR_CORR')
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, kdp_name=kdp_field_name, zdr_name='ZDR_CORR')
     radar.add_field_like('ZDR_CORR', 'ZDR_CORR_ATTEN', zdr_corr, replace_existing=True)
     logger.info('Attenuation on ZDR corrected.')
 
