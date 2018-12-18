@@ -47,23 +47,23 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL',
             Attenuation corrected differential reflectivity.
     """
     r = radar.range['data']
-    zdr = deepcopy(radar.fields[zdr_name]['data'])
-    # kdp = radar.fields[kdp_name]['data']
+    zdr = radar.fields[zdr_name]['data'].copy()
+    kdp = radar.fields[kdp_name]['data'].copy()
     phi = radar.fields[phidp_name]['data']
-    atten = 2 * alpha * phi
+    # atten = 2 * alpha * phi
 
-    # dr = (r[1] - r[0]) / 1000  # km
+    dr = (r[1] - r[0]) / 1000  # km
 
     # Check if KDP is a masked array.
-    # if np.ma.isMaskedArray(kdp):
-    #     kdp = kdp.filled(0)  # 0 is the neutral value for a sum
-    # else:
-    #     kdp[np.isnan(kdp)] = 0
-    #
-    # atten_specific = alpha * kdp  # Bringi relationship
-    # atten_specific[np.isnan(atten_specific)] = 0
-    # Path integrated attenuation
-    # atten = 2 * np.cumsum(atten_specific, axis=1) * dr
+    if np.ma.isMaskedArray(kdp):
+        kdp = kdp.filled(0)  # 0 is the neutral value for a sum
+    else:
+        kdp[np.isnan(kdp)] = 0
+
+    atten_specific = alpha * kdp  # Bringi relationship
+    atten_specific[np.isnan(atten_specific)] = 0
+    Path integrated attenuation
+    atten = 2 * np.cumsum(atten_specific, axis=1) * dr
 
     zdr_corr = zdr + atten
 
@@ -104,13 +104,13 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
                                                               phidp_field=phidp_field)
 
     # Correct DBZ from attenuation manually.
-    dbz = radar.fields[refl_field]['data'].copy()
-    att = atten_meta['data']
-    r = radar.range['data']
-    dr = r[1] - r[0]
+    # dbz = radar.fields[refl_field]['data'].copy()
+    # att = atten_meta['data']
+    # r = radar.range['data']
+    # dr = r[1] - r[0]
 
-    int_att = np.cumsum(att, axis=1) * dr / 1e3
-    dbz_corr = dbz + int_att
-    zh_corr['data'] = dbz_corr
+    # int_att = np.cumsum(att, axis=1) * dr / 1e3
+    # dbz_corr = dbz + int_att
+    # zh_corr['data'] = dbz_corr
 
     return atten_meta, zh_corr
