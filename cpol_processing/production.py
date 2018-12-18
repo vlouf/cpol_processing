@@ -291,8 +291,8 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
             pass
 
         try:
-            gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[4], vmin=-2, vmax=5, cmap='pyart_Theodore16')
-            the_ax[4].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
+            gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[5], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+            the_ax[5].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
