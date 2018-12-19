@@ -555,7 +555,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     # logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification
-    hydro_class = hydrometeors.hydrometeor_classification(radar, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
+    hydro_class = hydrometeors.hydrometeor_classification(radar, gatefilter, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
     radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
     logger.info('Hydrometeors classification estimated.')
 
