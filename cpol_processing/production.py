@@ -622,6 +622,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
         except KeyError:
             continue
 
+    # for key in radar.fields.keys():
+    #     radar.fields[key]['data'] = radar.fields[key]['data'].astype(np.float32)
+
     # Treatment is finished!
     end_time = time.time()
     logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name), (end_time - start_time))

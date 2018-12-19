@@ -26,6 +26,7 @@ import scipy
 import netCDF4
 import numpy as np
 
+from numba import jit
 from scipy import integrate, ndimage
 from csu_radartools import csu_kdp
 
@@ -63,8 +64,7 @@ def fix_phidp_from_kdp(phidp, kdp, r, gatefilter):
     return phidp, kdp
 
 
-def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", ncp_name="NCP",
-                 rhohv_name="RHOHV_CORR", refl_field='DBZ'):
+def phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF", refl_field='DBZ'):
     """
     Compute PHIDP and KDP Bringi.
 
@@ -232,7 +232,7 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     return kdp_meta
 
 
-def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 360]):
+def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='DBZ', bounds=[0, 360]):
     """
     Differential phase processing using machine learning technique.
 
@@ -253,15 +253,8 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
             Processed differential phase.
     """
     # Check if PHIDP is in a 180 deg or 360 deg interval.
-    phi = radar.fields[phidp_name]['data']
-    if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
-        half_phi = True
-        nyquist = 90
-        cutoff = 80
-    else:
-        half_phi = False
-        nyquist = 180
-        cutoff = 160
+    nyquist = 90
+    cutoff = 80
 
     scale_phi = True
     try:
@@ -273,9 +266,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
     # Dealiasing PHIDP using velocity dealiasing technique.
     unfphidict = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter,
                                                     vel_field=phidp_name, nyquist_vel=nyquist)
-    unfphi = unfphidict['data'].copy()
-    if half_phi:
-        unfphi *= 2
+    unfphi = unfphidict['data']
     if scale_phi:
         unfphi += 90
 
@@ -284,7 +275,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
 
     phitot = np.zeros_like(unfphi) + np.NaN
     unfphi[gatefilter.gate_excluded] = np.NaN
-    nraymax = unfphi.shape[0]
+    nraymax, ngatemax = unfphi.shape
     x = radar.range['data']
 
     for ray in range(0, nraymax):
@@ -318,29 +309,35 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', bounds=[0, 
         y_map = np.zeros((unfphi.shape[1])) + np.NaN
         y_map[pos] = y_fit
 
-        y_rslt = np.zeros((unfphi.shape[1]))
-        last_valid = 0
-
-        for idx, value in enumerate(y_map):
-            if np.isnan(value):
-                y_rslt[idx] = last_valid
-            else:
-                y_rslt[idx] = value
-                last_valid = value
-
-        phitot[ray, :] = y_rslt
-
-    if half_phi:
-        phitot /= 2
+        phitot[ray, :] = populate_radials(y_map, ngatemax)
 
     phi_unfold = pyart.config.get_metadata('differential_phase')
+    phi_unfold['valid_min'] = 0
+    phi_unfold['valid_max'] = 360
     phi_unfold['data'] = phitot
 
     # Computing KDP
-    kdp = _compute_kdp_from_phidp(x, phitot)
-    phi_unfold
+    # kdp = _compute_kdp_from_phidp(x, phitot)
+    radar.add_field('PHI_UNF', phi_unfold)
+    _, kdp = phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
+    radar.fields.pop('PHI_UNF')
+    # phi_unfold
 
     kdp['description'] = "Phase processing algorithm by Valentin Louf"
     phi_unfold['description'] = "Phase processing algorithm by Valentin Louf"
 
     return phi_unfold, kdp
+
+
+@jit(nopython=True)
+def populate_radials(y_map, ngatemax):
+    y_rslt = np.zeros((ngatemax))
+    last_valid = 0
+    for idx, value in enumerate(y_map):
+        if np.isnan(value):
+            y_rslt[idx] = last_valid
+        else:
+            y_rslt[idx] = value
+            last_valid = value
+
+    return y_rslt

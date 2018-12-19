@@ -4,13 +4,12 @@ Codes for correcting and estimating attenuation on ZH and ZDR.
 @title: attenuation
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 20/11/2017
+@date: 19/12/2018
 
 .. autosummary::
     :toctree: generated/
 
     correct_attenuation_zdr
-    correct_attenuation_zh
     correct_attenuation_zh_pyart
 """
 # Other Libraries
@@ -43,16 +42,13 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', 
         zdr_corr: array
             Attenuation corrected differential reflectivity.
     """
-    r = radar.range['data']
-    zdr = radar.fields[zdr_name]['data']
-    phi = radar.fields[phidp_name]['data']
+    zdr = radar.fields[zdr_name]['data'].copy()
+    phi = radar.fields[phidp_name]['data'].copy()
 
     # Z-PHI coefficient from Bringi et al. 2001
-    zdr_corr = zdr + 0.016 * phi
-
     zdr_meta = pyart.config.get_metadata('differential_reflectivity')
     zdr_meta['description'] = 'Attenuation corrected differential reflectivity using Bringi et al. 2001.'
-    zdr_meta['data'] = zdr_corr.copy()
+    zdr_meta['data'] = zdr + 0.016 * phi
 
     return zdr_meta
 
@@ -85,15 +81,5 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
                                                               ncp_field=rhv_field,
                                                               rhv_field=rhv_field,
                                                               phidp_field=phidp_field)
-
-    # Correct DBZ from attenuation manually.
-    # dbz = radar.fields[refl_field]['data'].copy()
-    # att = atten_meta['data']
-    # r = radar.range['data']
-    # dr = r[1] - r[0]
-
-    # int_att = np.cumsum(att, axis=1) * dr / 1e3
-    # dbz_corr = dbz + int_att
-    # zh_corr['data'] = dbz_corr
 
     return atten_meta, zh_corr
