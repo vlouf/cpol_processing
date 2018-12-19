@@ -28,6 +28,7 @@ import numpy as np
 
 from numba import jit
 from scipy import integrate, ndimage
+from scipy.interpolate import interp1d
 from csu_radartools import csu_kdp
 
 from pyart.correct.phase_proc import smooth_and_trim_scan
@@ -226,10 +227,10 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     sobel = sobel[::-1]
     gate_spacing = (r[1] - r[0]) / 1000.
     kdp = (scipy.ndimage.filters.convolve1d((phidp), sobel, axis=1) / ((window_len / 3) * 2 * gate_spacing))
-    kdp[kdp > 12] = 12
+    # kdp[kdp > 12] = 12
     kdp[kdp < -4] = -4
     kdp_meta = pyart.config.get_metadata('specific_differential_phase')
-    kdp_meta['data'] = kdp
+    kdp_meta['data'] = kdp / 2
 
     return kdp_meta
 
@@ -282,15 +283,11 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
     x = radar.range['data']
 
     for ray in range(0, nraymax):
-        nposm, nposp = 1, 1
-        if ray == 0:
-            nposm = 0
-        if ray == nraymax - 1:
-            nposp = 0
-
         # Taking the average the direct neighbours of each ray.
-        y = np.nanmean(unfphi[(ray - nposm): (ray + nposp), :], axis=0)
+        y = unfphi[ray, :]
         y[x < 5e3] = 0  # Close to the radar is always extremly noisy
+
+        y = elim_isolated(y)
 
         y = np.ma.masked_invalid(y)
         pos = ~y.mask
@@ -301,18 +298,17 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
         if len(y_nomask[x_nomask > 5e3]) == 0:
             phitot[ray, :] = 0
             continue
-        y_nomask = y_nomask - y_nomask[x_nomask > 5e3].min()
 
         # y_nomask[x < 5e3] = 0
         # Machine learning stuff.
-        ir = IsotonicRegression(bounds[0], bounds[1])
+        ir = IsotonicRegression(-180, bounds[1])
         y_fit = ir.fit_transform(x_nomask, y_nomask)
 
         y_fit = y_fit - y_fit.min()
         y_map = np.zeros((unfphi.shape[1])) + np.NaN
         y_map[pos] = y_fit
 
-        phitot[ray, :] = populate_radials(y_map, ngatemax)
+        phitot[ray, :] =  populate_radials(fill_nan(y_map), ngatemax)
 
     phi_unfold = pyart.config.get_metadata('differential_phase')
     phi_unfold['valid_min'] = 0
@@ -344,3 +340,22 @@ def populate_radials(y_map, ngatemax):
             last_valid = value
 
     return y_rslt
+
+
+@jit(nopython=True)
+def elim_isolated(mydata):
+    for idx in range(1, len(mydata) - 1):
+        if np.isnan(mydata[idx - 1]) and np.isnan(mydata[idx + 1]):
+            mydata[idx] = np.NaN
+    return mydata
+
+
+def fill_nan(A):
+    '''
+    interpolate to fill nan values
+    '''
+    inds = np.arange(A.shape[0])
+    good = np.where(np.isfinite(A))
+    f = interp1d(inds[good], A[good], bounds_error=False)
+    B = np.where(np.isfinite(A), A, f(inds))
+    return B
