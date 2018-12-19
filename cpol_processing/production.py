@@ -268,7 +268,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     # Initializing figure.
     with pl.style.context('seaborn-paper'):
         gr = pyart.graph.RadarDisplay(radar)
-        fig, the_ax = pl.subplots(4, 3, figsize=(12, 15), sharex=True, sharey=True)
+        fig, the_ax = pl.subplots(4, 3, figsize=(14, 15), sharex=True, sharey=True)
         the_ax = the_ax.flatten()
         # Plotting reflectivity
         gr.plot_ppi('total_power', ax=the_ax[0])

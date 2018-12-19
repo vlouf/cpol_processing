@@ -268,6 +268,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
                                                     vel_field=phidp_name, nyquist_vel=nyquist)
     unfphi = unfphidict['data']
     if scale_phi:
+        radar.fields[phidp_name]['data'] += 90
         unfphi += 90
 
     # Remove noise
