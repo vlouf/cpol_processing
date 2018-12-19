@@ -267,8 +267,9 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
         pass
 
     # Dealiasing PHIDP using velocity dealiasing technique.
-    unfphidict = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter,
-                                                    vel_field=phidp_name, nyquist_vel=nyquist)
+    unfphidict = pyart.correct.dealias_unwrap_phase(radar, gatefilter=gatefilter, skip_checks=True,
+                                                    vel_field=phidp_name, nyquist_vel=90)
+    # pyart.correct.dealias_region_based(radar, gatefilter=gatefilter, vel_field=phidp_name, nyquist_vel=nyquist)
     unfphi = unfphidict['data']
     if scale_phi:
         radar.fields[phidp_name]['data'] += 90
