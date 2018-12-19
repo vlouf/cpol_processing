@@ -226,6 +226,8 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     sobel = sobel[::-1]
     gate_spacing = (r[1] - r[0]) / 1000.
     kdp = (scipy.ndimage.filters.convolve1d((phidp), sobel, axis=1) / ((window_len / 3) * 2 * gate_spacing))
+    kdp[kdp > 12] = 12
+    kdp[kdp < -4] = -4
     kdp_meta = pyart.config.get_metadata('specific_differential_phase')
     kdp_meta['data'] = kdp
 
