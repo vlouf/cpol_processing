@@ -317,14 +317,14 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
     phi_unfold['data'] = phitot
 
     # Computing KDP
-    # kdp = _compute_kdp_from_phidp(x, phitot)
-    radar.add_field('PHI_UNF', phi_unfold)
-    _, kdp = phidp_bringi(radar, gatefilter, unfold_phidp_name="PHI_UNF")
-    radar.fields.pop('PHI_UNF')
+    kdp = _compute_kdp_from_phidp(x, phitot)
     # phi_unfold
 
     kdp['description'] = "Phase processing algorithm by Valentin Louf"
     phi_unfold['description'] = "Phase processing algorithm by Valentin Louf"
+
+    kdp['_FillValue'] = np.NaN
+    phi_unfold['_FillValue'] = np.NaN
 
     return phi_unfold, kdp
 
