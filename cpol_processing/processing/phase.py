@@ -276,7 +276,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
         unfphi += 90
 
     # Remove noise
-    unfphi[(unfphi < 0) | (radar.fields[phidp_name]['data'] > cutoff)] = np.NaN
+    # unfphi[(unfphi < 0) | (radar.fields[phidp_name]['data'] > cutoff)] = np.NaN
 
     phitot = np.zeros_like(unfphi) + np.NaN
     unfphi[gatefilter.gate_excluded] = np.NaN
@@ -305,7 +305,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
         ir = IsotonicRegression(-180, bounds[1])
         y_fit = ir.fit_transform(x_nomask, y_nomask)
 
-        y_fit = y_fit - y_fit.min()
+        # y_fit = y_fit - y_fit.min()
         y_map = np.zeros((unfphi.shape[1])) + np.NaN
         y_map[pos] = y_fit
 
