@@ -73,7 +73,7 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR'):
     return nw_dict, d0_dict
 
 
-def hydrometeor_classification(radar, kdp_name, zdr_name, refl_name='DBZ_CORR',
+def hydrometeor_classification(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR',
                                rhohv_name='RHOHV_CORR',
                                temperature_name='temperature',
                                height_name='height'):
@@ -102,9 +102,9 @@ def hydrometeor_classification(radar, kdp_name, zdr_name, refl_name='DBZ_CORR',
         hydro_meta: dict
             Hydrometeor classification.
     """
-    refl = radar.fields[refl_name]['data']
-    zdr = radar.fields[zdr_name]['data']
-    kdp = radar.fields[kdp_name]['data']
+    refl = radar.fields[refl_name]['data'].copy().filled(np.NaN)
+    zdr = radar.fields[zdr_name]['data'].copy().filled(np.NaN)
+    kdp = radar.fields[kdp_name]['data'].copy().filled(np.NaN)
     rhohv = radar.fields[rhohv_name]['data']
     try:
         radar_T = radar.fields[temperature_name]['data']
@@ -118,13 +118,13 @@ def hydrometeor_classification(radar, kdp_name, zdr_name, refl_name='DBZ_CORR',
         scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=False, band='C')
 
     hydro = np.argmax(scores, axis=0) + 1
-    fill_value = -32768
-    hydro_data = np.ma.masked_where(hydro == fill_value, hydro)
+    hydro[gatefilter.gate_excluded] = 0
+    hydro_data = np.ma.masked_equal(hydro, 0)
 
     the_comments = "1: Drizzle; 2: Rain; 3: Ice Crystals; 4: Aggregates; " +\
                    "5: Wet Snow; 6: Vertical Ice; 7: LD Graupel; 8: HD Graupel; 9: Hail; 10: Big Drops"
 
-    hydro_meta = {'data': hydro_data, 'units': ' ', 'long_name': 'Hydrometeor classification',
+    hydro_meta = {'data': hydro_data, 'units': ' ', 'long_name': 'Hydrometeor classification', '_FillValue': int(0),
                   'standard_name': 'Hydrometeor_ID', 'comments': the_comments}
 
     return hydro_meta
