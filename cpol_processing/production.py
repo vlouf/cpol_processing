@@ -553,7 +553,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
     # Correct Attenuation ZDR
     zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
-    radar.add_field_like('ZDR', 'ZDR_CORR_ATTEN', zdr_corr)
+    radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
     logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification
