@@ -222,19 +222,17 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     kdp_meta: dict
         KDP dictionary field.
     """
-    # PHIDP is the *****two****-way differential propagation phase shift between ranges.
-    half_phi = phidp.copy() / 2
-    gate_spacing = (r[1] - r[0]) / 1000.
-
-    # Create Sobel filter.
     sobel = 2. * np.arange(window_len) / (window_len - 1.0) - 1.0
     sobel = sobel / (abs(sobel).sum())
     sobel = sobel[::-1]
-
-    kdp = (scipy.ndimage.filters.convolve1d((half_phi), sobel, axis=1) / (gate_spacing * window_len / 3))
-
+    gate_spacing = (r[1] - r[0]) / 1000.
+    kdp = (scipy.ndimage.filters.convolve1d((phidp / 2), sobel, axis=1) / ((window_len / 3) * 2 * gate_spacing))
+    kdp[kdp > 12] = 12
+    kdp[kdp < 0] = 0
+    kdp[:, -window_len:] = 0
     kdp_meta = pyart.config.get_metadata('specific_differential_phase')
-    kdp_meta['data'] = kdp
+
+    kdp_meta['data'] = np.ma.masked_invalid(kdp)
 
     return kdp_meta
 
@@ -285,7 +283,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
     phitot = np.zeros_like(unfphi) + np.NaN
     unfphi[gatefilter.gate_excluded] = np.NaN
     nraymax, ngatemax = unfphi.shape
-    x = radar.range['data']
+    x = radar.range['data'].copy()
 
     for ray in range(0, nraymax):
         # Taking the average the direct neighbours of each ray.
