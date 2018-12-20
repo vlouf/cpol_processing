@@ -548,7 +548,8 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
 
     # Correct Attenuation ZH
     atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
-    radar.add_field('DBZ_CORR', zh_corr + atten_gas['data'], replace_existing=True)
+    zh_corr['data'] += atten_gas['data']
+    radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
     radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
     logger.info('Attenuation on reflectivity corrected.')
 
