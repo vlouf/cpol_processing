@@ -17,6 +17,43 @@ import pyart
 import numpy as np
 
 
+def correct_gaseous_attenuation(radar):
+    """
+    Adjust for gaseous attenuation from Doviak and Zrnic note tempgas is in dB,
+    elevation in degrees and r in km! Equation valid only for elevation < 10 deg
+    and r < 200 km. Right now only doing for tropic atmosphere according to
+    Doviak and Zrnic's book; for C-band we can increase the attenuation by a
+    FACTOR OF 1.2.
+
+    Note: Doviak and Zrnic's fit is for standard atmosphere (atten by oxygen
+    and water vapor. Their equation is at S-band. The factor of 1.2  is a good
+    approximation for C-band! Water vapor atten may have to increased in tropics
+    or over ocean.
+    """
+    r = radar.range['data'] / 1000
+    theta = radar.elevation['data']
+
+    R, TH = np.meshgrid(r, theta)
+
+    atten_gas = np.zeros(TH.shape)
+    pos = TH <= 10
+
+    tempgas1 = 0.4 + 3.45 * np.exp(-TH / 1.8)
+    tempgas2 = 27.8 + 154 * np.exp(-TH / 2.2)
+    atten_gas = 1.2 * tempgas1 * (1 - np.exp(-R / tempgas2))  # 1.2 factor for C-band 1.0 for S-band.
+    atten_gas[~pos] = 0
+
+    atten_meta = dict()
+    atten_meta['long_name'] = 'atmospheric_gases_attenuation'
+    atten_meta['units'] = 'dB'
+    atten_meta['description'] = 'Doviak and Zrnic eq 3.19 p 44.'
+    atten_meta['valid_min'] = 0
+    atten_meta['_FillValue'] = -9999
+    atten_meta['data'] = atten_gas
+
+    return atten_meta
+
+
 def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', alpha=0.016):
     """
     Correct attenuation on differential reflectivity. KDP_GG has been
