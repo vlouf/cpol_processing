@@ -222,15 +222,19 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     kdp_meta: dict
         KDP dictionary field.
     """
+    # PHIDP is the *****two****-way differential propagation phase shift between ranges.
+    half_phi = phidp.copy() / 2
+    gate_spacing = (r[1] - r[0]) / 1000.
+
+    # Create Sobel filter.
     sobel = 2. * np.arange(window_len) / (window_len - 1.0) - 1.0
     sobel = sobel / (abs(sobel).sum())
     sobel = sobel[::-1]
-    gate_spacing = (r[1] - r[0]) / 1000.
-    kdp = (scipy.ndimage.filters.convolve1d((phidp), sobel, axis=1) / ((window_len / 3) * 2 * gate_spacing))
-    # kdp[kdp > 12] = 12
-    kdp[kdp < -4] = -4
+
+    kdp = (scipy.ndimage.filters.convolve1d((half_phi), sobel, axis=1) / (window_len / 3))
+
     kdp_meta = pyart.config.get_metadata('specific_differential_phase')
-    kdp_meta['data'] = kdp / 2
+    kdp_meta['data'] = kdp
 
     return kdp_meta
 
