@@ -231,7 +231,7 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     sobel = sobel / (abs(sobel).sum())
     sobel = sobel[::-1]
 
-    kdp = (scipy.ndimage.filters.convolve1d((half_phi), sobel, axis=1) / (window_len / 3))
+    kdp = (scipy.ndimage.filters.convolve1d((half_phi), sobel, axis=1) / (gate_spacing * window_len / 3))
 
     kdp_meta = pyart.config.get_metadata('specific_differential_phase')
     kdp_meta['data'] = kdp
@@ -313,12 +313,13 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
         y_map = np.zeros((unfphi.shape[1])) + np.NaN
         y_map[pos] = y_fit
 
-        phitot[ray, :] =  populate_radials(fill_nan(y_map), ngatemax)
+        phitot[ray, :] = np.convolve(populate_radials(fill_nan(y_map), ngatemax),
+                                     np.ones(5) / 5)[:ngatemax]
 
     phi_unfold = pyart.config.get_metadata('differential_phase')
     phi_unfold['valid_min'] = 0
     phi_unfold['valid_max'] = 360
-    phi_unfold['data'] = phitot
+    phi_unfold['data'] = np.ma.masked_invalid(phitot)
 
     # Computing KDP
     kdp = _compute_kdp_from_phidp(x, phitot)
