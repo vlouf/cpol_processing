@@ -226,7 +226,7 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     sobel = sobel / (abs(sobel).sum())
     sobel = sobel[::-1]
     gate_spacing = (r[1] - r[0]) / 1000.
-    kdp = (scipy.ndimage.filters.convolve1d((phidp / 2), sobel, axis=1) / ((window_len / 3) * 2 * gate_spacing))
+    kdp = (scipy.ndimage.filters.convolve1d((phidp), sobel, axis=1) / ((window_len / 3) * 2 * gate_spacing))
     kdp[kdp > 12] = 12
     kdp[kdp < 0] = 0
     kdp[:, -window_len:] = 0
