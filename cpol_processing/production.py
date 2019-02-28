@@ -58,8 +58,7 @@ def _mkdir(dir):
     return None
 
 
-def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None,
-                     sound_dir=None, instrument='CPOL', linearz=True):
+def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'):
     """
     Call processing function and write data.
 
@@ -80,6 +79,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         linearz: bool
             Gridding reflectivity in linear unit (True) or dBZ (False).
     """
+    today = datetime.datetime.utcnow()
     if instrument == 'CPOL':
         is_cpol = True
     else:
@@ -87,13 +87,14 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
 
     # Create directories.
     _mkdir(outpath)
-
-    if outpath_grid is None:
-        outpath_grid = os.path.join(outpath, 'GRIDDED')
+    outpath = os.path.join("v{}".format(today.strftime('%Y')))
+    _mkdir(outpath)
+    outpath_ppi = os.path.join(outpath, 'ppi')
+    _mkdir(outpath)
+    outpath_grid = os.path.join(outpath, 'gridded')
     _mkdir(outpath_grid)
-
-    if figure_path is not None:
-        _mkdir(figure_path)
+    figure_path = os.path.join(outpath, 'quicklooks')
+    _mkdir(figure_path)
 
     outdir_150km = os.path.join(outpath_grid, "GRID_150km_2500m")
     # outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")
@@ -105,21 +106,22 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
+    # Business start here.
     radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol)
+    # Business over.
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
         return None
 
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
 
     # Generate output file name.
-    outfilename = os.path.basename(radar_file_name)
     if instrument == 'CPOL':
-        outfilename = "twpcpolppiX1.c1.{}.nc".format(radar_start_date.strftime("%Y%m%d_%H%M"))
+        outfilename = "twp10cpolppi.b1.{}00.nc".format(radar_start_date.strftime("%Y%m%d.%H%M"))
     else:
         outfilename = "cfrad." + radar_start_date.strftime("%Y%m%d_%H%M%S") + ".nc"
 
-    outfilename = os.path.join(outpath, outfilename)
+    outfilename = os.path.join(outpath_ppi, outfilename)
 
     # Check if output file already exists.
     if os.path.isfile(outfilename):
@@ -150,7 +152,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         metadata['geospatial_lon_max'] = maxlon
         metadata['geospatial_lon_min'] = minlon
         metadata['geospatial_lon_units'] = "degrees_east"
-        metadata['history'] = "created by Valentin Louf on raijin.nci.org.au at " + datetime.datetime.utcnow().isoformat() + " using Py-ART"
+        metadata['history'] = "created by Valentin Louf on raijin.nci.org.au at " + today.isoformat() + " using Py-ART"
         metadata['institution'] = 'Australian Bureau of Meteorology'
         metadata['instrument_name'] = 'CPOL'
         metadata['instrument_type'] = 'radar'
@@ -194,21 +196,21 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     for mykey in unwanted_keys:
         radar.fields.pop(mykey)
 
-    try:
-        # Gridding (and saving)
-        # Full radar range with a 2.5 km grid resolution
-        gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km, rmax=145e3, xyres=2500, linearz=linearz)
-        # Full radar range with a 1 km grid resolution
-        gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km_highres,
-                                rmax=145e3, xyres=1000, linearz=linearz)
-        # Half-range with a 1 km grid resolution
-        # gridding.gridding_radar(radar, radar_start_date, outpath=outdir_70km, rmax=70e3, xyres=1000, linearz=linearz)
+    # try:
+    #     # Gridding (and saving)
+    #     # Full radar range with a 2.5 km grid resolution
+    #     gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km, rmax=145e3, xyres=2500, linearz=linearz)
+    #     # Full radar range with a 1 km grid resolution
+    #     gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km_highres,
+    #                             rmax=145e3, xyres=1000, linearz=linearz)
+    #     # Half-range with a 1 km grid resolution
+    #     # gridding.gridding_radar(radar, radar_start_date, outpath=outdir_70km, rmax=70e3, xyres=1000, linearz=linearz)
 
-        logger.info('Gridding done.')
-    except Exception:
-        traceback.print_exc()
-        logging.error('Problem while gridding.')
-        raise
+    #     logger.info('Gridding done.')
+    # except Exception:
+    #     traceback.print_exc()
+    #     logging.error('Problem while gridding.')
+    #     raise
 
     # Processing finished!
     logger.info('%s processed in  %0.2f s.', os.path.basename(radar_file_name), (time.time() - tick))
@@ -414,7 +416,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     # Correct Doppler velocity units.
     try:
         radar.fields['VEL']['units'] = "m/s"
-        radar.fields['VEL']['standard_name'] = "radial_velocity"
         vel_missing = False
     except KeyError:
         vel_missing = True
@@ -427,15 +428,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         fake_rhohv = False  # Don't need to delete this field cause it's legit.
     except KeyError:
         # Creating a fake RHOHV field.
+        fake_rhohv = True  # We delete this fake field later.
         rho = pyart.config.get_metadata('cross_correlation_ratio')
         rho['data'] = np.ones_like(radar.fields['DBZ']['data'])
-        rho['description'] = "THIS FIELD IS FAKE. SHOULD BE REMOVED!"
         radar.add_field('RHOHV', rho)
         radar.add_field('RHOHV_CORR', rho)
-        radar.metadata['debug_info'] = 'RHOHV field does not exist in RAW data. I had to use a fake RHOHV.'
-        fake_rhohv = True  # We delete this fake field later.
         logger.critical("RHOHV field not found, creating a fake RHOHV")
-        print(f"RHOHV field not found, creating a fake RHOHV {radar_file_name}")
 
     # Compute SNR and extract radiosounding temperature.
     # Requires radiosoundings
@@ -488,11 +486,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         radar.fields['NCP']
         fake_ncp = False
     except KeyError:
+        fake_ncp = True
         ncp = pyart.config.get_metadata('normalized_coherent_power')
         ncp['data'] = np.zeros_like(radar.fields['RHOHV']['data'])
         ncp['data'][gatefilter.gate_included] = 1
         radar.add_field('NCP', ncp)
-        fake_ncp = True
 
     phidp, kdp = phase.valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP')
     radar.add_field('PHIDP_VAL', phidp)
@@ -524,7 +522,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     logger.info('Attenuation on ZDR corrected.')
 
     # Hydrometeors classification
-    hydro_class = hydrometeors.hydrometeor_classification(radar, gatefilter, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
+    hydro_class = hydrometeors.hydrometeor_classification(radar,
+                                                          gatefilter,
+                                                          kdp_name=kdp_field_name,
+                                                          zdr_name='ZDR_CORR_ATTEN')
+
     radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
     logger.info('Hydrometeors classification estimated.')
 
