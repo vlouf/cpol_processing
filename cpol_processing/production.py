@@ -96,12 +96,10 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     figure_path = os.path.join(outpath, 'quicklooks')
     _mkdir(figure_path)
 
-    outdir_150km = os.path.join(outpath_grid, "GRID_150km_2500m")
-    # outdir_70km = os.path.join(outpath_grid, "GRID_70km_1000m")
-    outdir_150km_highres = os.path.join(outpath_grid, "GRID_150km_1000m")
+    outdir_150km = os.path.join(outpath_grid, "grid_150km_2500m")
+    outdir_70km = os.path.join(outpath_grid, "grid_70km_1000m")
     _mkdir(outdir_150km)
-    # _mkdir(outdir_70km)
-    _mkdir(outdir_150km_highres)
+    _mkdir(outdir_70km)
 
     # Get logger.
     logger = logging.getLogger()
@@ -116,6 +114,10 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         return None
 
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+    outpath_ppi = os.path.join(outpath_ppi, str(radar_start_date.year))
+    _mkdir(outpath_ppi)
+    outpath_ppi = os.path.join(outpath_ppi, radar_start_date.strftime('%Y%m%d'))
+    _mkdir(outpath_ppi)
 
     # Generate output file name.
     if instrument == 'CPOL':
