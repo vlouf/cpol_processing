@@ -388,6 +388,12 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     # !!! READING THE RADAR !!!
     radar = radar_codes.read_radar(radar_file_name)
 
+    if is_cpol:
+        if radar.nsweeps <= 10:
+            print('Problem with CPOL PPI, not enough elevations.')
+            logger.error('Problem with CPOL PPI, not enough elevations.')
+            return None
+
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
         logger.error("MAJOR ERROR: %s reflectivity field is empty.", radar_file_name)
