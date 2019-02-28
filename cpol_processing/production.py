@@ -59,7 +59,7 @@ def _mkdir(dir):
 
 
 def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=None,
-                     sound_dir=None, instrument='CPOL', use_giangrande=True, linearz=True):
+                     sound_dir=None, instrument='CPOL', linearz=True):
     """
     Call processing function and write data.
 
@@ -77,8 +77,6 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
             Path to radiosoundings directory.
         instrument: str
             Name of radar (only CPOL will change something).
-        use_giangrande: bool
-            Use Scott G's technique for unfolding PHIDP and KDP.
         linearz: bool
             Gridding reflectivity in linear unit (True) or dBZ (False).
     """
@@ -107,7 +105,7 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
-    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol, use_giangrande=use_giangrande)
+    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol)
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
         return None
@@ -130,58 +128,49 @@ def process_and_save(radar_file_name, outpath, outpath_grid=None, figure_path=No
         return None
 
     if is_cpol:
-        global_metadata = dict()
-        global_metadata['uuid'] = str(uuid.uuid4())
-        global_metadata['naming_authority'] = 'au.org.nci'
-        global_metadata['source'] = "Australian Bureau of Meteorology and Monash University"
-        global_metadata['processing_level'] = "L1B"
-        global_metadata['disclaimer'] = "This dataset is supported by a funding from the U.S. Department of Energy " + \
-                                        "as part of the Atmospheric Radiation Measurement (ARM) Climate Research " + \
-                                        "Facility, an Office of Science user facility. If you use this dataset " + \
-                                        "to prepare a publication, please consider offering me (Valentin Louf)" + \
-                                        "co-authorship."
-        global_metadata['acknowledgement'] = "This work has been supported by the U.S. Department " + \
-                                             "of Energy Atmospheric Systems Research Program through " + \
-                                             "the grant DE-SC0014063. Data may be freely distributed."
-        global_metadata['product_version'] = datetime.datetime.now().strftime("%Y.%m")
-        global_metadata['references'] = "Louf, V., A. Protat, R. A. Warren, S. M. Collis, D. B. Wolff, S. Raunyiar, " +\
-                                        "C. Jakob, and W. A. Petersen, 2018: An integrated approach to weather " + \
-                                        "radar calibration and monitoring using ground clutter and satellite " + \
-                                        "comparisons. J. Atmos. Ocean. Technol., JTECH-D-18-0007.1, " +\
-                                        "doi:10.1175/JTECH-D-18-0007.1."
-        global_metadata['creator_name'] = "Valentin Louf"
-        global_metadata['creator_email'] = "valentin.louf@monash.edu"
-        global_metadata['creator_url'] = "github.com/vlouf"
-        global_metadata['institution'] = "Australian Bureau of Meteorology"
-        global_metadata['publisher_name'] = "NCI - National Computing Infrastructure"
-        global_metadata['publisher_url'] = "nci.org.au"
-        global_metadata['publisher_type'] = "institution"
-        global_metadata['site_name'] = "Gunn_Pt"
-        global_metadata['country'] = "Australia"
-        global_metadata['state'] = "NT"
-
         # Lat/lon informations
-        maxlon = '132.3856852067545'
-        minlon = '129.70320368213441'
-        maxlat = '-10.941777804922253'
-        minlat = '-13.552905831511362'
+        maxlon = '132.385'
+        minlon = '129.703'
+        maxlat = '-10.941'
+        minlat = '-13.552'
         origin_altitude = '50'
         origin_latitude = '-12.249'
         origin_longitude = '131.044'
 
-        global_metadata['geospatial_bounds'] = f"({minlon}, {maxlon}, {minlat}, {maxlat})"
-        global_metadata['geospatial_lat_min'] = minlat
-        global_metadata['geospatial_lat_max'] = maxlat
-        global_metadata['geospatial_lat_units'] = "degrees_north"
-        global_metadata['geospatial_lon_min'] = minlon
-        global_metadata['geospatial_lon_max'] = maxlon
-        global_metadata['geospatial_lon_units'] = "degrees_east"
-        global_metadata['origin_latitude'] = origin_latitude
-        global_metadata['origin_longitude'] = origin_longitude
-        global_metadata['origin_altitude'] = origin_altitude
+        metadata = dict()
+        metadata['Conventions'] = radar.metadata['Conventions']
+        metadata['acknowledgement'] = 'This work has been supported by the U.S. Department of Energy Atmospheric Systems Research Program through the grant DE-SC0014063. Data may be freely distributed.'
+        metadata['country'] = 'Australia'
+        metadata['creator_email'] = 'valentin.louf@bom.gov.au'
+        metadata['creator_name'] = 'Valentin Louf'
+        metadata['geospatial_bounds'] = f"({minlon}, {maxlon}, {minlat}, {maxlat})"
+        metadata['geospatial_lat_max'] = maxlat
+        metadata['geospatial_lat_min'] = minlat
+        metadata['geospatial_lat_units'] = "degrees_north"
+        metadata['geospatial_lon_max'] = maxlon
+        metadata['geospatial_lon_min'] = minlon
+        metadata['geospatial_lon_units'] = "degrees_east"
+        metadata['history'] = "created by Valentin Louf on raijin.nci.org.au at " + datetime.datetime.utcnow().isoformat() + " using Py-ART"
+        metadata['institution'] = 'Australian Bureau of Meteorology'
+        metadata['instrument_name'] = 'CPOL'
+        metadata['instrument_type'] = 'radar'
+        metadata['naming_authority'] = 'au.org.nci'
+        metadata['origin_altitude'] = origin_altitude
+        metadata['origin_latitude'] = origin_latitude
+        metadata['origin_longitude'] = origin_longitude
+        metadata['platform_is_mobile'] = 'false'
+        metadata['processing_level'] = 'b1'
+        metadata['publisher_name'] = "NCI"
+        metadata['publisher_url'] = "nci.gov.au"
+        metadata['references'] = 'cf. doi:10.1175/JTECH-D-18-0007.1'
+        metadata['site_name'] = 'Gunn_Pt'
+        metadata['source'] = 'rapic'
+        metadata['state'] = "NT"
+        metadata['title'] = "radar PPI volume from CPOL"
+        metadata['uuid'] = str(uuid.uuid4())
+        metadata['version'] = radar.metadata['version']
 
-        for k, v in global_metadata.items():
-            radar.metadata[k] = v
+        radar.metadata = metadata
 
     # Write results
     pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
@@ -343,7 +332,7 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, use_giangrande=False):
+def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -511,28 +500,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     kdp_field_name = 'KDP_VAL'
     phidp_field_name = 'PHIDP_VAL'
 
-    # if use_giangrande:
-    #     phidp_gg, kdp_gg = phase.phidp_giangrande(radar, gatefilter, phidp_field='PHIDP', rhv_field='RHOHV_CORR')
-    #     radar.add_field('PHIDP_GG', phidp_gg, replace_existing=True)
-    #     radar.add_field('KDP_GG', kdp_gg, replace_existing=True)
-    #     radar.fields['PHIDP_GG']['long_name'] = "corrected_differential_phase"
-    #     radar.fields['KDP_GG']['long_name'] = "corrected_specific_differential_phase"
-    #     logger.info('KDP/PHIDP Giangrande estimated.')
-    #
-    #     kdp_field_name = 'KDP_GG'
-    #     phidp_field_name = 'PHIDP_GG'
-    # else:
-    #     # Bringi unfolding.
-    #     phimeta, kdpmeta = phase.phidp_bringi(radar, gatefilter, unfold_phidp_name="PHIDP")
-    #     radar.add_field('PHIDP_BRINGI', phimeta, replace_existing=True)
-    #     radar.add_field('KDP_BRINGI', kdpmeta, replace_existing=True)
-    #     radar.fields['PHIDP_BRINGI']['long_name'] = "corrected_differential_phase"
-    #     radar.fields['KDP_BRINGI']['long_name'] = "corrected_specific_differential_phase"
-    #     logger.info('KDP/PHIDP Bringi estimated.')
-    #
-    #     kdp_field_name = 'KDP_BRINGI'
-    #     phidp_field_name = 'PHIDP_BRINGI'
-
     # Unfold VELOCITY
     if not vel_missing:
         # Dealias velocity.
@@ -572,11 +539,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True, 
     radar.add_field("D0", d0_dict)
     radar.add_field("NW", nw_dict)
     logger.info('DSD estimated.')
-
-    # Merhala classification:
-#     echo_class = hydrometeors.merhala_class_convstrat(radar)
-#     radar.add_field('thurai_echo_classification', echo_class)
-#     logger.info('Thurai classification estimated.')
 
     # Removing fake and useless fields.
     if fake_ncp:
