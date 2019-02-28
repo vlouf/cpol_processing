@@ -90,7 +90,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     outpath = os.path.join(outpath, "v{}".format(today.strftime('%Y')))
     _mkdir(outpath)
     outpath_ppi = os.path.join(outpath, 'ppi')
-    _mkdir(outpath)
+    _mkdir(outpath_ppi)
     outpath_grid = os.path.join(outpath, 'gridded')
     _mkdir(outpath_grid)
     figure_path = os.path.join(outpath, 'quicklooks')
