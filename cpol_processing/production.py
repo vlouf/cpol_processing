@@ -87,7 +87,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
 
     # Create directories.
     _mkdir(outpath)
-    outpath = os.path.join("v{}".format(today.strftime('%Y')))
+    outpath = os.path.join(outpath, "v{}".format(today.strftime('%Y')))
     _mkdir(outpath)
     outpath_ppi = os.path.join(outpath, 'ppi')
     _mkdir(outpath)
@@ -107,7 +107,9 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     logger = logging.getLogger()
     tick = time.time()
     # Business start here.
-    radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol)
     # Business over.
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
