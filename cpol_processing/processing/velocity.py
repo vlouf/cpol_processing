@@ -74,6 +74,7 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ'):
     vel_meta['data'] = unfvel.astype(np.float32)
     vel_meta['_Least_significant_digit'] = 2
     vel_meta['_FillValue'] = np.NaN
+    vel_meta['units'] = 'm/s'
 
     return vel_meta
 
