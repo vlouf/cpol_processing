@@ -632,8 +632,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
                 "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity",
                 "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
     # Delete working variables.
-    rkeys = radar.fields.keys()
-    for k in rkeys:
+    for k in list(radar.fields.keys()):
         if k not in goodkeys:
             radar.fields.pop(k)
 
