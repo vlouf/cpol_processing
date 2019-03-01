@@ -30,7 +30,8 @@ import warnings
 import traceback
 
 import pandas as pd
-import dask.bag as db
+# import dask.bag as db
+from multiprocessing import Pool
 import cpol_processing
 
 
@@ -87,8 +88,10 @@ def main():
             continue
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        bag = db.from_sequence(flist).map(production_line_manager)
-        bag.compute()
+        # bag = db.from_sequence(flist).map(production_line_manager)
+        # bag.compute()
+        with Pool(16) as pool:
+            pool.map(production_line_manager, flist)
         gc.collect()
 
     return None
@@ -103,7 +106,7 @@ if __name__ == '__main__':
     OUTPATH = "/g/data/hj10/cpol_level_1b/"
     SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
     LOG_FILE_PATH = os.path.expanduser('~')
-    TIME_BEFORE_DEATH = 420  # seconds before killing process.
+    TIME_BEFORE_DEATH = 600  # seconds before killing process.
 
     # Parse arguments
     parser_description = "Processing of radar data from level 1a to level 1b."
