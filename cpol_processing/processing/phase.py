@@ -341,7 +341,10 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
 
 @jit(nopython=True)
 def populate_radials(y_map, ngatemax):
+    ygrad = np.gradient(y_map)
+    y_map[ygrad > 12] = np.NaN
     y_rslt = np.zeros((ngatemax))
+
     last_valid = 0
     for idx, value in enumerate(y_map):
         if np.isnan(value):
