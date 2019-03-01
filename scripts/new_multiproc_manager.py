@@ -28,6 +28,7 @@ import datetime
 import warnings
 import traceback
 
+import pandas as pd
 import dask.bag as db
 import cpol_processing
 
@@ -126,14 +127,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
-
-    # Checking that dates are recognize.
-    try:
-        datetime.datetime.strptime(START_DATE, "%Y%m%d")
-        datetime.datetime.strptime(END_DATE, "%Y%m%d")
-    except Exception:
-        print("Did not understand the date format. Must be YYYYMMDD.")
-        sys.exit()
 
     # Creating the general log file.
     logname = "cpol_level1b_from_{}_to_{}.log".format(START_DATE, END_DATE)
