@@ -182,23 +182,23 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
 
     # Deleting all unwanted keys for gridded product.
-    logger.info("Gridding started.")
-    unwanted_keys = []
-    goodkeys = ['corrected_differential_reflectivity',
-                'cross_correlation_ratio',
-                'radar_echo_classification',
-                'radar_estimated_rain_rate',
-                'D0',
-                'NW',
-                'reflectivity',
-                'velocity',
-                'region_dealias_velocity']
+    # logger.info("Gridding started.")
+    # unwanted_keys = []
+    # goodkeys = ['corrected_differential_reflectivity',
+    #             'cross_correlation_ratio',
+    #             'radar_echo_classification',
+    #             'radar_estimated_rain_rate',
+    #             'D0',
+    #             'NW',
+    #             'reflectivity',
+    #             'velocity',
+    #             'region_dealias_velocity']
 
-    for mykey in radar.fields.keys():
-        if mykey not in goodkeys:
-            unwanted_keys.append(mykey)
-    for mykey in unwanted_keys:
-        radar.fields.pop(mykey)
+    # for mykey in radar.fields.keys():
+    #     if mykey not in goodkeys:
+    #         unwanted_keys.append(mykey)
+    # for mykey in unwanted_keys:
+    #     radar.fields.pop(mykey)
 
     # try:
     #     # Gridding (and saving)
@@ -642,7 +642,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     logger.info('Hardcoding gatefilter to Fields done.')
 
     goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", "raw_velocity",
-                "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity", "radar_estimated_rain_rate"
+                "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity", "radar_estimated_rain_rate",
                 "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
     # Delete working variables.
     for k in list(radar.fields.keys()):
