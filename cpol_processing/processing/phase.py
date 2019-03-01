@@ -327,7 +327,7 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
     kdp = kdp.astype(np.float32)
     kdp[gatefilter.gate_excluded] = 0
     kdp_meta = pyart.config.get_metadata('specific_differential_phase')
-    kdp_meta['data'] = kdp
+    kdp_meta['data'] = np.ma.masked_invalid(kdp)
     kdp_meta['_FillValue'] = 0
     kdp_meta['_Least_significant_digit'] = 4
     kdp_meta['description'] = "Phase processing algorithm by Valentin Louf"
