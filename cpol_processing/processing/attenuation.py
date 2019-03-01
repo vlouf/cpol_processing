@@ -54,7 +54,7 @@ def correct_gaseous_attenuation(radar):
     return atten_meta
 
 
-def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', alpha=0.016):
+def correct_attenuation_zdr(radar, gatefilter, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', alpha=0.016):
     """
     Correct attenuation on differential reflectivity. KDP_GG has been
     cleaned of noise, that's why we use it.
@@ -82,10 +82,16 @@ def correct_attenuation_zdr(radar, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', 
     zdr = radar.fields[zdr_name]['data'].copy()
     phi = radar.fields[phidp_name]['data'].copy()
 
+    zdr_corr = zdr + 0.016 * phi
+    zdr_corr[gatefilter.gate_excluded] = np.NaN
+    zdr_corr = np.ma.maked_invalid(zdr_corr)
+    np.ma.set_fill_value(zdr_corr, np.NaN)
     # Z-PHI coefficient from Bringi et al. 2001
     zdr_meta = pyart.config.get_metadata('differential_reflectivity')
     zdr_meta['description'] = 'Attenuation corrected differential reflectivity using Bringi et al. 2001.'
-    zdr_meta['data'] = zdr + 0.016 * phi
+    zdr_meta['_FillValue'] = np.NaN
+    zdr_meta['_Least_significant_digit'] = 2
+    zdr_meta['data'] = zdr_corr
 
     return zdr_meta
 
@@ -119,4 +125,5 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
                                                               rhv_field=rhv_field,
                                                               phidp_field=phidp_field)
 
+    zh_corr['_Least_significant_digit'] = 2
     return atten_meta, zh_corr

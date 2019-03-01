@@ -523,11 +523,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
     zh_corr['data'] += atten_gas['data']
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
-    radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
+    # radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
     logger.info('Attenuation on reflectivity corrected.')
 
     # Correct Attenuation ZDR
-    zdr_corr = attenuation.correct_attenuation_zdr(radar, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter=gatefilter, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
     radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
     logger.info('Attenuation on ZDR corrected.')
 
@@ -627,5 +627,9 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         except KeyError:
             continue
     logger.info('Hardcoding gatefilter to Fields done.')
+
+    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power",
+                "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity",
+                "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
 
     return radar

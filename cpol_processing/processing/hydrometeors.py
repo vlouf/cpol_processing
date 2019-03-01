@@ -55,19 +55,25 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR'):
     d0, Nw, mu = csu_dsd.calc_dsd(dz=dbz, zdr=zdr, kdp=kdp, band='C')
 
     Nw = np.log10(Nw)
-    Nw[np.isnan(Nw) | (gatefilter.gate_excluded)] = -9999
-    d0[np.isnan(d0) | (gatefilter.gate_excluded)] = -9999
+    Nw[gatefilter.gate_excluded] = np.NaN
+    Nw = np.ma.masked_invalid(Nw).astype(np.float32)
+    np.ma.set_fill_value(Nw, np.NaN)
+    d0[gatefilter.gate_excluded] = np.NaN
+    d0 = np.ma.masked_invalid(d0).astype(np.float32)
+    np.ma.set_fill_value(d0, np.NaN)
 
     nw_dict = {'data': Nw,
                'units': 'AU', 'long_name': 'Normalized Intercept Parameter',
                'standard_name': 'Normalized Intercept Parameter',
-               '_FillValue': -9999,
+               '_FillValue': np.NaN,
+               '_Least_significant_digit': 2,
                'description': "Log10 of the NW. Retrieval based on Bringi et al. (2009)."}
 
     d0_dict = {'data': d0,
                'units': 'mm', 'long_name': 'Median Volume Diameter',
                'standard_name': 'Median Volume Diameter',
-               '_FillValue': -9999,
+               '_FillValue': np.NaN,
+               '_Least_significant_digit': 2,
                'description': "D0 retrieval based on Bringi et al. (2009)."}
 
     return nw_dict, d0_dict
@@ -119,12 +125,12 @@ def hydrometeor_classification(radar, gatefilter, kdp_name, zdr_name, refl_name=
 
     hydro = np.argmax(scores, axis=0) + 1
     hydro[gatefilter.gate_excluded] = 0
-    hydro_data = np.ma.masked_equal(hydro, 0)
+    hydro_data = np.ma.masked_equal(hydro.astype(np.int16), 0)
 
     the_comments = "1: Drizzle; 2: Rain; 3: Ice Crystals; 4: Aggregates; " +\
                    "5: Wet Snow; 6: Vertical Ice; 7: LD Graupel; 8: HD Graupel; 9: Hail; 10: Big Drops"
 
-    hydro_meta = {'data': hydro_data, 'units': ' ', 'long_name': 'Hydrometeor classification', '_FillValue': int(0),
+    hydro_meta = {'data': hydro_data, 'units': ' ', 'long_name': 'Hydrometeor classification', '_FillValue': np.int16(0),
                   'standard_name': 'Hydrometeor_ID', 'comments': the_comments}
 
     return hydro_meta
