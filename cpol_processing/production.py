@@ -439,6 +439,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         vel_missing = True
         pass
 
+    # Check if the nyquist velocity is present in the radar parameters.
+    if not vel_missing:
+        velocity.check_nyquist_velocity(radar)
+
     # Looking for RHOHV field
     # For CPOL, season 09/10, there are no RHOHV fields before March!!!!
     try:
@@ -519,13 +523,14 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     # Unfold VELOCITY
     if not vel_missing:
         # Dealias velocity.
-        vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
+        # vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
+        vdop_unfold = velocity.unravel(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
         logger.info('Doppler velocity unfolded.')
 
     # Correct gaseous attenuation
     atten_gas = attenuation.correct_gaseous_attenuation(radar)
-    radar.add_field('gaseous_attenuation', atten_gas)
+    # radar.add_field('gaseous_attenuation', atten_gas)
 
     # Correct Attenuation ZH
     atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)

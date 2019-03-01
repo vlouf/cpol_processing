@@ -14,8 +14,6 @@ Codes for correcting Doppler velocity.
     correct_velocity_unfolding
     get_simulated_wind_profile
     unfold_velocity
-
-TODO: Use UNRAVEL to dealias velocity.
 """
 
 # Python Standard Library
@@ -27,6 +25,57 @@ import netCDF4
 import numpy as np
 
 from netCDF4 import num2date
+from unravel.dealias import process_3D
+
+
+def check_nyquist_velocity(radar, vel_name='VEL'):
+    """
+    Check if Nyquist velocity is present in the instrument parameters. If not,
+    then it is created.
+    """
+    try:
+        radar.instrument_parameters['nyquist_velocity']
+    except KeyError:
+        vnyq = np.nanmax(radar.fields[vel_name]['data'])
+        nray = len(radar.azimuth['data'])
+        vnyq_array = np.array([vnyq] * nray, dtype=np.float32)
+        nyquist_velocity = pyart.config.get_metadata('nyquist_velocity')
+        nyquist_velocity['data'] = vnyq_array
+        nyquist_velocity['_Least_significant_digit'] = 2
+        radar.instrument_parameters['nyquist_velocity'] = nyquist_velocity
+
+    return None
+
+
+def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ'):
+    """
+    Unfold Doppler velocity using Py-ART region based algorithm. Automatically
+    searches for a folding-corrected velocity field.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    gatefilter:
+        GateFilter
+    vel_name: str
+        Name of the (original) Doppler velocity field.
+    dbz_name: str
+        Name of the reflecitivity field.
+
+    Returns:
+    ========
+    vel_meta: dict
+        Unfolded Doppler velocity.
+    """
+    unfvel = process_3D(radar, velname=vel_name, dbzname=dbz_name, do_3D=False)
+    np.ma.set_fill_value(unfvel, np.NaN)
+    vel_meta = pyart.config.get_metadata('velocity')
+    vel_meta['data'] = unfvel.astype(np.float32)
+    vel_meta['_Least_significant_digit'] = 2
+    vel_meta['_FillValue'] = np.NaN
+
+    return vel_meta
 
 
 def correct_velocity_unfolding(radar, vel_name="VEL_UNFOLDED", simvel_name="sim_velocity"):
