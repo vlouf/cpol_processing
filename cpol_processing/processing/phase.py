@@ -317,17 +317,21 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
     phi_unfold['description'] = "Phase processing algorithm by Valentin Louf"
 
     phitot = phitot.astype(np.float32)
-    phitot[gatefilter.gate_excluded] = np.NaN
-    phi_unfold['data'] = np.ma.masked_invalid(phitot, 0)
+    # phitot[gatefilter.gate_excluded] = np.NaN
+    phitot = np.ma.masked_invalid(phitot)
+    np.ma.set_fill_value(phitot, np.NaN)
+    phi_unfold['data'] = phitot
     phi_unfold['_FillValue'] = np.NaN
     phi_unfold['_Least_significant_digit'] = 2
 
     # Computing KDP
     kdp = _compute_kdp_from_phidp(x, phitot)
     kdp = kdp.astype(np.float32)
-    kdp[gatefilter.gate_excluded] = np.NaN
+    # kdp[gatefilter.gate_excluded] = np.NaN
     kdp_meta = pyart.config.get_metadata('specific_differential_phase')
-    kdp_meta['data'] = np.ma.masked_invalid(kdp)
+    kdp = np.ma.masked_invalid(kdp)
+    np.ma.set_fill_value(kdp, np.NaN)
+    kdp_meta['data'] = kdp
     kdp_meta['_FillValue'] = np.NaN
     kdp_meta['_Least_significant_digit'] = 4
     kdp_meta['description'] = "Phase processing algorithm by Valentin Louf"
