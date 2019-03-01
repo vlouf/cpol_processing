@@ -84,7 +84,7 @@ def correct_attenuation_zdr(radar, gatefilter, zdr_name='ZDR_CORR', phidp_name='
 
     zdr_corr = zdr + 0.016 * phi
     zdr_corr[gatefilter.gate_excluded] = np.NaN
-    zdr_corr = np.ma.maked_invalid(zdr_corr)
+    zdr_corr = np.ma.masked_invalid(zdr_corr)
     np.ma.set_fill_value(zdr_corr, np.NaN)
     # Z-PHI coefficient from Bringi et al. 2001
     zdr_meta = pyart.config.get_metadata('differential_reflectivity')
