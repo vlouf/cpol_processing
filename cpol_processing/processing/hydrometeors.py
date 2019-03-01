@@ -58,6 +58,7 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR'):
     Nw[gatefilter.gate_excluded] = np.NaN
     Nw = np.ma.masked_invalid(Nw).astype(np.float32)
     np.ma.set_fill_value(Nw, np.NaN)
+
     d0[gatefilter.gate_excluded] = np.NaN
     d0 = np.ma.masked_invalid(d0).astype(np.float32)
     np.ma.set_fill_value(d0, np.NaN)
