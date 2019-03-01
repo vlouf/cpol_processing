@@ -21,6 +21,7 @@ import os
 import gc
 import sys
 import time
+import glob
 import signal
 import logging
 import argparse
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
     OUTPATH = "/g/data/hj10/cpol_level_1b/"
-    SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde"
+    SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
     LOG_FILE_PATH = os.path.expanduser('~')
     TIME_BEFORE_DEATH = 420  # seconds before killing process.
 
