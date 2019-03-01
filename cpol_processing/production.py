@@ -266,10 +266,10 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         fig, the_ax = pl.subplots(4, 3, figsize=(14, 15), sharex=True, sharey=True)
         the_ax = the_ax.flatten()
         # Plotting reflectivity
-        gr.plot_ppi('total_power', ax=the_ax[0])
+        gr.plot_ppi('total_power', ax=the_ax[0], cmap='pyart_NWSRef')
         the_ax[0].set_title(gr.generate_title('total_power', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
-        gr.plot_ppi('reflectivity', ax=the_ax[1], gatefilter=gatefilter)
+        gr.plot_ppi('reflectivity', ax=the_ax[1], gatefilter=gatefilter, cmap='pyart_NWSRef')
         the_ax[1].set_title(gr.generate_title('reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
         gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[2])
@@ -279,21 +279,21 @@ def plot_quicklook(radar, gatefilter, radar_date, figure_path):
         the_ax[3].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
 
         try:
-            gr.plot_ppi('corrected_differential_phase', ax=the_ax[4], vmin=-180, vmax=180, cmap='pyart_Wild25')
+            gr.plot_ppi('corrected_differential_phase', ax=the_ax[4], vmin=-180, vmax=180, cmap='pyart_Wild25', gatefilter=gatefilter)
             the_ax[4].set_title(gr.generate_title('corrected_differential_phase', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[5], vmin=-2, vmax=5, cmap='pyart_Theodore16')
+            gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[5], vmin=-2, vmax=5, cmap='pyart_Theodore16', gatefilter=gatefilter)
             the_ax[5].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
                                                   datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
 
         try:
-            gr.plot_ppi('folded_velocity', ax=the_ax[6], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
+            gr.plot_ppi('raw_velocity', ax=the_ax[6], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
             the_ax[6].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
         except KeyError:
             pass
@@ -391,6 +391,14 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
 
     # !!! READING THE RADAR !!!
     radar = radar_codes.read_radar(radar_file_name)
+
+    # Correct data type manually
+    try:
+        radar.longitude['data'].filled(0).astype(np.float32)
+        radar.latitude['data'].filled(0).astype(np.float32)
+        radar.altitude['data'].filled(0).astype(np.int32)
+    except Exception:
+        pass
 
     if is_cpol:
         if radar.nsweeps <= 10:
@@ -569,7 +577,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
             continue
 
     # Rename fields to pyart defaults.
-    fields_names = [('VEL', 'folded_velocity'),
+    fields_names = [('VEL', 'raw_velocity'),
                     ('VEL_UNFOLDED', 'velocity'),
                     ('DBZ', 'total_power'),
                     ('DBZ_CORR', 'reflectivity'),
@@ -628,12 +636,14 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
             continue
     logger.info('Hardcoding gatefilter to Fields done.')
 
-    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power",
+    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", "raw_velocity",
                 "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity",
                 "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
     # Delete working variables.
     for k in list(radar.fields.keys()):
         if k not in goodkeys:
             radar.fields.pop(k)
+
+    # Set Deflate Level
 
     return radar
