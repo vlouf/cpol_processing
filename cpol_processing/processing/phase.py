@@ -230,11 +230,8 @@ def _compute_kdp_from_phidp(r, phidp, window_len=35):
     kdp[kdp > 12] = 12
     kdp[kdp < 0] = 0
     kdp[:, -window_len:] = 0
-    kdp_meta = pyart.config.get_metadata('specific_differential_phase')
 
-    kdp_meta['data'] = np.ma.masked_invalid(kdp)
-
-    return kdp_meta
+    return kdp
 
 
 def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='DBZ', bounds=[0, 360]):
@@ -317,19 +314,25 @@ def valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP', dbz_name='D
     phi_unfold = pyart.config.get_metadata('differential_phase')
     phi_unfold['valid_min'] = 0
     phi_unfold['valid_max'] = 360
-    phi_unfold['data'] = np.ma.masked_invalid(phitot)
+    phi_unfold['description'] = "Phase processing algorithm by Valentin Louf"
+
+    phitot = phitot.astype(np.float32)
+    phitot[gatefilter.gate_excluded] = -9999
+    phi_unfold['data'] = np.ma.masked_less(phitot, 0)
+    phi_unfold['_FillValue'] = -9999
+    phi_unfold['_Least_significant_digit'] = 2
 
     # Computing KDP
     kdp = _compute_kdp_from_phidp(x, phitot)
-    # phi_unfold
+    kdp = kdp.astype(np.float32)
+    kdp[gatefilter.gate_excluded] = 0
+    kdp_meta = pyart.config.get_metadata('specific_differential_phase')
+    kdp_meta['data'] = kdp
+    kdp_meta['_FillValue'] = 0
+    kdp_meta['_Least_significant_digit'] = 4
+    kdp_meta['description'] = "Phase processing algorithm by Valentin Louf"
 
-    kdp['description'] = "Phase processing algorithm by Valentin Louf"
-    phi_unfold['description'] = "Phase processing algorithm by Valentin Louf"
-
-    kdp['_FillValue'] = np.NaN
-    phi_unfold['_FillValue'] = np.NaN
-
-    return phi_unfold, kdp
+    return phi_unfold, kdp_meta
 
 
 @jit(nopython=True)
