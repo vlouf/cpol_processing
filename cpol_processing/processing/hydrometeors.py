@@ -225,8 +225,9 @@ def rainfall_rate(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR',
 
     rainrate = {"long_name": 'Blended Rainfall Rate',
                 "units": "mm h-1",
-                "standard_name": "Rainfall Rate",
+                "standard_name": "rainfall_rate",
+                '_Least_significant_digit': 2,
                 "description": "Rainfall rate algorithm based on Thompson et al. 2016.",
-                "data": rain}
+                "data": rain.astype(np.float32)}
 
     return rainrate

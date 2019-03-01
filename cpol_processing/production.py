@@ -642,7 +642,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     logger.info('Hardcoding gatefilter to Fields done.')
 
     goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", "raw_velocity",
-                "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity",
+                "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity", "radar_estimated_rain_rate"
                 "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
     # Delete working variables.
     for k in list(radar.fields.keys()):
