@@ -336,7 +336,7 @@ if __name__ == '__main__':
     logname = "cpol_level1b_from_{}_to_{}.log".format(START_DATE, END_DATE)
     log_file_name = os.path.join(LOG_FILE_PATH, logname)
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.WARNING,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         filename=log_file_name,
         filemode='w+')

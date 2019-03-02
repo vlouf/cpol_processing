@@ -105,7 +105,7 @@ if __name__ == '__main__':
     INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
     OUTPATH = "/g/data/hj10/cpol_level_1b/"
     SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
-    LOG_FILE_PATH = os.path.expanduser('~')
+    LOG_FILE_PATH = "/short/kl02/vhl548/"
     TIME_BEFORE_DEATH = 600  # seconds before killing process.
 
     # Parse arguments
