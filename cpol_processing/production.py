@@ -16,6 +16,7 @@ CPOL Level 1b main production line. These are the drivers function.
 import os
 import time
 import uuid
+import signal  # NOTE: SIGALRM is not available on Windows!
 import logging
 import datetime
 import traceback
@@ -34,6 +35,14 @@ from .processing import hydrometeors
 from .processing import phase
 from .processing import radar_codes
 from .processing import velocity
+
+
+class TimeoutException(Exception):   # Custom exception class
+    pass
+
+
+def timeout_handler(signum, frame):   # Custom signal handler
+    raise TimeoutException
 
 
 def _mkdir(dir):
@@ -399,13 +408,21 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     if not vel_missing:
         # Dealias velocity.
         unfvel_tick = time.time()
-        vdop_unfold = velocity.unravel(radar, gatefilter)
-        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-        unfvel_time = time.time() - unfvel_tick
-        logger.info(f'Doppler velocity unfolded in {unfvel_time}s.')
-        print(f'Doppler velocity unfolded in {unfvel_time}s.')
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(240)
+        try:
+            vdop_unfold = velocity.unravel(radar, gatefilter)            
+        except TimeoutException:
+            # Treatment time was too long.
+            logging.error("Unfolding took too long.")
+            vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
+            vdop_unfold['comment'] = 'Region-based algorithm.'
+        else:
+            signal.alarm(0)
 
-        # vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
+        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)        
+        logger.info(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
+        print(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
 
     # Correct Attenuation ZH
     zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)

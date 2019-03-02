@@ -91,7 +91,7 @@ def correct_attenuation_zdr(radar, gatefilter, zdr_name='ZDR_CORR', phidp_name='
 def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
                                  rhv_field='RHOHV_CORR', phidp_field='PHIDP_GG'):
     """
-    Correct attenuation on reflectivity using Py-ART tool. The attenuation from 
+    Correct attenuation on reflectivity using Py-ART tool. The attenuation from
     atmospheric gases is also corrected.
 
     Parameters:
