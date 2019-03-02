@@ -22,7 +22,6 @@ import gc
 import sys
 import time
 import glob
-import signal
 import logging
 import argparse
 import datetime
@@ -30,20 +29,11 @@ import warnings
 import traceback
 
 import pandas as pd
-# import dask.bag as db
-from multiprocessing import Pool
+import dask.bag as db
 import cpol_processing
 
 
-class TimeoutException(Exception):   # Custom exception class
-    pass
-
-
-def timeout_handler(signum, frame):   # Custom signal handler
-    raise TimeoutException
-
-
-def production_line_manager(radar_file_name):
+def production_line_manager(infile):
     """
     The production line manager calls the production line and manages it ;-).
     Buffer function that is used to catch any problem with the processing line
@@ -51,29 +41,16 @@ def production_line_manager(radar_file_name):
 
     Parameters:
     ===========
-        radar_file_name: str
-            Name of the input radar file.
-        outpath: str
-            Path for saving output data.
-    """
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(TIME_BEFORE_DEATH)
+    infile: str
+        Name of the input radar file.
+    outpath: str
+        Path for saving output data.
+    """    
     try:
-        cpol_processing.process_and_save(radar_file_name, OUTPATH, sound_dir=SOUND_DIR)
-    except TimeoutException:
-        # Treatment time was too long.
-        logging.error("Too much time taken to treat %s, killing process.", radar_file_name)
-        return None  # Go to next iteration.
-    except Exception:
-        print("Exception in production line code:")
-        print("-" * 60)
-        print("ERROR IN FILE {}.".format(radar_file_name))
-        traceback.print_exc(file=sys.stdout)
-        print("-" * 60)
-        logging.error("Failed to process file", exc_info=True)
-        return None
-    else:
-        signal.alarm(0)
+        cpol_processing.process_and_save(radar_filinfilee_name, OUTPATH, sound_dir=SOUND_DIR)    
+    except Exception:        
+        traceback.print_exc(file=sys.stdout)        
+        logging.error(f"Failed to process {infile}", exc_info=True)        
 
     return None
 
@@ -88,10 +65,10 @@ def main():
             continue
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        # bag = db.from_sequence(flist).map(production_line_manager)
-        # bag.compute()
-        with Pool(16) as pool:
-            pool.map(production_line_manager, flist)
+        bag = db.from_sequence(flist).map(production_line_manager)
+        bag.compute()
+        # with Pool(16) as pool:
+        #     pool.map(production_line_manager, flist)
         gc.collect()
 
     return None
@@ -105,8 +82,7 @@ if __name__ == '__main__':
     INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
     OUTPATH = "/g/data/hj10/cpol_level_1b/"
     SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
-    LOG_FILE_PATH = "/short/kl02/vhl548/"
-    TIME_BEFORE_DEATH = 600  # seconds before killing process.
+    LOG_FILE_PATH = "/short/kl02/vhl548/"    
 
     # Parse arguments
     parser_description = "Processing of radar data from level 1a to level 1b."
@@ -136,7 +112,7 @@ if __name__ == '__main__':
     logname = "cpol_level1b_from_{}_to_{}.log".format(START_DATE, END_DATE)
     log_file_name = os.path.join(LOG_FILE_PATH, logname)
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.WARNING,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         filename=log_file_name,
         filemode='w+')

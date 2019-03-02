@@ -9,12 +9,10 @@ CPOL Level 1b main production line. These are the drivers function.
 .. autosummary::
     :toctree: generated/
 
-    process_and_save
-    plot_quicklook
+    process_and_save    
     production_line  => Driver function.
 """
 # Python Standard Library
-import gc
 import os
 import time
 import uuid
@@ -26,10 +24,6 @@ import warnings
 # Other Libraries -- Matplotlib must be imported before pyart.
 import netCDF4
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')  # <- Reason why matplotlib is imported first.
-import matplotlib.colors as colors
-import matplotlib.pyplot as pl
 import pyart
 
 # Custom modules.
@@ -223,121 +217,6 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     return None
 
 
-def plot_quicklook(radar, gatefilter, radar_date, figure_path):
-    """
-    Plot figure of old/new radar parameters for checking purpose.
-
-    Parameters:
-    ===========
-        radar:
-            Py-ART radar structure.
-        gatefilter:
-            The Gate filter.
-        radar_date: datetime
-            Datetime stucture of the radar data.
-    """
-    if figure_path is None:
-        return None
-    # Extracting year and date.
-    year = str(radar_date.year)
-    datestr = radar_date.strftime("%Y%m%d")
-    # Path for saving Figures.
-    outfile_path = os.path.join(figure_path, year, datestr)
-
-    # Checking if output directory exists. Creating them otherwise.
-    if not os.path.isdir(os.path.join(figure_path, year)):
-        try:
-            os.mkdir(os.path.join(figure_path, year))
-        except FileExistsError:
-            pass
-    if not os.path.isdir(outfile_path):
-        try:
-            os.mkdir(outfile_path)
-        except FileExistsError:
-            pass
-
-    # Checking if figure already exists.
-    outfile = radar_date.strftime("%Y%m%d_%H%M") + ".png"
-    outfile = os.path.join(outfile_path, outfile)
-
-    # Initializing figure.
-    with pl.style.context('seaborn-paper'):
-        gr = pyart.graph.RadarDisplay(radar)
-        fig, the_ax = pl.subplots(4, 3, figsize=(14, 15), sharex=True, sharey=True)
-        the_ax = the_ax.flatten()
-        # Plotting reflectivity
-        gr.plot_ppi('total_power', ax=the_ax[0], cmap='pyart_NWSRef')
-        the_ax[0].set_title(gr.generate_title('total_power', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('reflectivity', ax=the_ax[1], gatefilter=gatefilter, cmap='pyart_NWSRef')
-        the_ax[1].set_title(gr.generate_title('reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('radar_estimated_rain_rate', ax=the_ax[2])
-        the_ax[2].set_title(gr.generate_title('radar_estimated_rain_rate', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('differential_phase', ax=the_ax[3], vmin=-180, vmax=180, cmap='pyart_Wild25')
-        the_ax[3].set_title(gr.generate_title('differential_phase', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        try:
-            gr.plot_ppi('corrected_differential_phase', ax=the_ax[4], vmin=-180, vmax=180, cmap='pyart_Wild25', gatefilter=gatefilter)
-            the_ax[4].set_title(gr.generate_title('corrected_differential_phase', sweep=0,
-                                                  datetime_format='%Y-%m-%dT%H:%M'))
-        except KeyError:
-            pass
-
-        try:
-            gr.plot_ppi('corrected_specific_differential_phase', ax=the_ax[5], vmin=-2, vmax=5, cmap='pyart_Theodore16', gatefilter=gatefilter)
-            the_ax[5].set_title(gr.generate_title('corrected_specific_differential_phase', sweep=0,
-                                                  datetime_format='%Y-%m-%dT%H:%M'))
-        except KeyError:
-            pass
-
-        try:
-            gr.plot_ppi('raw_velocity', ax=the_ax[6], cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            the_ax[6].set_title(gr.generate_title('velocity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-        except KeyError:
-            pass
-
-        try:
-            gr.plot_ppi('velocity', ax=the_ax[7], gatefilter=gatefilter,
-                        cmap=pyart.graph.cm.NWSVel, vmin=-30, vmax=30)
-            the_ax[7].set_title(gr.generate_title('region_dealias_velocity', sweep=0,
-                                                  datetime_format='%Y-%m-%dT%H:%M'))
-        except KeyError:
-            pass
-
-        try:
-            gr.plot_ppi('cross_correlation_ratio', ax=the_ax[8], vmin=0.5, vmax=1.05)
-            the_ax[8].set_title(gr.generate_title('cross_correlation_ratio',
-                                                  sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-        except KeyError:
-            pass
-
-        gr.plot_ppi('differential_reflectivity', ax=the_ax[9])
-        the_ax[9].set_title(gr.generate_title('differential_reflectivity', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('corrected_differential_reflectivity', ax=the_ax[10], gatefilter=gatefilter)
-        the_ax[10].set_title(gr.generate_title('corrected_differential_reflectivity',
-                                              sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        gr.plot_ppi('radar_echo_classification', ax=the_ax[11])
-        the_ax[11].set_title(gr.generate_title('radar_echo_classification', sweep=0, datetime_format='%Y-%m-%dT%H:%M'))
-
-        for ax_sl in the_ax:
-            gr.plot_range_rings([50, 100, 150], ax=ax_sl)
-            ax_sl.set_aspect(1)
-            ax_sl.set_xlim(-150, 150)
-            ax_sl.set_ylim(-150, 150)
-
-        pl.tight_layout()
-        pl.savefig(outfile)  # Saving figure.
-        fig.clf()  # Clear figure
-        pl.close()  # Release memory
-    del gr  # Releasing memory
-
-    return None
-
-
 def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     """
     Production line for correcting and estimating CPOL data radar parameters.
@@ -472,24 +351,20 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
 
         # Looking for SNR
         try:
-            radar.fields['SNR']
-            logger.info('SNR already exists.')
+            radar.fields['SNR']            
         except KeyError:
-            radar.add_field('SNR', snr, replace_existing=True)
-            logger.info('SNR calculated.')
+            radar.add_field('SNR', snr, replace_existing=True)            
 
     # Correct RHOHV
     if not fake_rhohv:
         rho_corr = radar_codes.correct_rhohv(radar)
-        radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
-        logger.info('RHOHV corrected.')
+        radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)        
 
     # Correct ZDR
     corr_zdr = radar_codes.correct_zdr(radar)
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
-    # GateFilter
-    logger.info('Filtering data.')
+    # GateFilter    
     if is_cpol:
         gatefilter = filtering.do_gatefilter_cpol(radar,
                                                   refl_name='DBZ',
@@ -536,13 +411,11 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
     zh_corr['data'] += atten_gas['data']
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
-    # radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
-    logger.info('Attenuation on reflectivity corrected.')
+    # radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)    
 
     # Correct Attenuation ZDR
     zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter=gatefilter, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
-    radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
-    logger.info('Attenuation on ZDR corrected.')
+    radar.add_field('ZDR_CORR_ATTEN', zdr_corr)    
 
     # Hydrometeors classification
     hydro_class = hydrometeors.hydrometeor_classification(radar,
@@ -550,20 +423,17 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
                                                           kdp_name=kdp_field_name,
                                                           zdr_name='ZDR_CORR_ATTEN')
 
-    radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
-    logger.info('Hydrometeors classification estimated.')
+    radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)    
 
     # Rainfall rate
     rainfall = hydrometeors.rainfall_rate(radar, gatefilter, kdp_name=kdp_field_name,
                                           refl_name='DBZ_CORR', zdr_name='ZDR_CORR_ATTEN')
-    radar.add_field("radar_estimated_rain_rate", rainfall)
-    logger.info('Rainfall rate estimated.')
+    radar.add_field("radar_estimated_rain_rate", rainfall)    
 
     # DSD retrieval
     nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("D0", d0_dict)
-    radar.add_field("NW", nw_dict)
-    logger.info('DSD estimated.')
+    radar.add_field("NW", nw_dict)    
 
     # Removing fake and useless fields.
     if fake_ncp:
@@ -578,6 +448,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
                          'RHOHV']:
         try:
             radar.fields.pop(obsolete_key)
+            logger.info(f'Obsolete field {obsolete_key} removed from {radar_file_name}.')
         except KeyError:
             continue
 
@@ -603,8 +474,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
                     ('DBZV', 'reflectivity_v'),
                     ('WRADV', 'spectrum_width_v'),
                     ('SNRV', 'signal_to_noise_ratio_v'),
-                    ('SQIV', 'normalized_coherent_power_v'),
-                   ]
+                    ('SQIV', 'normalized_coherent_power_v')]
 
     for old_key, new_key in fields_names:
         try:
@@ -612,22 +482,10 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         except KeyError:
             continue
 
-    # for key in radar.fields.keys():
-    #     radar.fields[key]['data'] = radar.fields[key]['data'].astype(np.float32)
-
     # Treatment is finished!
     end_time = time.time()
     logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name), (end_time - start_time))
-    print("Treatment for %s done in %0.2f seconds." % (os.path.basename(radar_file_name), (end_time - start_time)))
-
-    # Plot check figure.
-    logger.info('Plotting figure')
-    try:
-        plot_quicklook(radar, gatefilter, radar_start_date, figure_path)
-    except Exception:
-        logger.exception("Problem while trying to plot figure.")
-    figure_time = time.time()
-    logger.info('Figure saved in %0.2fs.', (figure_time - end_time))
+    print("Treatment for %s done in %0.2f seconds." % (os.path.basename(radar_file_name), (end_time - start_time)))    
 
     hardcode_keys = ["reflectivity",
                      "radar_echo_classification",
@@ -638,8 +496,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         try:
             radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
         except KeyError:
-            continue
-    logger.info('Hardcoding gatefilter to Fields done.')
+            continue    
 
     goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", "raw_velocity",
                 "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity", "radar_estimated_rain_rate",
@@ -649,6 +506,6 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         if k not in goodkeys:
             radar.fields.pop(k)
 
-    # Set Deflate Level
+    # TODO: Set Deflate Level
 
     return radar
