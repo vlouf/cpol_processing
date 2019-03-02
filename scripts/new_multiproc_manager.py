@@ -45,12 +45,12 @@ def production_line_manager(infile):
         Name of the input radar file.
     outpath: str
         Path for saving output data.
-    """    
+    """
     try:
-        cpol_processing.process_and_save(radar_filinfilee_name, OUTPATH, sound_dir=SOUND_DIR)    
-    except Exception:        
-        traceback.print_exc(file=sys.stdout)        
-        logging.error(f"Failed to process {infile}", exc_info=True)        
+        cpol_processing.process_and_save(infile, OUTPATH, sound_dir=SOUND_DIR)
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+        logging.error(f"Failed to process {infile}", exc_info=True)
 
     return None
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
     OUTPATH = "/g/data/hj10/cpol_level_1b/"
     SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
-    LOG_FILE_PATH = "/short/kl02/vhl548/"    
+    LOG_FILE_PATH = "/short/kl02/vhl548/"
 
     # Parse arguments
     parser_description = "Processing of radar data from level 1a to level 1b."

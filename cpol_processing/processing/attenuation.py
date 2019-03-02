@@ -4,7 +4,7 @@ Codes for correcting and estimating attenuation on ZH and ZDR.
 @title: attenuation
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 19/12/2018
+@date: 3/03/2019
 
 .. autosummary::
     :toctree: generated/
@@ -43,15 +43,7 @@ def correct_gaseous_attenuation(radar):
     atten_gas = 1.2 * tempgas1 * (1 - np.exp(-R / tempgas2))  # 1.2 factor for C-band 1.0 for S-band.
     atten_gas[~pos] = 0
 
-    atten_meta = dict()
-    atten_meta['long_name'] = 'atmospheric_gases_attenuation'
-    atten_meta['units'] = 'dB'
-    atten_meta['description'] = 'Doviak and Zrnic eq 3.19 p 44.'
-    atten_meta['valid_min'] = 0
-    atten_meta['_FillValue'] = -9999
-    atten_meta['data'] = atten_gas
-
-    return atten_meta
+    return atten_gas
 
 
 def correct_attenuation_zdr(radar, gatefilter, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', alpha=0.016):
@@ -99,7 +91,8 @@ def correct_attenuation_zdr(radar, gatefilter, zdr_name='ZDR_CORR', phidp_name='
 def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
                                  rhv_field='RHOHV_CORR', phidp_field='PHIDP_GG'):
     """
-    Correct attenuation on reflectivity using Py-ART tool.
+    Correct attenuation on reflectivity using Py-ART tool. The attenuation from 
+    atmospheric gases is also corrected.
 
     Parameters:
     ===========
@@ -118,12 +111,14 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
         Attenuation corrected reflectivity.
     """
     # Compute attenuation
-    atten_meta, zh_corr = pyart.correct.calculate_attenuation(radar, 0,
-                                                              rhv_min=0.3,
-                                                              refl_field=refl_field,
-                                                              ncp_field=rhv_field,
-                                                              rhv_field=rhv_field,
-                                                              phidp_field=phidp_field)
+    atten_gas = correct_gaseous_attenuation(radar)
+    _, zh_corr = pyart.correct.calculate_attenuation(radar, 0,
+                                                     rhv_min=0.3,
+                                                     refl_field=refl_field,
+                                                     ncp_field=rhv_field,
+                                                     rhv_field=rhv_field,
+                                                     phidp_field=phidp_field)
 
     zh_corr['_Least_significant_digit'] = 2
-    return atten_meta, zh_corr
+    zh_corr['data'] += atten_gas
+    return zh_corr

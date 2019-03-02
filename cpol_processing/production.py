@@ -9,7 +9,7 @@ CPOL Level 1b main production line. These are the drivers function.
 .. autosummary::
     :toctree: generated/
 
-    process_and_save    
+    process_and_save
     production_line  => Driver function.
 """
 # Python Standard Library
@@ -21,7 +21,7 @@ import datetime
 import traceback
 import warnings
 
-# Other Libraries -- Matplotlib must be imported before pyart.
+# Other Libraries
 import netCDF4
 import numpy as np
 import pyart
@@ -351,20 +351,20 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
 
         # Looking for SNR
         try:
-            radar.fields['SNR']            
+            radar.fields['SNR']
         except KeyError:
-            radar.add_field('SNR', snr, replace_existing=True)            
+            radar.add_field('SNR', snr, replace_existing=True)
 
     # Correct RHOHV
     if not fake_rhohv:
         rho_corr = radar_codes.correct_rhohv(radar)
-        radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)        
+        radar.add_field_like('RHOHV', 'RHOHV_CORR', rho_corr, replace_existing=True)
 
     # Correct ZDR
     corr_zdr = radar_codes.correct_zdr(radar)
     radar.add_field_like('ZDR', 'ZDR_CORR', corr_zdr, replace_existing=True)
 
-    # GateFilter    
+    # GateFilter
     if is_cpol:
         gatefilter = filtering.do_gatefilter_cpol(radar,
                                                   refl_name='DBZ',
@@ -398,24 +398,23 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     # Unfold VELOCITY
     if not vel_missing:
         # Dealias velocity.
-        # vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
+        unfvel_tick = time.time()
         vdop_unfold = velocity.unravel(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-        logger.info('Doppler velocity unfolded.')
+        unfvel_time = time.time() - unfvel_tick
+        logger.info(f'Doppler velocity unfolded in {unfvel_time}s.')
+        print(f'Doppler velocity unfolded in {unfvel_time}s.')
 
-    # Correct gaseous attenuation
-    atten_gas = attenuation.correct_gaseous_attenuation(radar)
-    # radar.add_field('gaseous_attenuation', atten_gas)
+        # vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
 
     # Correct Attenuation ZH
-    atten_spec, zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
-    zh_corr['data'] += atten_gas['data']
+    zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
-    # radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)    
+    # radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
 
     # Correct Attenuation ZDR
     zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter=gatefilter, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
-    radar.add_field('ZDR_CORR_ATTEN', zdr_corr)    
+    radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
 
     # Hydrometeors classification
     hydro_class = hydrometeors.hydrometeor_classification(radar,
@@ -423,17 +422,17 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
                                                           kdp_name=kdp_field_name,
                                                           zdr_name='ZDR_CORR_ATTEN')
 
-    radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)    
+    radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
 
     # Rainfall rate
     rainfall = hydrometeors.rainfall_rate(radar, gatefilter, kdp_name=kdp_field_name,
                                           refl_name='DBZ_CORR', zdr_name='ZDR_CORR_ATTEN')
-    radar.add_field("radar_estimated_rain_rate", rainfall)    
+    radar.add_field("radar_estimated_rain_rate", rainfall)
 
     # DSD retrieval
     nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("D0", d0_dict)
-    radar.add_field("NW", nw_dict)    
+    radar.add_field("NW", nw_dict)
 
     # Removing fake and useless fields.
     if fake_ncp:
@@ -485,7 +484,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
     # Treatment is finished!
     end_time = time.time()
     logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name), (end_time - start_time))
-    print("Treatment for %s done in %0.2f seconds." % (os.path.basename(radar_file_name), (end_time - start_time)))    
+    print("Treatment for %s done in %0.2f seconds." % (os.path.basename(radar_file_name), (end_time - start_time)))
 
     hardcode_keys = ["reflectivity",
                      "radar_echo_classification",
@@ -496,7 +495,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         try:
             radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
         except KeyError:
-            continue    
+            continue
 
     goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", "raw_velocity",
                 "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity", "radar_estimated_rain_rate",
