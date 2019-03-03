@@ -256,11 +256,11 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
     20/ Plotting figure quicklooks.
     21/ Hardcoding gatefilter.
     """
-    # Start chronometer.
-    start_time = time.time()
-
     # !!! READING THE RADAR !!!
-    radar = radar_codes.read_radar(radar_file_name)
+    if is_cpol:
+        radar = pyart.io.read(radar_file_name)
+    else:
+        radar = radar_codes.read_radar(radar_file_name)
 
     # Correct data type manually
     try:
@@ -457,7 +457,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         try:
             radar.add_field(new_key, radar.fields.pop(old_key), replace_existing=True)
         except KeyError:
-            continue        
+            continue
 
     hardcode_keys = ["reflectivity",
                      "radar_echo_classification",

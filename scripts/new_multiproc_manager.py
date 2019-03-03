@@ -22,8 +22,10 @@ import sys
 import glob
 import argparse
 import datetime
+import traceback
 
-from multiprocessing import get_context
+from concurrent.futures import TimeoutError
+from pebble import ProcessPool, ProcessExpired
 
 
 def chunks(l, n):
@@ -116,5 +118,19 @@ if __name__ == '__main__':
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
         for flist_chunk in chunks(flist, 16):
             arglist = [(f, OUTPATH, SOUND_DIR) for f in flist_chunk]
-            with get_context("spawn").Pool(len(flist_chunk)) as pool:
-                pool.starmap(main, arglist)
+            with ProcessPool() as pool:
+                future = pool.starmap(main, arglist, timeout=180)
+                iterator = future.result()
+                while True:
+                    try:
+                        result = next(iterator)
+                    except StopIteration:
+                        break
+                    except TimeoutError as error:
+                        print("function took longer than %d seconds" % error.args[1])
+                    except ProcessExpired as error:
+                        print("%s. Exit code: %d" % (error, error.exitcode))
+                    except Exception as error:
+                        print("function raised %s" % error)
+                        print(error.traceback)  # Python's traceback of remote process
+
