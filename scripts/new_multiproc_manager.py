@@ -22,8 +22,6 @@ import sys
 import glob
 import argparse
 import datetime
-import warnings
-import traceback
 
 from multiprocessing import get_context
 
@@ -37,7 +35,7 @@ def chunks(l, n):
         yield l[i:i + n]
 
 
-def main(infile):
+def main(infile, outpath, sound_dir):
     """
     It calls the production line and manages it. Buffer function that is used
     to catch any problem with the processing line without screwing the whole
@@ -50,10 +48,15 @@ def main(infile):
     outpath: str
         Path for saving output data.
     """
-    import cpol_processing
-    # SIGALRM is unix only.
+    import warnings
+    import traceback
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        import cpol_processing
+
     try:
-        cpol_processing.process_and_save(infile, OUTPATH, sound_dir=SOUND_DIR)
+        cpol_processing.process_and_save(infile, outpath, sound_dir=sound_dir)
     except Exception:
         traceback.print_exc()
         return None
@@ -111,9 +114,7 @@ if __name__ == '__main__':
             print('No file found for {}.'.format(day.strftime("%Y-%b-%d")))
             continue
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
-
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            for flist_chunk in chunks(flist, 16):
-                with get_context("spawn").Pool(len(flist_chunk)) as pool:
-                    pool.map(main, flist_chunk)
+        for flist_chunk in chunks(flist, 16):
+            arglist = [(f, OUTPATH, SOUND_DIR) for f in flist_chunk]
+            with get_context("spawn").Pool(len(flist_chunk)) as pool:
+                pool.starmap(main, arglist)
