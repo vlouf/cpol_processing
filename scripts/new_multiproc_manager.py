@@ -23,8 +23,9 @@ import glob
 import argparse
 import traceback
 
+from multiprocessing import Pool
+
 import pandas as pd
-import dask.bag as db
 import cpol_processing
 
 
@@ -37,11 +38,11 @@ def chunks(l, n):
         yield l[i:i + n]
 
 
-def production_line_manager(infile):
+def main(infile):
     """
-    The production line manager calls the production line and manages it ;-).
-    Buffer function that is used to catch any problem with the processing line
-    without screwing the whole multiprocessing stuff.
+    It calls the production line and manages it. Buffer function that is used
+    to catch any problem with the processing line without screwing the whole
+    multiprocessing stuff.
 
     Parameters:
     ===========
@@ -55,26 +56,6 @@ def production_line_manager(infile):
     except Exception:
         traceback.print_exc()
         # logging.error(f"Failed to process {infile}", exc_info=True)
-
-    gc.collect()
-    return None
-
-
-def main():
-    date_list = pd.date_range(START_DATE, END_DATE)
-    for day in date_list:
-        input_dir = os.path.join(INPATH, str(day.year), day.strftime("%Y%m%d"), "*.*")
-        flist = sorted(glob.glob(input_dir))
-        if len(flist) == 0:
-            print('No file found for {}.'.format(day.strftime("%Y-%b-%d")))
-            continue
-        print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
-
-        for flist_chunk in chunks(flist, 16):
-            bag = db.from_sequence(flist_chunk).map(production_line_manager)
-            bag.compute()
-        # with Pool(16) as pool:
-        #     pool.map(production_line_manager, flist)
 
     return None
 
@@ -113,14 +94,14 @@ if __name__ == '__main__':
     START_DATE = args.start_date
     END_DATE = args.end_date
 
-    # Creating the general log file.
-    # logname = "cpol_level1b_from_{}_to_{}.log".format(START_DATE, END_DATE)
-    # log_file_name = os.path.join(LOG_FILE_PATH, logname)
-    # logging.basicConfig(
-    #     level=logging.WARNING,
-    #     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    #     filename=log_file_name,
-    #     filemode='w+')
-    # logger = logging.getLogger(__name__)
+    for day in pd.date_range(START_DATE, END_DATE):
+        input_dir = os.path.join(INPATH, str(day.year), day.strftime("%Y%m%d"), "*.*")
+        flist = sorted(glob.glob(input_dir))
+        if len(flist) == 0:
+            print('No file found for {}.'.format(day.strftime("%Y-%b-%d")))
+            continue
+        print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-    main()
+        for flist_chunk in chunks(flist, 32):
+            with Pool() as pool:
+                pool.map(main, flist)
