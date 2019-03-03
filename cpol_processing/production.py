@@ -16,11 +16,8 @@ CPOL Level 1b main production line. These are the drivers function.
 import os
 import time
 import uuid
-import signal  # NOTE: SIGALRM is not available on Windows!
-import logging
 import datetime
 import traceback
-import warnings
 
 # Other Libraries
 import netCDF4
@@ -103,9 +100,6 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     # outdir_70km = os.path.join(outpath_grid, "grid_70km_1000m")
     # _mkdir(outdir_150km)
     # _mkdir(outdir_70km)
-
-    # Get logger.
-    logger = logging.getLogger()
     tick = time.time()
 
     # Business start here.
@@ -131,8 +125,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     outfilename = os.path.join(outpath_ppi, outfilename)
 
     # Check if output file already exists.
-    if os.path.isfile(outfilename):
-        logger.error('Output file already exists for: %s.', outfilename)
+    if os.path.isfile(outfilename):        
         print(f"Output file {outfilename} already exists.")
         return None
 
@@ -219,8 +212,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     #     logging.error('Problem while gridding.')
     #     raise
 
-    # Processing finished!
-    logger.info('%s processed in  %0.2f s.', os.path.basename(radar_file_name), (time.time() - tick))
+    # Processing finished!    
     print('%s processed in  %0.2fs.' % (os.path.basename(radar_file_name), (time.time() - tick)))
 
     return None
@@ -269,9 +261,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
     20/ Plotting figure quicklooks.
     21/ Hardcoding gatefilter.
     """
-    # Get logger.
-    logger = logging.getLogger()
-
     # Start chronometer.
     start_time = time.time()
 
@@ -298,16 +287,14 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         raise TypeError(f"Azimuth field is empty in {radar_file_name}.")
 
     if not radar_codes.check_year(radar):
-        logger.warning(f'{radar_file_name} date probably wrong. Had to correct century.')
+        print(f'{radar_file_name} date probably wrong. Had to correct century.')
 
     new_azimuth, azi_has_changed = radar_codes.correct_azimuth(radar)
-    if azi_has_changed:
-        logger.info('Azimuth has been corrected.')
+    if azi_has_changed:        
         radar.azimuth['data'] = new_azimuth
 
     # Getting radar's date and time.
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
-    logger.info("%s read.", radar_file_name)
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))    
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
@@ -336,8 +323,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         rho = pyart.config.get_metadata('cross_correlation_ratio')
         rho['data'] = np.ones_like(radar.fields['DBZ']['data'])
         radar.add_field('RHOHV', rho)
-        radar.add_field('RHOHV_CORR', rho)
-        logger.critical("RHOHV field not found, creating a fake RHOHV")
+        radar.add_field('RHOHV_CORR', rho)        
 
     # Compute SNR and extract radiosounding temperature.
     # Requires radiosoundings
@@ -347,8 +333,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
             radar.add_field('temperature', temperature, replace_existing=True)
             radar.add_field('height', height, replace_existing=True)
         except ValueError:
-            traceback.print_exc()
-            logger.error("Impossible to compute SNR")
+            traceback.print_exc()            
             print(f"Impossible to compute SNR {radar_file_name}")
             return None
 
@@ -414,8 +399,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         # else:
         #     signal.alarm(0)
 
-        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-        logger.info(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
+        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)        
         print(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
 
     # Correct Attenuation ZH
@@ -458,7 +442,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
                          'RHOHV']:
         try:
             radar.fields.pop(obsolete_key)
-            logger.info(f'Obsolete field {obsolete_key} removed from {radar_file_name}.')
+            print(f'Obsolete field {obsolete_key} removed from {radar_file_name}.')
         except KeyError:
             continue
 
@@ -494,8 +478,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
 
     # Treatment is finished!
     end_time = time.time()
-    logger.info("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name), (end_time - start_time))
-    print("Treatment for %s done in %0.2f seconds." % (os.path.basename(radar_file_name), (end_time - start_time)))
+    print("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name), (end_time - start_time))
 
     hardcode_keys = ["reflectivity",
                      "radar_echo_classification",

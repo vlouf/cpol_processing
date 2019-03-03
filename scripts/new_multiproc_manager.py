@@ -22,7 +22,7 @@ import gc
 import sys
 import time
 import glob
-import logging
+# import logging
 import argparse
 import datetime
 import warnings
@@ -50,7 +50,7 @@ def production_line_manager(infile):
         cpol_processing.process_and_save(infile, OUTPATH, sound_dir=SOUND_DIR)
     except Exception:
         traceback.print_exc()
-        logging.error(f"Failed to process {infile}", exc_info=True)
+        # logging.error(f"Failed to process {infile}", exc_info=True)
 
     gc.collect()
     return None
@@ -76,7 +76,7 @@ def main():
 
 if __name__ == '__main__':
     """
-    Global variables definition and logging file initialisation.
+    Global variables definition.
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
@@ -109,13 +109,13 @@ if __name__ == '__main__':
     END_DATE = args.end_date
 
     # Creating the general log file.
-    logname = "cpol_level1b_from_{}_to_{}.log".format(START_DATE, END_DATE)
-    log_file_name = os.path.join(LOG_FILE_PATH, logname)
-    logging.basicConfig(
-        level=logging.WARNING,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        filename=log_file_name,
-        filemode='w+')
-    logger = logging.getLogger(__name__)
+    # logname = "cpol_level1b_from_{}_to_{}.log".format(START_DATE, END_DATE)
+    # log_file_name = os.path.join(LOG_FILE_PATH, logname)
+    # logging.basicConfig(
+    #     level=logging.WARNING,
+    #     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    #     filename=log_file_name,
+    #     filemode='w+')
+    # logger = logging.getLogger(__name__)
 
     main()
