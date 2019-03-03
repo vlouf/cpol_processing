@@ -20,21 +20,12 @@ CPOL Level 1b main production line.
 import os
 import sys
 import glob
-import signal
 import argparse
 import datetime
 import warnings
 import traceback
 
-from multiprocessing import Pool
-
-
-class TimeoutException(Exception):   # Custom exception class
-    pass
-
-
-def timeout_handler(signum, frame):   # Custom signal handler
-    raise TimeoutException
+from multiprocessing import get_context
 
 
 def chunks(l, n):
@@ -61,18 +52,11 @@ def main(infile):
     """
     import cpol_processing
     # SIGALRM is unix only.
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(TIME_BEFORE_DEATH)
     try:
         cpol_processing.process_and_save(infile, OUTPATH, sound_dir=SOUND_DIR)
-    except TimeoutException:
-        print(f'Process deadlock for file {infile}. Killing it.')
-        return None
     except Exception:
         traceback.print_exc()
         return None
-    else:
-        signal.alarm(0)
 
     return None
 
@@ -86,7 +70,6 @@ if __name__ == '__main__':
     OUTPATH = "/g/data/hj10/cpol_level_1b/"
     SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
     LOG_FILE_PATH = "/short/kl02/vhl548/"
-    TIME_BEFORE_DEATH = 240
 
     # Parse arguments
     parser_description = "Processing of radar data from level 1a to level 1b."
@@ -132,5 +115,5 @@ if __name__ == '__main__':
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             for flist_chunk in chunks(flist, 16):
-                with Pool(len(flist_chunk)) as pool:
+                with get_context("spawn").Pool(len(flist_chunk)) as pool:
                     pool.map(main, flist_chunk)
