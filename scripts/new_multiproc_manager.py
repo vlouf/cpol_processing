@@ -37,7 +37,7 @@ def chunks(l, n):
         yield l[i:i + n]
 
 
-def main(infile, outpath, sound_dir):
+def main(inargs):
     """
     It calls the production line and manages it. Buffer function that is used
     to catch any problem with the processing line without screwing the whole
@@ -52,6 +52,8 @@ def main(infile, outpath, sound_dir):
     """
     import warnings
     import traceback
+
+    inargs = infile, outpath, sound_dir
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
@@ -119,7 +121,7 @@ if __name__ == '__main__':
         for flist_chunk in chunks(flist, 16):
             arglist = [(f, OUTPATH, SOUND_DIR) for f in flist_chunk]
             with ProcessPool() as pool:
-                future = pool.starmap(main, arglist, timeout=180)
+                future = pool.map(main, arglist, timeout=180)
                 iterator = future.result()
                 while True:
                     try:
