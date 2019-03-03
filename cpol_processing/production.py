@@ -1,7 +1,7 @@
 """
 CPOL Level 1b main production line. These are the drivers function.
 
-@title: CPOL_PROD_1b
+@title: production
 @author: Valentin Louf <valentin.louf@monash.edu>
 @copyright: Valentin Louf (2017-)
 @institution: Bureau of Meteorology
@@ -10,7 +10,7 @@ CPOL Level 1b main production line. These are the drivers function.
     :toctree: generated/
 
     process_and_save
-    production_line  => Driver function.
+    production_line
 """
 # Python Standard Library
 import os
@@ -37,12 +37,12 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-class TimeoutException(Exception):   # Custom exception class
-    pass
+# class TimeoutException(Exception):   # Custom exception class
+#     pass
 
 
-def timeout_handler(signum, frame):   # Custom signal handler
-    raise TimeoutException
+# def timeout_handler(signum, frame):   # Custom signal handler
+#     raise TimeoutException
 
 
 def _mkdir(dir):
@@ -107,11 +107,11 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     # Get logger.
     logger = logging.getLogger()
     tick = time.time()
+
     # Business start here.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol)
+    radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol)
     # Business over.
+
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
         return None
@@ -280,28 +280,22 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
 
     # Correct data type manually
     try:
-        radar.longitude['data'].filled(0).astype(np.float32)
-        radar.latitude['data'].filled(0).astype(np.float32)
-        radar.altitude['data'].filled(0).astype(np.int32)
+        radar.longitude['data'] = radar.longitude['data'].filled(0).astype(np.float32)
+        radar.latitude['data'] = radar.latitude['data'].filled(0).astype(np.float32)
+        radar.altitude['data'] = radar.altitude['data'].filled(0).astype(np.int32)
     except Exception:
         pass
 
     if is_cpol:
-        if radar.nsweeps <= 10:
-            print('Problem with CPOL PPI, not enough elevations.')
-            logger.error('Problem with CPOL PPI, not enough elevations.')
-            return None
+        if radar.nsweeps <= 10:                        
+            raise ValueError(f'Problem with CPOL PPIs, only {radar.nsweeps} elevations.')
 
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
-        logger.error("MAJOR ERROR: %s reflectivity field is empty.", radar_file_name)
-        print(f"MAJOR ERROR: {radar_file_name} reflectivity field is empty.")
-        return None
+        raise TypeError(f"Reflectivity field is empty in {radar_file_name}.")        
 
     if not radar_codes.check_azimuth(radar):
-        logger.error("MAJOR ERROR: %s azimuth field is empty.", radar_file_name)
-        print(f"MAJOR ERROR: {radar_file_name} azimuth field is empty.")
-        return None
+        raise TypeError(f"Azimuth field is empty in {radar_file_name}.")
 
     if not radar_codes.check_year(radar):
         logger.warning(f'{radar_file_name} date probably wrong. Had to correct century.')
@@ -325,8 +319,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         radar.fields['VEL']['units'] = "m/s"
         vel_missing = False
     except KeyError:
-        vel_missing = True
-        pass
+        vel_missing = True        
 
     # Check if the nyquist velocity is present in the radar parameters.
     if not vel_missing:
@@ -409,17 +402,17 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
     if not vel_missing:
         # Dealias velocity.
         unfvel_tick = time.time()
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(240)
-        try:
-            vdop_unfold = velocity.unravel(radar, gatefilter)
-        except TimeoutException:
-            # Treatment time was too long.
-            logging.error("Unfolding took too long.")
-            vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
-            vdop_unfold['comment'] = 'Region-based algorithm.'
-        else:
-            signal.alarm(0)
+        # signal.signal(signal.SIGALRM, timeout_handler)
+        # signal.alarm(240)
+        # try:
+        vdop_unfold = velocity.unravel(radar, gatefilter)
+        # except TimeoutException:
+        #     # Treatment time was too long.
+        #     logging.error("Unfolding took too long.")
+        #     vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
+        #     vdop_unfold['comment'] = 'Region-based algorithm.'
+        # else:
+        #     signal.alarm(0)
 
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
         logger.info(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')

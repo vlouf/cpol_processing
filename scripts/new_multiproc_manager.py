@@ -49,9 +49,10 @@ def production_line_manager(infile):
     try:
         cpol_processing.process_and_save(infile, OUTPATH, sound_dir=SOUND_DIR)
     except Exception:
-        traceback.print_exc(file=sys.stdout)
+        traceback.print_exc()
         logging.error(f"Failed to process {infile}", exc_info=True)
 
+    gc.collect()
     return None
 
 
@@ -66,10 +67,9 @@ def main():
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
         bag = db.from_sequence(flist).map(production_line_manager)
-        bag.compute()
+        bag.compute(scheduler='processes', num_workers=16)
         # with Pool(16) as pool:
         #     pool.map(production_line_manager, flist)
-        gc.collect()
 
     return None
 
