@@ -18,6 +18,7 @@ import time
 import uuid
 import datetime
 import traceback
+import warnings
 
 # Other Libraries
 import netCDF4
@@ -103,7 +104,9 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     tick = time.time()
 
     # Business start here.
-    radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol)
     # Business over.
 
     if radar is None:
@@ -441,8 +444,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
     for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV', 'ZDR_CORR',
                          'RHOHV']:
         try:
-            radar.fields.pop(obsolete_key)
-            print(f'Obsolete field {obsolete_key} removed from {radar_file_name}.')
+            radar.fields.pop(obsolete_key)            
         except KeyError:
             continue
 
