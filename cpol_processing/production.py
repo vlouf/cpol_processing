@@ -120,7 +120,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     outfilename = os.path.join(outpath_ppi, outfilename)
 
     # Check if output file already exists.
-    if os.path.isfile(outfilename):        
+    if os.path.isfile(outfilename):
         print(f"Output file {outfilename} already exists.")
         return None
 
@@ -207,7 +207,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     #     logging.error('Problem while gridding.')
     #     raise
 
-    # Processing finished!    
+    # Processing finished!
     print('%s processed in  %0.2fs.' % (os.path.basename(radar_file_name), (time.time() - tick)))
 
     return None
@@ -271,12 +271,12 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         pass
 
     if is_cpol:
-        if radar.nsweeps <= 10:                        
+        if radar.nsweeps <= 10:
             raise ValueError(f'Problem with CPOL PPIs, only {radar.nsweeps} elevations.')
 
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
-        raise TypeError(f"Reflectivity field is empty in {radar_file_name}.")        
+        raise TypeError(f"Reflectivity field is empty in {radar_file_name}.")
 
     if not radar_codes.check_azimuth(radar):
         raise TypeError(f"Azimuth field is empty in {radar_file_name}.")
@@ -285,11 +285,11 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         print(f'{radar_file_name} date probably wrong. Had to correct century.')
 
     new_azimuth, azi_has_changed = radar_codes.correct_azimuth(radar)
-    if azi_has_changed:        
+    if azi_has_changed:
         radar.azimuth['data'] = new_azimuth
 
     # Getting radar's date and time.
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))    
+    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:
@@ -301,7 +301,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         radar.fields['VEL']['units'] = "m/s"
         vel_missing = False
     except KeyError:
-        vel_missing = True        
+        vel_missing = True
 
     # Check if the nyquist velocity is present in the radar parameters.
     if not vel_missing:
@@ -318,7 +318,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         rho = pyart.config.get_metadata('cross_correlation_ratio')
         rho['data'] = np.ones_like(radar.fields['DBZ']['data'])
         radar.add_field('RHOHV', rho)
-        radar.add_field('RHOHV_CORR', rho)        
+        radar.add_field('RHOHV_CORR', rho)
 
     # Compute SNR and extract radiosounding temperature.
     # Requires radiosoundings
@@ -328,7 +328,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
             radar.add_field('temperature', temperature, replace_existing=True)
             radar.add_field('height', height, replace_existing=True)
         except ValueError:
-            traceback.print_exc()            
+            traceback.print_exc()
             print(f"Impossible to compute SNR {radar_file_name}")
             return None
 
@@ -383,7 +383,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         # Dealias velocity.
         unfvel_tick = time.time()
         vdop_unfold = velocity.unravel(radar, gatefilter)
-        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)        
+        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
         print(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
 
     # Correct Attenuation ZH
@@ -425,7 +425,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
     for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV', 'ZDR_CORR',
                          'RHOHV']:
         try:
-            radar.fields.pop(obsolete_key)            
+            radar.fields.pop(obsolete_key)
         except KeyError:
             continue
 

@@ -18,16 +18,14 @@ CPOL Level 1b main production line.
 """
 # Python Standard Library
 import os
-import gc
+import sys
 import glob
 import signal
 import argparse
+import datetime
 import traceback
 
 from multiprocessing import Pool
-
-import pandas as pd
-import cpol_processing
 
 
 class TimeoutException(Exception):   # Custom exception class
@@ -60,6 +58,7 @@ def main(infile):
     outpath: str
         Path for saving output data.
     """
+    import cpol_processing
     # SIGALRM is unix only.
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(TIME_BEFORE_DEATH)
@@ -67,8 +66,10 @@ def main(infile):
         cpol_processing.process_and_save(infile, OUTPATH, sound_dir=SOUND_DIR)
     except TimeoutException:
         print(f'Process deadlock for file {infile}. Killing it.')
+        return None
     except Exception:
         traceback.print_exc()
+        return None
     else:
         signal.alarm(0)
 
@@ -109,8 +110,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
+    try:
+        start = datetime.datetime.strptime(START_DATE, "%Y%m%d")
+        end = datetime.datetime.strptime(END_DATE, "%Y%m%d")
+        if start > end:
+            raise ValueError('End date older than start date.')
+        date_range = [start + datetime.timedelta(days=x) for x in range(0, (end - start).days + 1, )]
+    except ValueError:
+        print("Invalid dates.")
+        sys.exit()
 
-    for day in pd.date_range(START_DATE, END_DATE):
+    for day in date_range:
         input_dir = os.path.join(INPATH, str(day.year), day.strftime("%Y%m%d"), "*.*")
         flist = sorted(glob.glob(input_dir))
         if len(flist) == 0:
@@ -118,6 +128,6 @@ if __name__ == '__main__':
             continue
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        for flist_chunk in chunks(flist, 32):
+        for flist_chunk in chunks(flist, 16):
             with Pool(16) as pool:
                 pool.map(main, flist)
