@@ -94,15 +94,15 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     _mkdir(outpath)
     outpath_ppi = os.path.join(outpath, 'ppi')
     _mkdir(outpath_ppi)
-    outpath_grid = os.path.join(outpath, 'gridded')
-    _mkdir(outpath_grid)
-    figure_path = os.path.join(outpath, 'quicklooks')
-    _mkdir(figure_path)
+    # outpath_grid = os.path.join(outpath, 'gridded')
+    # _mkdir(outpath_grid)
+    # figure_path = os.path.join(outpath, 'quicklooks')
+    # _mkdir(figure_path)
 
-    outdir_150km = os.path.join(outpath_grid, "grid_150km_2500m")
-    outdir_70km = os.path.join(outpath_grid, "grid_70km_1000m")
-    _mkdir(outdir_150km)
-    _mkdir(outdir_70km)
+    # outdir_150km = os.path.join(outpath_grid, "grid_150km_2500m")
+    # outdir_70km = os.path.join(outpath_grid, "grid_70km_1000m")
+    # _mkdir(outdir_150km)
+    # _mkdir(outdir_70km)
 
     # Get logger.
     logger = logging.getLogger()
@@ -110,7 +110,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     # Business start here.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        radar = production_line(radar_file_name, sound_dir, figure_path, is_cpol=is_cpol)
+        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol)
     # Business over.
     if radar is None:
         print(f'{radar_file_name} has not been processed. Check logs.')
@@ -226,7 +226,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     return None
 
 
-def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
+def production_line(radar_file_name, sound_dir, is_cpol=True):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -235,41 +235,39 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
 
     Parameters:
     ===========
-        radar_file_name: str
-            Name of the input radar file.
-        sound_dir: str
-            Path to radiosounding directory.
-        figure_path: str
-            Path for saving figures.
+    radar_file_name: str
+        Name of the input radar file.
+    sound_dir: str
+        Path to radiosounding directory.
 
     Returns:
     ========
-        radar: Object
-            Py-ART radar structure.
+    radar: Object
+        Py-ART radar structure.
 
     PLAN:
     =====
-        01/ Read input radar file.
-        02/ Check if radar file OK (no problem with azimuth and reflectivity).
-        03/ Get radar date.
-        04/ Check if NCP field exists (creating a fake one if it doesn't)
-        05/ Check if RHOHV field exists (creating a fake one if it doesn't)
-        06/ Compute SNR and temperature using radiosoundings.
-        07/ Correct RHOHV using Ryzhkov algorithm.
-        08/ Create gatefilter (remove noise and incorrect data).
-        09/ Correct ZDR using Ryzhkov algorithm.
-        10/ Process and unfold raw PHIDP using wradlib and Vulpiani algorithm.
-        11/ Compute Giangrande's PHIDP using pyart.
-        12/ Unfold velocity using pyart.
-        13/ Compute attenuation for ZH
-        14/ Compute attenuation for ZDR
-        15/ Estimate Hydrometeors classification using csu toolbox.
-        16/ Estimate Rainfall rate using csu toolbox.
-        17/ Estimate DSD retrieval using csu toolbox.
-        18/ Removing fake/temporary fieds.
-        19/ Rename fields to pyart standard names.
-        20/ Plotting figure quicklooks.
-        21/ Hardcoding gatefilter.
+    01/ Read input radar file.
+    02/ Check if radar file OK (no problem with azimuth and reflectivity).
+    03/ Get radar date.
+    04/ Check if NCP field exists (creating a fake one if it doesn't)
+    05/ Check if RHOHV field exists (creating a fake one if it doesn't)
+    06/ Compute SNR and temperature using radiosoundings.
+    07/ Correct RHOHV using Ryzhkov algorithm.
+    08/ Create gatefilter (remove noise and incorrect data).
+    09/ Correct ZDR using Ryzhkov algorithm.
+    10/ Process and unfold raw PHIDP using wradlib and Vulpiani algorithm.
+    11/ Compute Giangrande's PHIDP using pyart.
+    12/ Unfold velocity using pyart.
+    13/ Compute attenuation for ZH
+    14/ Compute attenuation for ZDR
+    15/ Estimate Hydrometeors classification using csu toolbox.
+    16/ Estimate Rainfall rate using csu toolbox.
+    17/ Estimate DSD retrieval using csu toolbox.
+    18/ Removing fake/temporary fieds.
+    19/ Rename fields to pyart standard names.
+    20/ Plotting figure quicklooks.
+    21/ Hardcoding gatefilter.
     """
     # Get logger.
     logger = logging.getLogger()
@@ -411,7 +409,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(240)
         try:
-            vdop_unfold = velocity.unravel(radar, gatefilter)            
+            vdop_unfold = velocity.unravel(radar, gatefilter)
         except TimeoutException:
             # Treatment time was too long.
             logging.error("Unfolding took too long.")
@@ -420,7 +418,7 @@ def production_line(radar_file_name, sound_dir, figure_path=None, is_cpol=True):
         else:
             signal.alarm(0)
 
-        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)        
+        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
         logger.info(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
         print(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
 
