@@ -53,7 +53,7 @@ def main(inargs):
     import warnings
     import traceback
 
-    inargs = infile, outpath, sound_dir
+    infile, outpath, sound_dir = inargs
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
