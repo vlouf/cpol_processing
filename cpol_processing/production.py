@@ -303,6 +303,9 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         print(f"MAJOR ERROR: {radar_file_name} azimuth field is empty.")
         return None
 
+    if not radar_codes.check_year(radar):
+        logger.warning(f'{radar_file_name} date probably wrong. Had to correct century.')
+
     new_azimuth, azi_has_changed = radar_codes.correct_azimuth(radar)
     if azi_has_changed:
         logger.info('Azimuth has been corrected.')

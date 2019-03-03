@@ -14,6 +14,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
     _nearest
     check_azimuth
     check_reflectivity
+    check_year
     correct_rhohv
     correct_zdr
     get_radiosoundings
@@ -134,6 +135,32 @@ def check_reflectivity(radar, refl_field_name='DBZ'):
             return False
 
     return True
+
+
+def check_year(radar):
+    """
+    Check if time unit is correct. We have encountered some old files with the
+    year 2000 bug, i.e. date being 2098 instead of 1998.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+
+    Returns:
+    ========
+        True if date seems valid and False if date century had to be corrected.
+    """
+    dtime = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+    if dtime.year < 2050:
+        # Date seems valid.
+        return True
+    else:
+        wyr = dtime.year
+        tunit = radar.time['units']
+        radar.time['units'] = tunit.replace(str(wyr), str(wyr - 100))
+
+    return False
 
 
 def correct_azimuth(radar):
