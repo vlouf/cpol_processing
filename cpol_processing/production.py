@@ -35,14 +35,6 @@ from .processing import radar_codes
 from .processing import velocity
 
 
-# class TimeoutException(Exception):   # Custom exception class
-#     pass
-
-
-# def timeout_handler(signum, frame):   # Custom signal handler
-#     raise TimeoutException
-
-
 def _mkdir(dir):
     """
     Make directory. Might seem redundant but you might have concurrency issue
@@ -390,18 +382,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
     if not vel_missing:
         # Dealias velocity.
         unfvel_tick = time.time()
-        # signal.signal(signal.SIGALRM, timeout_handler)
-        # signal.alarm(240)
-        # try:
         vdop_unfold = velocity.unravel(radar, gatefilter)
-        # except TimeoutException:
-        #     # Treatment time was too long.
-        #     logging.error("Unfolding took too long.")
-        #     vdop_unfold = velocity.unfold_velocity(radar, gatefilter, constrain_sounding=False)
-        #     vdop_unfold['comment'] = 'Region-based algorithm.'
-        # else:
-        #     signal.alarm(0)
-
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)        
         print(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
 
