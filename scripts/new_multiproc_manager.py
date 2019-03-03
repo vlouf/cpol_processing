@@ -19,18 +19,22 @@ CPOL Level 1b main production line.
 # Python Standard Library
 import os
 import gc
-import sys
-import time
 import glob
-# import logging
 import argparse
-import datetime
-import warnings
 import traceback
 
 import pandas as pd
 import dask.bag as db
 import cpol_processing
+
+
+def chunks(l, n):
+    """
+    Yield successive n-sized chunks from l.
+    From http://stackoverflow.com/a/312464
+    """
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 
 def production_line_manager(infile):
@@ -66,8 +70,9 @@ def main():
             continue
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        bag = db.from_sequence(flist).map(production_line_manager)
-        bag.compute(scheduler='processes', num_workers=16)
+        for flist_chunk in chunks(flist, 16):
+            bag = db.from_sequence(flist_chunk).map(production_line_manager)
+            bag.compute()
         # with Pool(16) as pool:
         #     pool.map(production_line_manager, flist)
 
