@@ -384,7 +384,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         unfvel_tick = time.time()
         vdop_unfold = velocity.unravel(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-        print(f'Doppler velocity unfolded in {time.time() - unfvel_tick}s.')
+        print('Doppler velocity unfolded in %0.2f s.' % (time.time() - unfvel_tick))
 
     # Correct Attenuation ZH
     zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
@@ -457,11 +457,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
         try:
             radar.add_field(new_key, radar.fields.pop(old_key), replace_existing=True)
         except KeyError:
-            continue
-
-    # Treatment is finished!
-    end_time = time.time()
-    print("Treatment for {} done in {:0.2f} seconds.".format(os.path.basename(radar_file_name), (end_time - start_time)))
+            continue        
 
     hardcode_keys = ["reflectivity",
                      "radar_echo_classification",

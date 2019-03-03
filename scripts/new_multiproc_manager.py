@@ -23,6 +23,7 @@ import glob
 import signal
 import argparse
 import datetime
+import warnings
 import traceback
 
 from multiprocessing import Pool
@@ -128,6 +129,8 @@ if __name__ == '__main__':
             continue
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        for flist_chunk in chunks(flist, 16):
-            with Pool(16) as pool:
-                pool.map(main, flist)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            for flist_chunk in chunks(flist, 16):
+                with Pool(len(flist_chunk)) as pool:
+                    pool.map(main, flist_chunk)
