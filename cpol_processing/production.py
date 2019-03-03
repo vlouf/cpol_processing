@@ -480,7 +480,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
 
     # Treatment is finished!
     end_time = time.time()
-    print("Treatment for %s done in %0.2f seconds.", os.path.basename(radar_file_name), (end_time - start_time))
+    print("Treatment for {} done in {:0.2f} seconds.".format(os.path.basename(radar_file_name), (end_time - start_time)))
 
     hardcode_keys = ["reflectivity",
                      "radar_echo_classification",
