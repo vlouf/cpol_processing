@@ -213,7 +213,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     return None
 
 
-def production_line(radar_file_name, sound_dir, is_cpol=True):
+def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -382,7 +382,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True):
     if not vel_missing:
         # Dealias velocity.
         unfvel_tick = time.time()
-        vdop_unfold = velocity.unravel(radar, gatefilter)
+        if use_unravel:
+            vdop_unfold = velocity.unravel(radar, gatefilter)
+        else:
+            vdop_unfold = velocity.unfold_velocity(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
         print('Doppler velocity unfolded in %0.2f s.' % (time.time() - unfvel_tick))
 
