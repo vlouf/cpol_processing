@@ -89,7 +89,7 @@ calculation, and rainfall rate estimation."""
 
     parser.add_argument('--unravel', dest='unravel', action='store_true')
     parser.add_argument('--no-unravel', dest='unravel', action='store_false')
-    parser.set_defaults(unravel=False)
+    parser.set_defaults(unravel=True)
 
     args = parser.parse_args()
     INFILE = args.infile

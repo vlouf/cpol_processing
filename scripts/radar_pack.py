@@ -1,19 +1,18 @@
 """
-CPOL Level 1b main production line.
+Raw radar PPIs processing. Quality control, filtering, attenuation correction,
+dealiasing, unfolding, hydrometeors calculation, rainfall rate estimation.
+Tested on CPOL.
 
-@title: CPOL_PROD_1b
+@title: cpol_processing
 @author: Valentin Louf <valentin.louf@monash.edu>
-@institution: Bureau of Meteorology
-@date: 1/03/2019
-@version: 1
+@institution: Monash University
+@date: 13/03/2019
+@version: 2
 
 .. autosummary::
     :toctree: generated/
 
-    timeout_handler
     chunks
-    production_line_manager
-    production_line_multiproc
     main
 """
 # Python Standard Library
@@ -23,6 +22,8 @@ import glob
 import argparse
 import datetime
 import traceback
+
+import crayons
 
 from concurrent.futures import TimeoutError
 from pebble import ProcessPool, ProcessExpired
@@ -53,19 +54,37 @@ def main(inargs):
     import warnings
     import traceback
 
-    infile, outpath, sound_dir = inargs
+    infile, outpath, sound_dir, use_unravel = inargs
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         import cpol_processing
 
     try:
-        cpol_processing.process_and_save(infile, outpath, sound_dir=sound_dir)
+        cpol_processing.process_and_save(infile, outpath, sound_dir=sound_dir, use_unravel=use_unravel)
     except Exception:
         traceback.print_exc()
         return None
 
     return None
+
+
+def welcome_message():
+    """
+    Display a welcome message with the input information.
+    """
+    print("#" * 79)
+    print("")
+    print(" " * 25 + crayons.red("Raw radar PPIs production line.\n", bold=True))
+    print("\t- Input data directory path is: " + crayons.yellow(INPATH))
+    print("\t- Output data directory path is: " + crayons.yellow(OUTPATH))
+    print("\t- Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
+    print(f"\t- The process will occur between {crayons.yellow(START_DATE)} and {crayons.yellow(END_DATE)}.")
+    if USE_UNRAVEL:
+        print("\t- " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
+    else:
+        print("\t- " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
+    print("\n" + "#" * 79 + "\n")
 
 
 if __name__ == '__main__':
@@ -76,10 +95,11 @@ if __name__ == '__main__':
     INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
     OUTPATH = "/g/data/hj10/cpol_level_1b/"
     SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
-    LOG_FILE_PATH = "/short/kl02/vhl548/"
 
     # Parse arguments
-    parser_description = "Processing of radar data from level 1a to level 1b."
+    parser_description =  """Raw radar PPIs processing. It provides Quality
+control, filtering, attenuation correction, dealiasing, unfolding, hydrometeors
+calculation, and rainfall rate estimation."""
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument(
         '-s',
@@ -97,18 +117,27 @@ if __name__ == '__main__':
         type=str,
         help='Ending date.',
         required=True)
+    parser.add_argument('--unravel', dest='unravel', action='store_true')
+    parser.add_argument('--no-unravel', dest='unravel', action='store_false')
+    parser.set_defaults(unravel=True)
 
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
+    USE_UNRAVEL = args.unravel
+
+    # Display infos
+    welcome_message()
+
+    # Check date
     try:
         start = datetime.datetime.strptime(START_DATE, "%Y%m%d")
         end = datetime.datetime.strptime(END_DATE, "%Y%m%d")
         if start > end:
-            raise ValueError('End date older than start date.')
+            parser.error('End date older than start date.')
         date_range = [start + datetime.timedelta(days=x) for x in range(0, (end - start).days + 1, )]
     except ValueError:
-        print("Invalid dates.")
+        parser.error('Invalid dates.')
         sys.exit()
 
     for day in date_range:
@@ -117,12 +146,16 @@ if __name__ == '__main__':
         if len(flist) == 0:
             print('No file found for {}.'.format(day.strftime("%Y-%b-%d")))
             continue
+
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
+
         for flist_chunk in chunks(flist, 16):
-            arglist = [(f, OUTPATH, SOUND_DIR) for f in flist_chunk]
+            arglist = [(f, OUTPATH, SOUND_DIR, USE_UNRAVEL) for f in flist_chunk]
+
             with ProcessPool() as pool:
                 future = pool.map(main, arglist, timeout=180)
                 iterator = future.result()
+
                 while True:
                     try:
                         result = next(iterator)
@@ -135,4 +168,3 @@ if __name__ == '__main__':
                     except Exception as error:
                         print("function raised %s" % error)
                         print(error.traceback)  # Python's traceback of remote process
-
