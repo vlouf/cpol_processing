@@ -51,7 +51,7 @@ def _mkdir(dir):
     return None
 
 
-def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'):
+def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL', use_unravel=True):
     """
     Call processing function and write data.
 
@@ -98,7 +98,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     # Business start here.
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol)
+        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol, use_unravel=use_unravel)
     # Business over.
 
     if radar is None:
