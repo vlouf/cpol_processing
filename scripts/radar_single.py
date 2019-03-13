@@ -35,11 +35,10 @@ def main():
     print("\t- Output data directory path is: " + crayons.yellow(OUTPATH))
     print("\t- Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
     if USE_UNRAVEL:
-        print("UNRAVEL will be used as dealiasing algorithm.")
+        print("\t- " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
     else:
-        print("REGION-BASED will be used as dealiasing algorithm.")
-
-    print("#" * 79 + "\n")
+        print("\t- " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
+    print("\n" + "#" * 79 + "\n")
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
