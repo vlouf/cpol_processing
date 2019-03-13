@@ -106,8 +106,8 @@ venv.bak/
 scripts/pbs/
 
 .DS*
-.pbs
-.pbs.*
+*.pbs
+*.pbs.*
 surendra.py
 .f
 *.pyc
