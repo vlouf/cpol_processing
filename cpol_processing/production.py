@@ -271,7 +271,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         pass
 
     if is_cpol:
-        if radar.nsweeps <= 10:
+        if radar.nsweeps < 10:
             raise ValueError(f'Problem with CPOL PPIs, only {radar.nsweeps} elevations.')
 
     # Check if radar reflecitivity field is correct.
