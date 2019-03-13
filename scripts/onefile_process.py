@@ -1,38 +1,26 @@
 """
-CPOL Level 1b main production line.
+Raw radar PPIs processing. Quality control, filtering, attenuation correction,
+dealiasing, unfolding, hydrometeors calculation, rainfall rate estimation.
+Tested on CPOL.
 
-@title: CPOL_PROD_1b
+@title: cpol_processing
 @author: Valentin Louf <valentin.louf@monash.edu>
-@institution: Bureau of Meteorology
-@date: 31/05/2017
-@version: 0.99
+@institution: Monash University
+@date: 13/03/2019
+@version: 2
 
 .. autosummary::
     :toctree: generated/
 
-    timeout_handler
-    chunks
-    production_line_manager
-    production_line_multiproc
     main
 """
 # Python Standard Library
 import os
-import logging
 import argparse
-import datetime
 import warnings
 
-# Other Libraries -- Matplotlib must be imported first
-import matplotlib
-matplotlib.use('Agg')  # <- Reason why matplotlib is imported first.
-
-import pyart
-import crayons  # For the welcoming message only.
-import numpy as np
-
-# Custom modules.
-import cpol_processing
+# Other Libraries
+import crayons
 
 
 def main():
@@ -42,19 +30,23 @@ def main():
     # Start with a welcome message.
     print("#" * 79)
     print("")
-    print(" " * 25 + crayons.red("CPOL Level 1b production line.", bold=True))
-    print("")
-    print("- Input data directory path is: " + crayons.yellow(INFILE))
-    print("- Output data directory path is: " + crayons.yellow(OUTPATH))
-    print("- Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
-    print("- Figures will be saved in: " + crayons.yellow(FIGURE_CHECK_PATH))
-    if IS_SEAPOL:
-        print("This is the Seapol radar. PHIDP is going to be corrected.")
-    print("#" * 79)
-    print("")
+    print(" " * 25 + crayons.red("Raw radar PPIs production line.\n", bold=True))
+    print("\t- Input data directory path is: " + crayons.yellow(INFILE))
+    print("\t- Output data directory path is: " + crayons.yellow(OUTPATH))
+    print("\t- Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
+    if USE_UNRAVEL:
+        print("UNRAVEL will be used as dealiasing algorithm.")
+    else:
+        print("REGION-BASED will be used as dealiasing algorithm.")
 
-    # Serious stuffs begin here.
-    cpol_processing.process_and_save(INFILE, OUTPATH, OUTPATH_GRID, FIGURE_CHECK_PATH, SOUND_DIR)
+    print("#" * 79 + "\n")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        import cpol_processing
+        cpol_processing.process_and_save(INFILE, OUTPATH, SOUND_DIR)
+
+    print(crayons.green("Process completed."))
 
     return None
 
@@ -65,13 +57,14 @@ if __name__ == '__main__':
     """
     # Input directory for Radiosoundings (use my other script, named caprica to
     # download and format these datas).
-    SOUND_DIR = "/g/data2/rr5/vhl548/DARWIN_radiosonde/"
-    # Output directory for verification figures.
-    # Output directory for log files.
-    LOG_FILE_PATH = os.path.expanduser("~")
+    # INPATH = "/g/data/hj10/cpol_level_1a/ppi/"
+    # OUTPATH = "/g/data/hj10/cpol_level_1b/"
+
 
     # Parse arguments
-    parser_description = "Leveling treatment of CPOL data from level 1a to level 1b."
+    parser_description = """Raw radar PPIs processing. It provides Quality
+control, filtering, attenuation correction, dealiasing, unfolding, hydrometeors
+calculation, and rainfall rate estimation."""
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument(
         '-i',
@@ -87,14 +80,23 @@ if __name__ == '__main__':
         type=str,
         help='Output directory.',
         required=True)
-    # parser.add_argument('--seapol', dest='seapol', action='store_true')
-    # parser.add_argument('--no-seapol', dest='seapol', action='store_false')
-    parser.set_defaults(seapol=False)
+    parser.add_argument(
+        '-r',
+        '--radiosounds',
+        dest='rs_dir',
+        type=str,
+        help='Radiosoundings directory.',
+        default="/g/data2/rr5/CPOL_radar/DARWIN_radiosonde")
+
+    parser.add_argument('--unravel', dest='unravel', action='store_true')
+    parser.add_argument('--no-unravel', dest='unravel', action='store_false')
+    parser.set_defaults(unravel=False)
 
     args = parser.parse_args()
     INFILE = args.infile
     OUTPATH = args.outdir
-    IS_SEAPOL = args.seapol
+    SOUND_DIR =  args.rs_dir
+    USE_UNRAVEL = args.unravel
 
     if not os.path.isfile(INFILE):
         parser.error("Invalid input file.")
@@ -102,26 +104,4 @@ if __name__ == '__main__':
     if not os.path.isdir(OUTPATH):
         parser.error("Invalid (or don't exist) output directory.")
 
-    OUTPATH_GRID = os.path.join(OUTPATH, 'GRIDDED')
-    FIGURE_CHECK_PATH = os.path.join(OUTPATH, 'FIGURE_CHECK')
-    if not os.path.isdir(OUTPATH_GRID):
-        print("Creating output figures directory: {}.".format(OUTPATH_GRID))
-        os.mkdir(OUTPATH_GRID)
-    if not os.path.isdir(FIGURE_CHECK_PATH):
-        print("Creating output figures directory: {}.".format(FIGURE_CHECK_PATH))
-        os.mkdir(FIGURE_CHECK_PATH)
-
-    # Creating the general log file.
-    logname = "log_file_for_{}.log".format(os.path.basename(INFILE))
-    log_file_name = os.path.join(LOG_FILE_PATH, logname)
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        filename=log_file_name,
-        filemode='a+')
-    logger = logging.getLogger(__name__)
-
-    with warnings.catch_warnings():
-        # Just ignoring warning messages.
-        warnings.simplefilter("ignore")
-        main()
+    main()
