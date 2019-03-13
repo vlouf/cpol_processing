@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Note: To use the 'upload' functionality of this file, you must:
-#   $ pip install twine
-
 import io
 import os
 import sys
@@ -13,9 +10,10 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'cpol_processing'
-DESCRIPTION = 'CPOL radar data processing. '
+DESCRIPTION = """Radar PPIs data processing, quality control, filtering, attenuation
+correction, dealiasing, unfolding, hydrometeors calculation, rainfall rate estimation."""
 URL = 'https://github.com/vlouf/cpol_processing'
-EMAIL = 'valentin.louf@bom.gov.au'
+EMAIL = 'valentin.louf@monash.edu'
 AUTHOR = 'Valentin Louf'
 
 # What packages are required for this module to be executed?
@@ -100,6 +98,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     # $ setup.py publish support.
     cmdclass={
