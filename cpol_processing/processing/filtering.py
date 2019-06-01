@@ -113,10 +113,11 @@ def do_gatefilter_cpol(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='R
     gf.exclude_outside(zdr_name, -3.0, 7.0)    
     gf.exclude_outside(refl_name, -20.0, 80.0)
 
-    dphi = texture(radar.fields[phidp_name]['data'])
-    radar.add_field_like(phidp_name, 'PHITXT', dphi)
-    gf.exclude_above('PHITXT', 20)
-    gf.exclude_below(rhohv_name, 0.4)
+    # dphi = texture(radar.fields[phidp_name]['data'])
+    # radar.add_field_like(phidp_name, 'PHITXT', dphi)
+    # gf.exclude_above('PHITXT', 20)
+    if radar_start_date.year > 2007:
+        gf.exclude_below(rhohv_name, 0.5)
 
     # Remove rings in march 1999.
     if radar_start_date.year == 1999 and radar_start_date.month == 3:
@@ -129,7 +130,7 @@ def do_gatefilter_cpol(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='R
     # Remove tmp fields.
     try:
         radar.fields.pop('NDBZ')
-        radar.fields.pop('PHITXT')
+        # radar.fields.pop('PHITXT')
     except Exception:
         pass
 
