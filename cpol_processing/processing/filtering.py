@@ -115,7 +115,7 @@ def do_gatefilter_cpol(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='R
 
     dphi = texture(radar.fields[phidp_name]['data'])
     radar.add_field_like(phidp_name, 'PHITXT', dphi)
-    gf.exclude_above('PHITXT', 10)
+    gf.exclude_above('PHITXT', 20)
     gf.exclude_below(rhohv_name, 0.4)
 
     # Remove rings in march 1999.
