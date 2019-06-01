@@ -111,7 +111,10 @@ def hydrometeor_classification(radar, gatefilter, kdp_name, zdr_name, refl_name=
     """
     refl = radar.fields[refl_name]['data'].copy().filled(np.NaN)
     zdr = radar.fields[zdr_name]['data'].copy().filled(np.NaN)
-    kdp = radar.fields[kdp_name]['data'].copy().filled(np.NaN)
+    try:
+        kdp = radar.fields[kdp_name]['data'].copy().filled(np.NaN)
+    except AttributeError:
+        kdp = radar.fields[kdp_name]['data'].copy()
     rhohv = radar.fields[rhohv_name]['data']
     try:
         radar_T = radar.fields[temperature_name]['data']

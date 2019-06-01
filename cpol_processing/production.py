@@ -131,8 +131,8 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         maxlat = '-10.941'
         minlat = '-13.552'
         origin_altitude = '50'
-        origin_latitude = '-12.249'
-        origin_longitude = '131.044'
+        origin_latitude = '-12.2491'
+        origin_longitude = '131.0444'
 
         metadata = dict()
         metadata['Conventions'] = radar.metadata['Conventions']
