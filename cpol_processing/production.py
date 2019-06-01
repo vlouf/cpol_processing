@@ -434,10 +434,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
             continue
 
     # Rename fields to pyart defaults.
-    fields_names = [('VEL', 'raw_velocity'),
-                    ('VEL_UNFOLDED', 'velocity'),
+    fields_names = [('VEL', 'velocity'),
+                    ('VEL_UNFOLDED', 'corrected_velocity'),
                     ('DBZ', 'total_power'),
-                    ('DBZ_CORR', 'reflectivity'),
+                    ('DBZ_CORR', 'corrected_reflectivity'),
                     ('RHOHV_CORR', 'cross_correlation_ratio'),
                     ('ZDR', 'differential_reflectivity'),
                     ('ZDR_CORR_ATTEN', 'corrected_differential_reflectivity'),
@@ -463,10 +463,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         except KeyError:
             continue
 
-    hardcode_keys = ["reflectivity",
+    hardcode_keys = ["corrected_reflectivity",
                      "radar_echo_classification",
-                     "corrected_differential_reflectivity",
-                     "region_dealias_velocity",
+                     "corrected_velocity",
+                     "corrected_differential_reflectivity",                     
                      "D0", "NW"]
     for mykey in hardcode_keys:
         try:
@@ -474,8 +474,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         except KeyError:
             continue
 
-    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", "raw_velocity",
-                "reflectivity", "cross_correlation_ratio", "corrected_differential_reflectivity", "radar_estimated_rain_rate",
+    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", 
+                "corrected_velocity", "differential_phase", "signal_to_noise_ratio",
+                "corrected_reflectivity", "cross_correlation_ratio", "differential_reflectivity", 
+                "corrected_differential_reflectivity", "radar_estimated_rain_rate",
                 "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
     # Delete working variables.
     for k in list(radar.fields.keys()):
