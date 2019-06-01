@@ -153,7 +153,7 @@ calculation, and rainfall rate estimation."""
             arglist = [(f, OUTPATH, SOUND_DIR, USE_UNRAVEL) for f in flist_chunk]
 
             with ProcessPool() as pool:
-                future = pool.map(main, arglist, timeout=180)
+                future = pool.map(main, arglist, timeout=240)
                 iterator = future.result()
 
                 while True:

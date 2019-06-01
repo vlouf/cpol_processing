@@ -372,7 +372,8 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         ncp['data'][gatefilter.gate_included] = 1
         radar.add_field('NCP', ncp)
 
-    phidp, kdp = phase.valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP')
+    # phidp, kdp = phase.valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP')
+    phidp, kdp = phase.phidp_giangrande(radar, gatefilter)
     radar.add_field('PHIDP_VAL', phidp)
     radar.add_field('KDP_VAL', kdp)
     kdp_field_name = 'KDP_VAL'

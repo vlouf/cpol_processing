@@ -146,50 +146,50 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
         Field dictionary containing recalculated differential phases.
     """
     #  Preprocessing
-    unfphidict = pyart.correct.dealias_region_based(
-        radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
+    # unfphidict = pyart.correct.dealias_region_based(
+    #     radar, gatefilter=gatefilter, vel_field=phidp_field, nyquist_vel=90)
 
-    phi = radar.fields[phidp_field]['data']
-    if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
-        half_phi = True
-    else:
-        half_phi = False
+    # phi = radar.fields[phidp_field]['data']
+    # if phi.max() - phi.min() <= 200:  # 180 degrees plus some margin for noise...
+    #     half_phi = True
+    # else:
+    #     half_phi = False
 
-    vflag = np.zeros_like(phi)
-    vflag[gatefilter.gate_excluded] = -3
-    # unfphi, vflag = filter_data(phi, vflag, 90, 180, 40)
-    unfphi = unfphidict['data']
+    # vflag = np.zeros_like(phi)
+    # vflag[gatefilter.gate_excluded] = -3
+    # # unfphi, vflag = filter_data(phi, vflag, 90, 180, 40)
+    # unfphi = unfphidict['data']
 
-    try:
-        if np.nanmean(phi[gatefilter.gate_included]) < 0:
-            unfphi += 90
-    except ValueError:
-        pass
+    # try:
+    #     if np.nanmean(phi[gatefilter.gate_included]) < 0:
+    #         unfphi += 90
+    # except ValueError:
+    #     pass
 
-    if half_phi:
-        unfphi *= 2
+    # if half_phi:
+    #     unfphi *= 2
 
-    unfphi[vflag == -3] = 0
+    # unfphi[vflag == -3] = 0
 
     # unfphi['data'][unfphi['data'] >= 340] = np.NaN
-    radar.add_field_like(phidp_field, 'PHIDP_TMP', unfphi)
+    # radar.add_field_like(phidp_field, 'PHIDP_TMP', unfphi)
     # Pyart version 1.10.
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar,
                                                    0.0,
-                                                   # gatefilter=gatefilter,
+                                                   gatefilter=gatefilter,
                                                    LP_solver='cylp',
                                                    ncp_field=ncp_field,
                                                    refl_field=refl_field,
                                                    rhv_field=rhv_field,
-                                                   phidp_field='PHIDP_TMP')
+                                                   phidp_field=phidp_field)
 
-    radar.fields.pop('PHIDP_TMP')
-    phidp_gg.pop('valid_min')
+    # radar.fields.pop('PHIDP_TMP')
+    # phidp_gg.pop('valid_min')
 
-    if half_phi:
-        unfphi['data'] /= 2
-        phidp_gg['data'] /= 2
-        kdp_gg['data'] /= 2
+    # if half_phi:
+    #     unfphi['data'] /= 2
+    #     phidp_gg['data'] /= 2
+    #     kdp_gg['data'] /= 2
 
     phidp_gg['data'], kdp_gg['data'] = fix_phidp_from_kdp(phidp_gg['data'],
                                                           kdp_gg['data'],
