@@ -270,9 +270,9 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     except Exception:
         pass
 
-    if is_cpol:
-        if radar.nsweeps < 10:
-            raise ValueError(f'Problem with CPOL PPIs, only {radar.nsweeps} elevations.')
+    # if is_cpol:
+    #     if radar.nsweeps < 10:
+    #         raise ValueError(f'Problem with CPOL PPIs, only {radar.nsweeps} elevations.')
 
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
@@ -466,7 +466,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     hardcode_keys = ["corrected_reflectivity",
                      "radar_echo_classification",
                      "corrected_velocity",
-                     "corrected_differential_reflectivity",                     
+                     "corrected_differential_reflectivity",
                      "D0", "NW"]
     for mykey in hardcode_keys:
         try:
@@ -474,9 +474,9 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         except KeyError:
             continue
 
-    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power", 
+    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power",
                 "corrected_velocity", "differential_phase", "signal_to_noise_ratio",
-                "corrected_reflectivity", "cross_correlation_ratio", "differential_reflectivity", 
+                "corrected_reflectivity", "cross_correlation_ratio", "differential_reflectivity",
                 "corrected_differential_reflectivity", "radar_estimated_rain_rate",
                 "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
     # Delete working variables.
