@@ -106,6 +106,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         return None
 
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+    radar_end_date = netCDF4.num2date(radar.time['data'][-1], radar.time['units'])
     outpath_ppi = os.path.join(outpath_ppi, str(radar_start_date.year))
     _mkdir(outpath_ppi)
     outpath_ppi = os.path.join(outpath_ppi, radar_start_date.strftime('%Y%m%d'))
@@ -134,8 +135,10 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         origin_latitude = '-12.2491'
         origin_longitude = '131.0444'
 
+        unique_id = str(uuid.uuid4())
+
         metadata = dict()
-        metadata['Conventions'] = radar.metadata['Conventions']
+        metadata['Conventions'] = "CF-1.6, ACDD-1.3"
         metadata['acknowledgement'] = 'This work has been supported by the U.S. Department of Energy Atmospheric Systems Research Program through the grant DE-SC0014063. Data may be freely distributed.'
         metadata['country'] = 'Australia'
         metadata['creator_email'] = 'valentin.louf@bom.gov.au'
@@ -148,9 +151,12 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         metadata['geospatial_lon_min'] = minlon
         metadata['geospatial_lon_units'] = "degrees_east"
         metadata['history'] = "created by Valentin Louf on raijin.nci.org.au at " + today.isoformat() + " using Py-ART"
-        metadata['institution'] = 'Australian Bureau of Meteorology'
+        metadata['id'] = unique_id
+        metadata['institution'] = 'Bureau of Meteorology'
+        metadata['instrument'] = 'radar'
         metadata['instrument_name'] = 'CPOL'
         metadata['instrument_type'] = 'radar'
+        metadata['licence'] = "Freely Distributed"
         metadata['naming_authority'] = 'au.org.nci'
         metadata['origin_altitude'] = origin_altitude
         metadata['origin_latitude'] = origin_latitude
@@ -159,12 +165,20 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         metadata['processing_level'] = 'b1'
         metadata['publisher_name'] = "NCI"
         metadata['publisher_url'] = "nci.gov.au"
-        metadata['references'] = 'cf. doi:10.1175/JTECH-D-18-0007.1'
-        metadata['site_name'] = 'Gunn_Pt'
-        metadata['source'] = 'rapic'
+        # metadata["product_version"] = f'v2019.{now.month:02}.'
+        metadata['references'] = 'doi:10.1175/JTECH-D-18-0007.1'
+        metadata['site_name'] = 'Gunn Pt'
+        metadata['source'] = 'radar'
         metadata['state'] = "NT"
+        metadata['standard_name_vocabulary'] = 'CF Standard Name Table v67',
+        metadata['summary'] = "Volumetric scan from CPOL dual-polarization Doppler radar (Darwin, Australia)"
+        metadata["time_coverage_start"] = radar_start_date.isoformat()
+        metadata["time_coverage_end"] = radar_end_date.isoformat()
+        metadata["time_coverage_duration"] = "P10M"
+        metadata["time_coverage_resolution"] = "PT10M"
         metadata['title'] = "radar PPI volume from CPOL"
-        metadata['uuid'] = str(uuid.uuid4())
+        
+        metadata['uuid'] = unique_id
         metadata['version'] = radar.metadata['version']
 
         radar.metadata = metadata
@@ -270,10 +284,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     except Exception:
         pass
 
-    # if is_cpol:
-    #     if radar.nsweeps < 10:
-    #         raise ValueError(f'Problem with CPOL PPIs, only {radar.nsweeps} elevations.')
-
     # Check if radar reflecitivity field is correct.
     if not radar_codes.check_reflectivity(radar):
         raise TypeError(f"Reflectivity field is empty in {radar_file_name}.")
@@ -372,7 +382,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         ncp['data'][gatefilter.gate_included] = 1
         radar.add_field('NCP', ncp)
 
-    # phidp, kdp = phase.valentin_phase_processing(radar, gatefilter, phidp_name='PHIDP')
     phidp, kdp = phase.phidp_giangrande(radar, gatefilter)
     radar.add_field('PHIDP_VAL', phidp)
     radar.add_field('KDP_VAL', kdp)
@@ -393,7 +402,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     # Correct Attenuation ZH
     zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
-    # radar.add_field('specific_attenuation_reflectivity', atten_spec, replace_existing=True)
 
     # Correct Attenuation ZDR
     zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter=gatefilter, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
@@ -416,6 +424,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("D0", d0_dict)
     radar.add_field("NW", nw_dict)
+
+    # Thurai echo classification.
+    echo_thurai = hydrometeors.merhala_class_convstrat(radar)
+    radar.add_field('thurai_echo_classification', echo_thurai)
 
     # Removing fake and useless fields.
     if fake_ncp:
@@ -483,7 +495,5 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     for k in list(radar.fields.keys()):
         if k not in goodkeys:
             radar.fields.pop(k)
-
-    # TODO: Set Deflate Level
 
     return radar
