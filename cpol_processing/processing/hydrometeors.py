@@ -63,19 +63,18 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR'):
     d0 = np.ma.masked_invalid(d0).astype(np.float32)
     np.ma.set_fill_value(d0, np.NaN)
 
-    nw_dict = {'data': Nw,
-               'units': 'AU', 'long_name': 'Normalized Intercept Parameter',
-               'standard_name': 'Normalized Intercept Parameter',
+    nw_dict = {'data': Nw,                
+               'long_name': 'normalized_intercept_parameter',
                '_FillValue': np.NaN,
                '_Least_significant_digit': 2,
-               'description': "Log10 of the NW. Retrieval based on Bringi et al. (2009)."}
+               'reference': "doi:10.1175/2009JTECHA1258.1"}
 
     d0_dict = {'data': d0,
-               'units': 'mm', 'long_name': 'Median Volume Diameter',
-               'standard_name': 'Median Volume Diameter',
+               'units': 'mm', 
+               'long_name': 'median_volume_diameter',
                '_FillValue': np.NaN,
                '_Least_significant_digit': 2,
-               'description': "D0 retrieval based on Bringi et al. (2009)."}
+               'reference': "doi:10.1175/2009JTECHA1258.1"}
 
     return nw_dict, d0_dict
 
@@ -147,7 +146,6 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
     Convective or Mixed, based on the D-Zero value and the log10(Nw) value.
     Merhala's rain classification is 1 for Stratiform, 2 for Convective and 3
     for Mixed, 0 if no rain.
-
     """
     # Extracting data.
     d0 = radar.fields[d0_name]['data']
@@ -171,12 +169,11 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
     classification[(indexa >= -0.1) & (indexa <= 0.1)] = 3
 
     # Masking invalid data.
-    # classification = np.ma.masked_where(~pos0 | ~pos1 | dbz.mask, classification)
+    classification = np.ma.masked_where(~pos0 | ~pos1 | dbz.mask, classification)
 
     # Generate metada.
     class_meta = {'data': classification,
-                  'standard_name': 'echo_classification',
-                  'long_name': 'Merhala Thurai echo classification',
+                  'long_name': 'thurai_echo_classification',
                   'valid_min': 0,
                   'valid_max': 3,
                   'comment_1': 'Convective-stratiform echo classification based on Merhala Thurai',
