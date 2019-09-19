@@ -153,7 +153,7 @@ calculation, and rainfall rate estimation."""
             arglist = [(f, OUTPATH, SOUND_DIR, USE_UNRAVEL) for f in flist_chunk]
 
             with ProcessPool() as pool:
-                future = pool.map(main, arglist, timeout=240)
+                future = pool.map(main, arglist, timeout=300)
                 iterator = future.result()
 
                 while True:
@@ -165,6 +165,5 @@ calculation, and rainfall rate estimation."""
                         print("function took longer than %d seconds" % error.args[1])
                     except ProcessExpired as error:
                         print("%s. Exit code: %d" % (error, error.exitcode))
-                    except Exception as error:
-                        print("function raised %s" % error)
-                        print(error.traceback)  # Python's traceback of remote process
+                    except Exception:
+                        traceback.print_exc()
