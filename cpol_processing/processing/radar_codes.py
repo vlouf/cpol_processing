@@ -29,8 +29,6 @@ import time
 import fnmatch
 import datetime
 
-from copy import deepcopy
-
 # Other Libraries
 import pyart
 import scipy
@@ -54,7 +52,7 @@ def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
     snr: dict
         Signal to noise ratio.
     """
-    range_grid, azi_grid = np.meshgrid(radar.range['data'], radar.azimuth['data'])
+    range_grid, _ = np.meshgrid(radar.range['data'], radar.azimuth['data'])
     range_grid += 1  # Cause of 0
 
     # remove range scale.. This is basically the radar constant scaled dBm
