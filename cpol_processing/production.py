@@ -165,7 +165,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         metadata['processing_level'] = 'b1'
         metadata['publisher_name'] = "NCI"
         metadata['publisher_url'] = "nci.gov.au"
-        # metadata["product_version"] = f'v2019.{now.month:02}.'
+        metadata["product_version"] = f"v{today.year}.{today.month:02}"
         metadata['references'] = 'doi:10.1175/JTECH-D-18-0007.1'
         metadata['site_name'] = 'Gunn Pt'
         metadata['source'] = 'radar'
@@ -177,7 +177,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         metadata["time_coverage_duration"] = "P10M"
         metadata["time_coverage_resolution"] = "PT10M"
         metadata['title'] = "radar PPI volume from CPOL"
-        
+
         metadata['uuid'] = unique_id
         metadata['version'] = radar.metadata['version']
 
@@ -308,7 +308,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
 
     # Correct Doppler velocity units.
     try:
-        radar.fields['VEL']['units'] = "m/s"
+        radar.fields['VEL']['units'] = "m s-1"
         vel_missing = False
     except KeyError:
         vel_missing = True
