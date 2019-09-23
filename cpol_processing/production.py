@@ -226,6 +226,24 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     20/ Plotting figure quicklooks.
     21/ Hardcoding gatefilter.
     """
+    # List of keys that we'll keep in the output radar dataset.
+    OUTPUT_RADAR_FLD = ['D0', 'NW',
+                        'corrected_differential_phase',
+                        'corrected_differential_reflectivity',
+                        'corrected_reflectivity',
+                        'corrected_specific_differential_phase',
+                        'corrected_velocity',
+                        'cross_correlation_ratio',
+                        'differential_phase',
+                        'differential_reflectivity',
+                        'radar_echo_classification',
+                        'radar_estimated_rain_rate',
+                        'signal_to_noise_ratio',
+                        'spectrum_width',
+                        'thurai_echo_classification',
+                        'total_power',
+                        'velocity']
+
     # !!! READING THE RADAR !!!
     if is_cpol:
         radar = pyart.io.read(radar_file_name)
@@ -432,14 +450,9 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         except KeyError:
             continue
 
-    goodkeys = ["radar_echo_classification", "D0", "NW", "velocity", "total_power",
-                "corrected_velocity", "differential_phase", "signal_to_noise_ratio",
-                "corrected_reflectivity", "cross_correlation_ratio", "differential_reflectivity",
-                "corrected_differential_reflectivity", "radar_estimated_rain_rate",
-                "corrected_differential_phase", "corrected_specific_differential_phase", "spectrum_width"]
     # Delete working variables.
     for k in list(radar.fields.keys()):
-        if k not in goodkeys:
+        if k not in OUTPUT_RADAR_FLD:
             radar.fields.pop(k)
 
     # Correct the standard_name metadata:
