@@ -28,7 +28,6 @@ import pyart
 # Custom modules.
 from . import attenuation
 from . import filtering
-from . import gridding
 from . import hydrometeors
 from . import phase
 from . import radar_codes
@@ -185,43 +184,6 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
 
     # Write results
     pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
-
-    # Deleting all unwanted keys for gridded product.
-    # logger.info("Gridding started.")
-    # unwanted_keys = []
-    # goodkeys = ['corrected_differential_reflectivity',
-    #             'cross_correlation_ratio',
-    #             'radar_echo_classification',
-    #             'radar_estimated_rain_rate',
-    #             'D0',
-    #             'NW',
-    #             'reflectivity',
-    #             'velocity',
-    #             'region_dealias_velocity']
-
-    # for mykey in radar.fields.keys():
-    #     if mykey not in goodkeys:
-    #         unwanted_keys.append(mykey)
-    # for mykey in unwanted_keys:
-    #     radar.fields.pop(mykey)
-
-    # try:
-    #     # Gridding (and saving)
-    #     # Full radar range with a 2.5 km grid resolution
-    #     gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km, rmax=145e3, xyres=2500, linearz=linearz)
-    #     # Full radar range with a 1 km grid resolution
-    #     gridding.gridding_radar(radar, radar_start_date, outpath=outdir_150km_highres,
-    #                             rmax=145e3, xyres=1000, linearz=linearz)
-    #     # Half-range with a 1 km grid resolution
-    #     # gridding.gridding_radar(radar, radar_start_date, outpath=outdir_70km, rmax=70e3, xyres=1000, linearz=linearz)
-
-    #     logger.info('Gridding done.')
-    # except Exception:
-    #     traceback.print_exc()
-    #     logging.error('Problem while gridding.')
-    #     raise
-
-    # Processing finished!
     print('%s processed in  %0.2fs.' % (os.path.basename(radar_file_name), (time.time() - tick)))
 
     return None
