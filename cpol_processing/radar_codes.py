@@ -236,6 +236,46 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     return rho_corr
 
 
+def correct_standard_name(radar):
+    """
+    'standard_name' is a protected keyword for metadata in the CF conventions.
+    To respect the CF conventions we can only use the standard_name field that
+    exists in the CF table.
+
+    Parameter:
+    ==========
+    radar: Radar object
+        Py-ART data structure.
+    """
+    try:
+        radar.range.pop('standard_name')
+        radar.azimuth.pop('standard_name')
+        radar.elevation.pop('standard_name')
+    except Exception:
+        pass
+
+    try:
+        radar.sweep_number.pop('standard_name')
+        radar.fixed_angle.pop('standard_name')
+        radar.sweep_mode.pop('standard_name')
+    except Exception:
+        pass
+
+    good_keys = ['corrected_reflectivity', 'total_power', 'radar_estimated_rain_rate']
+    for k in radar.fields.keys():
+        if k not in good_keys:
+            try:
+                radar.fields[k].pop('standard_name')
+            except Exception:
+                continue
+
+    radar.latitude['standard_name'] = 'latitude'
+    radar.longitude['standard_name'] = 'longitude'
+    radar.altitude['standard_name'] = 'altitude'
+
+    return None
+
+
 def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
     """
     Correct differential reflectivity (ZDR) from noise. From the Schuur et al.

@@ -486,4 +486,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         if k not in goodkeys:
             radar.fields.pop(k)
 
+    # Correct the standard_name metadata:
+    radar_codes.correct_standard_name(radar)
+
     return radar
