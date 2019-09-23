@@ -83,15 +83,8 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     _mkdir(outpath)
     outpath_ppi = os.path.join(outpath, 'ppi')
     _mkdir(outpath_ppi)
-    # outpath_grid = os.path.join(outpath, 'gridded')
-    # _mkdir(outpath_grid)
     # figure_path = os.path.join(outpath, 'quicklooks')
     # _mkdir(figure_path)
-
-    # outdir_150km = os.path.join(outpath_grid, "grid_150km_2500m")
-    # outdir_70km = os.path.join(outpath_grid, "grid_70km_1000m")
-    # _mkdir(outdir_150km)
-    # _mkdir(outdir_70km)
     tick = time.time()
 
     # Business start here.
@@ -142,6 +135,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         metadata['country'] = 'Australia'
         metadata['creator_email'] = 'valentin.louf@bom.gov.au'
         metadata['creator_name'] = 'Valentin Louf'
+        metadata['date_created'] = today.isoformat()
         metadata['geospatial_bounds'] = f"({minlon}, {maxlon}, {minlat}, {maxlat})"
         metadata['geospatial_lat_max'] = maxlat
         metadata['geospatial_lat_min'] = minlat
@@ -162,6 +156,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         metadata['origin_longitude'] = origin_longitude
         metadata['platform_is_mobile'] = 'false'
         metadata['processing_level'] = 'b1'
+        metadata['project'] = "CPOL"
         metadata['publisher_name'] = "NCI"
         metadata['publisher_url'] = "nci.gov.au"
         metadata["product_version"] = f"v{today.year}.{today.month:02}"
@@ -176,7 +171,6 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         metadata["time_coverage_duration"] = "P10M"
         metadata["time_coverage_resolution"] = "PT10M"
         metadata['title'] = "radar PPI volume from CPOL"
-
         metadata['uuid'] = unique_id
         metadata['version'] = radar.metadata['version']
 
@@ -450,5 +444,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
 
     # Correct the standard_name metadata:
     radar_codes.correct_standard_name(radar)
+    # ACDD-1.3 compliant metadata:
+    radar_codes.coverage_content_type(radar)
 
     return radar
