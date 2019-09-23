@@ -9,7 +9,7 @@ Codes for correcting the differential phase and estimating KDP.
 .. autosummary::
     :toctree: generated/
 
-    fix_phidp_from_kdp
+    _fix_phidp_from_kdp
     phidp_bringi
     phidp_giangrande
 """
@@ -21,7 +21,7 @@ from scipy import integrate
 from csu_radartools import csu_kdp
 
 
-def fix_phidp_from_kdp(phidp, kdp, r, gatefilter):
+def _fix_phidp_from_kdp(phidp, kdp, r, gatefilter):
     """
     Correct PHIDP and KDP from spider webs.
 
@@ -137,12 +137,13 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
                                                    rhv_field=rhv_field,
                                                    phidp_field=phidp_field)
 
-    phidp_gg['data'], kdp_gg['data'] = fix_phidp_from_kdp(phidp_gg['data'],
-                                                          kdp_gg['data'],
-                                                          radar.range['data'],
-                                                          gatefilter)
+    phidp_gg['data'], kdp_gg['data'] = _fix_phidp_from_kdp(phidp_gg['data'],
+                                                           kdp_gg['data'],
+                                                           radar.range['data'],
+                                                           gatefilter)
 
     try:
+        # Remove temp variables.
         radar.fields.pop('unfolded_differential_phase')
     except Exception:
         pass
