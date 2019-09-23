@@ -305,6 +305,37 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
     return corr_zdr
 
 
+def coverage_content_type(radar):
+    """
+    Adding metadata for compatibility with ACDD-1.3
+
+    Parameter:
+    ==========
+    radar: Radar object
+        Py-ART data structure.
+    """
+    radar.range['coverage_content_type'] = 'coordinate'
+    radar.azimuth['coverage_content_type'] = 'coordinate'
+    radar.elevation['coverage_content_type'] = 'coordinate'
+    radar.latitude['coverage_content_type'] = 'coordinate'
+    radar.longitude['coverage_content_type'] = 'coordinate'
+    radar.altitude['coverage_content_type'] = 'coordinate'
+
+    radar.sweep_number['coverage_content_type'] = 'auxiliaryInformation'
+    radar.fixed_angle['coverage_content_type'] = 'auxiliaryInformation'
+    radar.sweep_mode['coverage_content_type'] = 'auxiliaryInformation'
+
+    for k in radar.fields.keys():
+        if k == 'radar_echo_classification':
+            radar.fields[k]['coverage_content_type'] = 'thematicClassification'
+        elif k in ['normalized_coherent_power', 'normalized_coherent_power_v']:
+            radar.fields[k]['coverage_content_type'] = 'qualityInformation'
+        else:
+            radar.fields[k]['coverage_content_type'] = 'physicalMeasurement'
+
+    return None
+
+
 def get_radiosoundings(sound_dir, radar_start_date):
     """
     Find the radiosoundings
