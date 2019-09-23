@@ -68,7 +68,7 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ'):
     vel_meta: dict
         Unfolded Doppler velocity.
     """
-    unfvel = process_3D(radar, velname=vel_name, dbzname=dbz_name, do_3D=False)
+    unfvel = process_3D(radar, velname=vel_name, dbzname=dbz_name)
     np.ma.set_fill_value(unfvel, np.NaN)
     vel_meta = pyart.config.get_metadata('velocity')
     vel_meta['data'] = unfvel.astype(np.float32)
