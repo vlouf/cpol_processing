@@ -390,14 +390,8 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
 
     # Unfold VELOCITY
     if not vel_missing:
-        # Dealias velocity.
-        unfvel_tick = time.time()
-        if use_unravel:
-            vdop_unfold = velocity.unravel(radar, gatefilter)
-        else:
-            vdop_unfold = velocity.unfold_velocity(radar, gatefilter)
+        vdop_unfold = velocity.unravel(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
-        print('Doppler velocity unfolded in %0.2f s.' % (time.time() - unfvel_tick))
 
     # Correct Attenuation ZH
     zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
