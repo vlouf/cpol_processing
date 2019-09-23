@@ -128,51 +128,49 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         origin_longitude = '131.0444'
 
         unique_id = str(uuid.uuid4())
-
-        metadata = dict()
-        metadata['Conventions'] = "CF-1.6, ACDD-1.3"
-        metadata['acknowledgement'] = 'This work has been supported by the U.S. Department of Energy Atmospheric Systems Research Program through the grant DE-SC0014063. Data may be freely distributed.'
-        metadata['country'] = 'Australia'
-        metadata['creator_email'] = 'valentin.louf@bom.gov.au'
-        metadata['creator_name'] = 'Valentin Louf'
-        metadata['date_created'] = today.isoformat()
-        metadata['geospatial_bounds'] = f"({minlon}, {maxlon}, {minlat}, {maxlat})"
-        metadata['geospatial_lat_max'] = maxlat
-        metadata['geospatial_lat_min'] = minlat
-        metadata['geospatial_lat_units'] = "degrees_north"
-        metadata['geospatial_lon_max'] = maxlon
-        metadata['geospatial_lon_min'] = minlon
-        metadata['geospatial_lon_units'] = "degrees_east"
-        metadata['history'] = "created by Valentin Louf on raijin.nci.org.au at " + today.isoformat() + " using Py-ART"
-        metadata['id'] = unique_id
-        metadata['institution'] = 'Bureau of Meteorology'
-        metadata['instrument'] = 'radar'
-        metadata['instrument_name'] = 'CPOL'
-        metadata['instrument_type'] = 'radar'
-        metadata['licence'] = "Freely Distributed"
-        metadata['naming_authority'] = 'au.org.nci'
-        metadata['origin_altitude'] = origin_altitude
-        metadata['origin_latitude'] = origin_latitude
-        metadata['origin_longitude'] = origin_longitude
-        metadata['platform_is_mobile'] = 'false'
-        metadata['processing_level'] = 'b1'
-        metadata['project'] = "CPOL"
-        metadata['publisher_name'] = "NCI"
-        metadata['publisher_url'] = "nci.gov.au"
-        metadata["product_version"] = f"v{today.year}.{today.month:02}"
-        metadata['references'] = 'doi:10.1175/JTECH-D-18-0007.1'
-        metadata['site_name'] = 'Gunn Pt'
-        metadata['source'] = 'radar'
-        metadata['state'] = "NT"
-        metadata['standard_name_vocabulary'] = 'CF Standard Name Table v67',
-        metadata['summary'] = "Volumetric scan from CPOL dual-polarization Doppler radar (Darwin, Australia)"
-        metadata["time_coverage_start"] = radar_start_date.isoformat()
-        metadata["time_coverage_end"] = radar_end_date.isoformat()
-        metadata["time_coverage_duration"] = "P10M"
-        metadata["time_coverage_resolution"] = "PT10M"
-        metadata['title'] = "radar PPI volume from CPOL"
-        metadata['uuid'] = unique_id
-        metadata['version'] = radar.metadata['version']
+        metadata = {'Conventions': "CF-1.6, ACDD-1.3",
+                    'acknowledgement': 'This work has been supported by the U.S. Department of Energy Atmospheric Systems Research Program through the grant DE-SC0014063. Data may be freely distributed.',
+                    'country': 'Australia',
+                    'creator_email': 'valentin.louf@bom.gov.au',
+                    'creator_name': 'Valentin Louf',
+                    'date_created': today.isoformat(),
+                    'geospatial_bounds': f"({minlon}, {maxlon}, {minlat}, {maxlat})",
+                    'geospatial_lat_max': maxlat,
+                    'geospatial_lat_min': minlat,
+                    'geospatial_lat_units': "degrees_north",
+                    'geospatial_lon_max': maxlon,
+                    'geospatial_lon_min': minlon,
+                    'geospatial_lon_units': "degrees_east",
+                    'history': "created by Valentin Louf on raijin.nci.org.au at " + today.isoformat() + " using Py-ART",
+                    'id': unique_id,
+                    'institution': 'Bureau of Meteorology',
+                    'instrument': 'radar',
+                    'instrument_name': 'CPOL',
+                    'instrument_type': 'radar',
+                    'licence': "Freely Distributed",
+                    'naming_authority': 'au.org.nci',
+                    'origin_altitude': origin_altitude,
+                    'origin_latitude': origin_latitude,
+                    'origin_longitude': origin_longitude,
+                    'platform_is_mobile': 'false',
+                    'processing_level': 'b1',
+                    'project': "CPOL",
+                    'publisher_name': "NCI",
+                    'publisher_url': "nci.gov.au",
+                    'product_version': f"v{today.year}.{today.month:02}",
+                    'references': 'doi:10.1175/JTECH-D-18-0007.1',
+                    'site_name': 'Gunn Pt',
+                    'source': 'radar',
+                    'state': "NT",
+                    'standard_name_vocabulary': 'CF Standard Name Table v67',
+                    'summary': "Volumetric scan from CPOL dual-polarization Doppler radar (Darwin, Australia)",
+                    'time_coverage_start': radar_start_date.isoformat(),
+                    'time_coverage_end': radar_end_date.isoformat(),
+                    'time_coverage_duration': "P10M",
+                    'time_coverage_resolution': "PT10M",
+                    'title': "radar PPI volume from CPOL",
+                    'uuid': unique_id,
+                    'version': radar.metadata['version']}
 
         radar.metadata = metadata
 
@@ -226,6 +224,29 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     20/ Plotting figure quicklooks.
     21/ Hardcoding gatefilter.
     """
+    FIELDS_NAMES = [('VEL', 'velocity'),
+                    ('VEL_UNFOLDED', 'corrected_velocity'),
+                    ('DBZ', 'total_power'),
+                    ('DBZ_CORR', 'corrected_reflectivity'),
+                    ('RHOHV_CORR', 'cross_correlation_ratio'),
+                    ('ZDR', 'differential_reflectivity'),
+                    ('ZDR_CORR_ATTEN', 'corrected_differential_reflectivity'),
+                    ('PHIDP', 'differential_phase'),
+                    ('PHIDP_BRINGI', 'bringi_differential_phase'),
+                    ('PHIDP_GG', 'giangrande_differential_phase'),
+                    ('PHIDP_VAL', 'corrected_differential_phase'),
+                    ('KDP', 'specific_differential_phase'),
+                    ('KDP_BRINGI', 'bringi_specific_differential_phase'),
+                    ('KDP_GG', 'giangrande_specific_differential_phase'),
+                    ('KDP_VAL', 'corrected_specific_differential_phase'),
+                    ('WIDTH', 'spectrum_width'),
+                    ('SNR', 'signal_to_noise_ratio'),
+                    ('NCP', 'normalized_coherent_power'),
+                    ('DBZV', 'reflectivity_v'),
+                    ('WRADV', 'spectrum_width_v'),
+                    ('SNRV', 'signal_to_noise_ratio_v'),
+                    ('SQIV', 'normalized_coherent_power_v')]
+
     # List of keys that we'll keep in the output radar dataset.
     OUTPUT_RADAR_FLD = ['D0', 'NW',
                         'corrected_differential_phase',
@@ -409,46 +430,23 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         except KeyError:
             continue
 
-    # Rename fields to pyart defaults.
-    fields_names = [('VEL', 'velocity'),
-                    ('VEL_UNFOLDED', 'corrected_velocity'),
-                    ('DBZ', 'total_power'),
-                    ('DBZ_CORR', 'corrected_reflectivity'),
-                    ('RHOHV_CORR', 'cross_correlation_ratio'),
-                    ('ZDR', 'differential_reflectivity'),
-                    ('ZDR_CORR_ATTEN', 'corrected_differential_reflectivity'),
-                    ('PHIDP', 'differential_phase'),
-                    ('PHIDP_BRINGI', 'bringi_differential_phase'),
-                    ('PHIDP_GG', 'giangrande_differential_phase'),
-                    ('PHIDP_VAL', 'corrected_differential_phase'),
-                    ('KDP', 'specific_differential_phase'),
-                    ('KDP_BRINGI', 'bringi_specific_differential_phase'),
-                    ('KDP_GG', 'giangrande_specific_differential_phase'),
-                    ('KDP_VAL', 'corrected_specific_differential_phase'),
-                    ('WIDTH', 'spectrum_width'),
-                    ('SNR', 'signal_to_noise_ratio'),
-                    ('NCP', 'normalized_coherent_power'),
-                    ('DBZV', 'reflectivity_v'),
-                    ('WRADV', 'spectrum_width_v'),
-                    ('SNRV', 'signal_to_noise_ratio_v'),
-                    ('SQIV', 'normalized_coherent_power_v')]
-
-    for old_key, new_key in fields_names:
+    # Change the temporary working name of fields to the one define by the user.
+    for old_key, new_key in FIELDS_NAMES:
         try:
             radar.add_field(new_key, radar.fields.pop(old_key), replace_existing=True)
         except KeyError:
             continue
 
-    hardcode_keys = ["corrected_reflectivity",
-                     "radar_echo_classification",
-                     "corrected_velocity",
-                     "corrected_differential_reflectivity",
-                     "D0", "NW"]
-    for mykey in hardcode_keys:
-        try:
-            radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
-        except KeyError:
-            continue
+    # hardcode_keys = ["corrected_reflectivity",
+    #                  "radar_echo_classification",
+    #                  "corrected_velocity",
+    #                  "corrected_differential_reflectivity",
+    #                  "D0", "NW"]
+    # for mykey in hardcode_keys:
+    #     try:
+    #         radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
+    #     except KeyError:
+    #         continue
 
     # Delete working variables.
     for k in list(radar.fields.keys()):
