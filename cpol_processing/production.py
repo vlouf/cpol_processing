@@ -26,13 +26,13 @@ import numpy as np
 import pyart
 
 # Custom modules.
-from .processing import attenuation
-from .processing import filtering
-from .processing import gridding
-from .processing import hydrometeors
-from .processing import phase
-from .processing import radar_codes
-from .processing import velocity
+from . import attenuation
+from . import filtering
+from . import gridding
+from . import hydrometeors
+from . import phase
+from . import radar_codes
+from . import velocity
 
 
 def _mkdir(dir):
