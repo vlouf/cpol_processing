@@ -313,10 +313,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     except KeyError:
         vel_missing = True
 
-    # Check if the nyquist velocity is present in the radar parameters.
-    if not vel_missing:
-        velocity.check_nyquist_velocity(radar)
-
     # Looking for RHOHV field
     # For CPOL, season 09/10, there are no RHOHV fields before March!!!!
     try:
