@@ -63,14 +63,14 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR'):
     d0 = np.ma.masked_invalid(d0).astype(np.float32)
     np.ma.set_fill_value(d0, np.NaN)
 
-    nw_dict = {'data': Nw,                
+    nw_dict = {'data': Nw,
                'long_name': 'normalized_intercept_parameter',
                '_FillValue': np.NaN,
                '_Least_significant_digit': 2,
                'reference': "doi:10.1175/2009JTECHA1258.1"}
 
     d0_dict = {'data': d0,
-               'units': 'mm', 
+               'units': 'mm',
                'long_name': 'median_volume_diameter',
                '_FillValue': np.NaN,
                '_Least_significant_digit': 2,
@@ -150,10 +150,9 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
     # Extracting data.
     d0 = radar.fields[d0_name]['data']
     nw = radar.fields[nw_name]['data']
-    rainrate = radar.fields[rain_name]['data']
     dbz = radar.fields[dbz_name]['data']
 
-    classification = np.zeros_like(dbz, dtype=int)
+    classification = np.zeros(dbz.shape, dtype=np.int16)
 
     # Invalid data
     pos0 = (d0 >= -5) & (d0 <= 100)
