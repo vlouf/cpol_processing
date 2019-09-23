@@ -147,4 +147,9 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     except Exception:
         pass
 
+    phidp_gg['data'] = phidp_gg['data'].astype(np.float32)
+    phidp_gg['_Least_significant_digit'] = 4
+    kdp_gg['data'] = kdp_gg['data'].astype(np.float32)
+    kdp_gg['_Least_significant_digit'] = 4
+
     return phidp_gg, kdp_gg
