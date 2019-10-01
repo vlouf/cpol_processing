@@ -5,7 +5,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 04/04/2017
-@date: 19/12/2018
+@date: 01/10/2019
 
 .. autosummary::
     :toctree: generated/
@@ -298,8 +298,8 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
     zdr = radar.fields[zdr_name]['data'].copy()
     snr = radar.fields[snr_name]['data'].copy()
     alpha = 1.48
-    natural_zdr = 10**(0.1 * zdr)
-    natural_snr = 10**(0.1 * snr)
+    natural_zdr = 10 ** (0.1 * zdr)
+    natural_snr = 10 ** (0.1 * snr)
     corr_zdr = 10 * np.log10((alpha * natural_snr * natural_zdr) / (alpha * natural_snr + alpha - natural_zdr))
 
     return corr_zdr

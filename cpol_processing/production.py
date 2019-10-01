@@ -221,8 +221,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     17/ Estimate DSD retrieval using csu toolbox.
     18/ Removing fake/temporary fieds.
     19/ Rename fields to pyart standard names.
-    20/ Plotting figure quicklooks.
-    21/ Hardcoding gatefilter.
     """
     FIELDS_NAMES = [('VEL', 'velocity'),
                     ('VEL_UNFOLDED', 'corrected_velocity'),
@@ -389,7 +387,8 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
 
     # Correct Attenuation ZDR
-    zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter=gatefilter, phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter=gatefilter,
+                                                   phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
     radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
 
     # Hydrometeors classification
@@ -436,17 +435,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
             radar.add_field(new_key, radar.fields.pop(old_key), replace_existing=True)
         except KeyError:
             continue
-
-    # hardcode_keys = ["corrected_reflectivity",
-    #                  "radar_echo_classification",
-    #                  "corrected_velocity",
-    #                  "corrected_differential_reflectivity",
-    #                  "D0", "NW"]
-    # for mykey in hardcode_keys:
-    #     try:
-    #         radar.fields[mykey]['data'] = filtering.filter_hardcoding(radar.fields[mykey]['data'], gatefilter)
-    #     except KeyError:
-    #         continue
 
     # Delete working variables.
     for k in list(radar.fields.keys()):
