@@ -29,21 +29,21 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR'):
 
     Parameters:
     ===========
-        radar:
-            Py-ART radar structure.
-        refl_name: str
-            Reflectivity field name.
-        zdr_name: str
-            ZDR field name.
-        kdp_name: str
-            KDP field name.
+    radar:
+        Py-ART radar structure.
+    refl_name: str
+        Reflectivity field name.
+    zdr_name: str
+        ZDR field name.
+    kdp_name: str
+        KDP field name.
 
     Returns:
     ========
-        nw_dict: dict
-            Normalized Intercept Parameter.
-        d0_dict: dict
-            Median Volume Diameter.
+    nw_dict: dict
+        Normalized Intercept Parameter.
+    d0_dict: dict
+        Median Volume Diameter.
     """
     dbz = radar.fields[refl_name]['data'].copy().filled(np.NaN)
     zdr = radar.fields[zdr_name]['data'].copy()
@@ -88,25 +88,25 @@ def hydrometeor_classification(radar, gatefilter, kdp_name, zdr_name, refl_name=
 
     Parameters:
     ===========
-        radar:
-            Py-ART radar structure.
-        refl_name: str
-            Reflectivity field name.
-        zdr_name: str
-            ZDR field name.
-        kdp_name: str
-            KDP field name.
-        rhohv_name: str
-            RHOHV field name.
-        temperature_name: str
-            Sounding temperature field name.
-        height: str
-            Gate height field name.
+    radar:
+        Py-ART radar structure.
+    refl_name: str
+        Reflectivity field name.
+    zdr_name: str
+        ZDR field name.
+    kdp_name: str
+        KDP field name.
+    rhohv_name: str
+        RHOHV field name.
+    temperature_name: str
+        Sounding temperature field name.
+    height: str
+        Gate height field name.
 
     Returns:
     ========
-        hydro_meta: dict
-            Hydrometeor classification.
+    hydro_meta: dict
+        Hydrometeor classification.
     """
     refl = radar.fields[refl_name]['data'].copy().filled(np.NaN)
     zdr = radar.fields[zdr_name]['data'].copy().filled(np.NaN)
@@ -146,6 +146,18 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
     Convective or Mixed, based on the D-Zero value and the log10(Nw) value.
     Merhala's rain classification is 1 for Stratiform, 2 for Convective and 3
     for Mixed, 0 if no rain.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    dbz_name: str
+        Reflectivity field name.
+
+    Returns:
+    ========
+    class_meta: dict
+        Merhala Thurai classification.
     """
     # Extracting data.
     d0 = radar.fields[d0_name]['data']
@@ -188,21 +200,21 @@ def rainfall_rate(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR',
 
     Parameters:
     ===========
-        radar:
-            Py-ART radar structure.
-        refl_name: str
-            Reflectivity field name.
-        zdr_name: str
-            ZDR field name.
-        kdp_name: str
-            KDP field name.
-        hydro_name: str
-            Hydrometeor classification field name.
+    radar:
+        Py-ART radar structure.
+    refl_name: str
+        Reflectivity field name.
+    zdr_name: str
+        ZDR field name.
+    kdp_name: str
+        KDP field name.
+    hydro_name: str
+        Hydrometeor classification field name.
 
     Returns:
     ========
-        rainrate: dict
-            Rainfall rate.
+    rainrate: dict
+        Rainfall rate.
     """
     dbz = radar.fields[refl_name]['data'].filled(np.NaN)
     zdr = radar.fields[zdr_name]['data'].filled(np.NaN)
