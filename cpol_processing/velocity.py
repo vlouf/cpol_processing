@@ -24,7 +24,9 @@ def _check_nyquist_velocity(radar, vel_name='VEL'):
     then it is created.
     """
     try:
-        vnyq = radar.instrument_parameters['nyquist_velocity']
+        vnyq = radar.instrument_parameters['nyquist_velocity']['data']
+        if vnyq is None:
+            raise KeyError('Nyquist velocity does not exists.')
     except KeyError:
         vnyq = np.nanmax(radar.fields[vel_name]['data'])
         nray = len(radar.azimuth['data'])
@@ -37,7 +39,7 @@ def _check_nyquist_velocity(radar, vel_name='VEL'):
     return vnyq
 
 
-def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ'):
+def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
     """
     Unfold Doppler velocity using Py-ART region based algorithm. Automatically
     searches for a folding-corrected velocity field.
@@ -60,7 +62,10 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ'):
     """
     from unravel import dealias
 
-    nyquist = _check_nyquist_velocity(radar, vel_name)
+    vnyq = _check_nyquist_velocity(radar, vel_name)
+    if nyquist is None:
+        if np.isscalar(vnyq):
+            nyquist = vnyq
 
     unfvel, _, _, _ = dealias.debug_dealiasing(radar, vel_name, dbz_name, 
                                                gatefilter=gatefilter,
