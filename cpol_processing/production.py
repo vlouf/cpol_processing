@@ -379,7 +379,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
 
     # Unfold VELOCITY
     if not vel_missing:
-        vdop_unfold = velocity.unravel(radar, gatefilter)
+        if is_cpol:
+            vdop_unfold = velocity.unravel(radar, gatefilter, nyquist=13.3)
+        else:
+            vdop_unfold = velocity.unravel(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
 
     # Correct Attenuation ZH
