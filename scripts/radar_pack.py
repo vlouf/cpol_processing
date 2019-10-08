@@ -93,7 +93,7 @@ if __name__ == '__main__':
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/cpol_level_1a/v2019/ppi/"
-    OUTPATH = "/g/data/hj10/cpol_level_1b_tmp/"
+    OUTPATH = '/g/data/hj10/cpol_level_1b/v2019_new/'
     SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
 
     # Parse arguments
@@ -149,11 +149,11 @@ calculation, and rainfall rate estimation."""
 
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        for flist_chunk in chunks(flist, 16):
+        for flist_chunk in chunks(flist, 32):
             arglist = [(f, OUTPATH, SOUND_DIR, USE_UNRAVEL) for f in flist_chunk]
 
             with ProcessPool() as pool:
-                future = pool.map(main, arglist, timeout=300)
+                future = pool.map(main, arglist, timeout=1200)
                 iterator = future.result()
 
                 while True:
