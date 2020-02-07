@@ -60,16 +60,17 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
     vel_meta: dict
         Unfolded Doppler velocity.
     """
-    from unravel import dealias
+    import unravel
 
     vnyq = _check_nyquist_velocity(radar, vel_name)
     if nyquist is None:
         if np.isscalar(vnyq):
             nyquist = vnyq
 
-    unfvel, _, _, _ = dealias.debug_dealiasing(radar, vel_name, dbz_name, 
-                                               gatefilter=gatefilter,
-                                               debug=False,
+    unfvel, _, _, _ = unravel.unravel_3D_pyart(radar, 
+                                               vel_name, 
+                                               dbz_name, 
+                                               gatefilter=gatefilter,                                               
                                                alpha=0.8,
                                                nyquist_velocity=nyquist, 
                                                strategy='long_range')
