@@ -111,7 +111,6 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
         Attenuation corrected reflectivity.
     """
     # Compute attenuation
-    atten_gas = correct_gaseous_attenuation(radar)
     _, zh_corr = pyart.correct.calculate_attenuation(radar, 0,
                                                      rhv_min=0.3,
                                                      refl_field=refl_field,
