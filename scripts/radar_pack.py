@@ -92,9 +92,9 @@ if __name__ == '__main__':
     Global variables definition.
     """
     # Main global variables (Path directories).
-    INPATH = "/g/data/hj10/cpol_level_1a/v2019/ppi/"
-    OUTPATH = '/g/data/hj10/cpol_level_1b/v2019_new/'
-    SOUND_DIR = "/g/data2/rr5/CPOL_radar/DARWIN_radiosonde"
+    INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
+    OUTPATH = '/g/data/hj10/admin/cpol_level_1b/v2020/'
+    SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
 
     # Parse arguments
     parser_description =  """Raw radar PPIs processing. It provides Quality

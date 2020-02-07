@@ -85,7 +85,7 @@ calculation, and rainfall rate estimation."""
         dest='rs_dir',
         type=str,
         help='Radiosoundings directory.',
-        default="/g/data2/rr5/CPOL_radar/DARWIN_radiosonde")
+        default="/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde")
 
     parser.add_argument('--unravel', dest='unravel', action='store_true')
     parser.add_argument('--no-unravel', dest='unravel', action='store_false')
