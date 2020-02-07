@@ -118,6 +118,49 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
                                                      rhv_field=rhv_field,
                                                      phidp_field=phidp_field)
 
-    zh_corr['_Least_significant_digit'] = 2
-    zh_corr['data'] += atten_gas
+    zh_corr['_Least_significant_digit'] = 2    
     return zh_corr
+
+
+def correct_attenuation_new(radar, 
+                            gatefilter, 
+                            refl_field='DBZ', 
+                            zdr_field='ZDR', 
+                            phidp_field='PHIDP_GG', 
+                            temp_field='temperature'):
+    """
+    Correct attenuation on reflectivity using Py-ART tool. The attenuation from
+    atmospheric gases is also corrected.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    gatefilter:
+        Gate filter.
+    refl_name: str
+        Reflectivity field name.
+    zdr_field: str
+        KDP field name.
+    phidp_field: str
+        PHIDP field name
+    temp_field: str
+        Temperature field name.
+
+    Returns:
+    ========
+    atten_meta: dict
+        Specific attenuation.
+    zh_corr: array
+        Attenuation corrected reflectivity.
+    """
+    rslt = pyart.correct.calculate_attenuation_zphi(radar, 
+                                                    gatefilter=gatefilter, 
+                                                    refl_field=refl_field, 
+                                                    phidp_field=phidp_field,
+                                                    zdr_field=zdr_field,
+                                                    temp_field=temp_field)
+
+    spec_at, pia_dict, cor_z, spec_diff_at, pida_dict, cor_zdr = rslt
+
+    return cor_z, cor_zdr
