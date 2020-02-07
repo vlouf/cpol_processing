@@ -385,13 +385,12 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
             vdop_unfold = velocity.unravel(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
 
-    # Correct Attenuation ZH
-    zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
+    # Correct attenuation ZH and ZDR
+    zh_corr, zdr_corr = attenuation.correct_attenuation_new(radar,
+                                                            gatefilter,
+                                                            zdr_field='ZDR_CORR',
+                                                            phidp_field=phidp_field_name)
     radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
-
-    # Correct Attenuation ZDR
-    zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter=gatefilter,
-                                                   phidp_name=phidp_field_name, zdr_name='ZDR_CORR')
     radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
 
     # Hydrometeors classification
@@ -403,12 +402,18 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     radar.add_field('radar_echo_classification', hydro_class, replace_existing=True)
 
     # Rainfall rate
-    rainfall = hydrometeors.rainfall_rate(radar, gatefilter, kdp_name=kdp_field_name,
-                                          refl_name='DBZ_CORR', zdr_name='ZDR_CORR_ATTEN')
+    rainfall = hydrometeors.rainfall_rate(radar,
+                                          gatefilter,
+                                          kdp_name=kdp_field_name,
+                                          refl_name='DBZ_CORR',
+                                          zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("radar_estimated_rain_rate", rainfall)
 
     # DSD retrieval
-    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar, gatefilter, kdp_name=kdp_field_name, zdr_name='ZDR_CORR_ATTEN')
+    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar,
+                                                  gatefilter,
+                                                  kdp_name=kdp_field_name,
+                                                  zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("D0", d0_dict)
     radar.add_field("NW", nw_dict)
 

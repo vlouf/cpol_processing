@@ -162,5 +162,10 @@ def correct_attenuation_new(radar,
                                                     temp_field=temp_field)
 
     spec_at, pia_dict, cor_z, spec_diff_at, pida_dict, cor_zdr = rslt
+        
+    cor_z['data'] = cor_z['data'].astype(np.float32)
+    cor_zdr['data'] = cor_zdr['data'].astype(np.float32)
+    cor_z['_Least_significant_digit'] = 2
+    cor_zdr['_Least_significant_digit'] = 2
 
     return cor_z, cor_zdr
