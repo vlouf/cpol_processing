@@ -5,7 +5,7 @@ Codes for correcting Doppler velocity.
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 11/12/2017
-@date: 23/09/2019
+@date: 08/02/2020
 
 .. autosummary::
     :toctree: generated/
@@ -67,13 +67,13 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
         if np.isscalar(vnyq):
             nyquist = vnyq
 
-    unfvel, _, _, _ = unravel.unravel_3D_pyart(radar, 
-                                               vel_name, 
-                                               dbz_name, 
-                                               gatefilter=gatefilter,                                               
-                                               alpha=0.8,
-                                               nyquist_velocity=nyquist, 
-                                               strategy='long_range')
+    unfvel = unravel.unravel_3D_pyart(radar,
+                                      vel_name,
+                                      dbz_name,
+                                      gatefilter=gatefilter,
+                                      alpha=0.8,
+                                      nyquist_velocity=nyquist,
+                                      strategy='long_range')
 
     np.ma.set_fill_value(unfvel, np.NaN)
     vel_meta = pyart.config.get_metadata('velocity')
@@ -82,7 +82,7 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
     vel_meta['_FillValue'] = np.NaN
     vel_meta['comment'] = 'UNRAVEL algorithm.'
     vel_meta['units'] = 'm s-1'
-    
+
     try:
         vel_meta.pop('standard_name')
     except Exception:
