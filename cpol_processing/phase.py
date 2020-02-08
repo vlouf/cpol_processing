@@ -4,7 +4,7 @@ Codes for correcting the differential phase and estimating KDP.
 @title: phase
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 22/09/2019
+@date: 08/02/2020
 
 .. autosummary::
     :toctree: generated/
@@ -130,12 +130,20 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     kdp_gg: dict
         Field dictionary containing recalculated differential phases.
     """
+    unfphidic = pyart.correct.dealias_unwrap_phase(radar,
+                                                   gatefilter=gatefilter,
+                                                   skip_checks=True,
+                                                   vel_field=phidp_field,
+                                                   nyquist_vel=90)
+
+    radar.add_field_like(phidp_field, 'PHITMP', unfphidic['data'])
+
     phidp_gg, kdp_gg = pyart.correct.phase_proc_lp(radar, 0.0,
                                                    LP_solver='cylp',
                                                    ncp_field=ncp_field,
                                                    refl_field=refl_field,
                                                    rhv_field=rhv_field,
-                                                   phidp_field=phidp_field)
+                                                   phidp_field='PHITMP')
 
     phidp_gg['data'], kdp_gg['data'] = _fix_phidp_from_kdp(phidp_gg['data'],
                                                            kdp_gg['data'],
@@ -145,6 +153,7 @@ def phidp_giangrande(radar, gatefilter, refl_field='DBZ', ncp_field='NCP',
     try:
         # Remove temp variables.
         radar.fields.pop('unfolded_differential_phase')
+        radar.fields.pop('PHITMP')
     except Exception:
         pass
 
