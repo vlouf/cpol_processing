@@ -119,10 +119,16 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
 
     if is_cpol:
         # Lat/lon informations
-        maxlon = '132.385'
-        minlon = '129.703'
-        maxlat = '-10.941'
-        minlat = '-13.552'
+        # maxlon = '132.385'
+        # minlon = '129.703'
+        # maxlat = '-10.941'
+        # minlat = '-13.552'
+        latitude = radar.latitude['data']
+        longitude = radar.longitude['data']
+        maxlon = longitude.max()
+        minlon = longitude.min()
+        maxlat = latitude.max()
+        minlat = latitude.min()
         origin_altitude = '50'
         origin_latitude = '-12.2491'
         origin_longitude = '131.0444'
@@ -133,8 +139,9 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
                     'country': 'Australia',
                     'creator_email': 'valentin.louf@bom.gov.au',
                     'creator_name': 'Valentin Louf',
+                    'creator_url': 'github.com/vlouf',
                     'date_created': today.isoformat(),
-                    'geospatial_bounds': f"({minlon}, {maxlon}, {minlat}, {maxlat})",
+                    "geospatial_bounds": f"POLYGON(({minlon} {minlat},{minlon} {maxlat},{maxlon} {maxlat},{maxlon} {minlat},{minlon} {minlat}))",
                     'geospatial_lat_max': maxlat,
                     'geospatial_lat_min': minlat,
                     'geospatial_lat_units': "degrees_north",
@@ -147,6 +154,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
                     'instrument': 'radar',
                     'instrument_name': 'CPOL',
                     'instrument_type': 'radar',
+                    'keywords': 'radar, tropics, Doppler, dual-polarization',
                     'licence': "Freely Distributed",
                     'naming_authority': 'au.org.nci',
                     'origin_altitude': origin_altitude,
@@ -418,8 +426,8 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     radar.add_field("NW", nw_dict)
 
     # Thurai echo classification.
-    echo_thurai = hydrometeors.merhala_class_convstrat(radar)
-    radar.add_field('thurai_echo_classification', echo_thurai)
+    # echo_thurai = hydrometeors.merhala_class_convstrat(radar)
+    # radar.add_field('thurai_echo_classification', echo_thurai)
 
     # Removing fake and useless fields.
     if fake_ncp:
