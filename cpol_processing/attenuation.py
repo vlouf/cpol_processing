@@ -131,7 +131,10 @@ def correct_attenuation_zh_pyart(radar,
     specific_atten = np.ma.masked_invalid(spec_atten['data'])
     r = radar.range['data'] / 1000
     dr = r[2] - r[1]
-    attenuation = 2 * cumtrapz(specific_atten, dx=dr)
+
+    na, nr = radar.fields[refl_field]['data'].shape
+    attenuation = np.zeros((na, nr))
+    attenuation[:, :-1] = 2 * cumtrapz(specific_atten, dx=dr)
     refl_corr = radar.fields[refl_field]['data'].copy() + attenuation
 
-    return refl_corr
+    return refl_corr.astype(np.float32)
