@@ -16,6 +16,8 @@ Codes for correcting and estimating attenuation on ZH and ZDR.
 import pyart
 import numpy as np
 
+from scipy.integrate import cumtrapz
+
 
 def correct_gaseous_attenuation(radar):
     """
@@ -46,7 +48,11 @@ def correct_gaseous_attenuation(radar):
     return atten_gas
 
 
-def correct_attenuation_zdr(radar, gatefilter, zdr_name='ZDR_CORR', phidp_name='PHIDP_VAL', alpha=0.016):
+def correct_attenuation_zdr(radar,
+                            gatefilter,
+                            zdr_name='ZDR_CORR',
+                            phidp_name='PHIDP_VAL',
+                            alpha=0.016):
     """
     Correct attenuation on differential reflectivity. KDP_GG has been
     cleaned of noise, that's why we use it.
@@ -88,8 +94,11 @@ def correct_attenuation_zdr(radar, gatefilter, zdr_name='ZDR_CORR', phidp_name='
     return zdr_meta
 
 
-def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
-                                 rhv_field='RHOHV_CORR', phidp_field='PHIDP_GG'):
+def correct_attenuation_zh_pyart(radar,
+                                 refl_field='DBZ',
+                                 ncp_field='NCP',
+                                 rhv_field='RHOHV_CORR',
+                                 phidp_field='PHIDP_GG'):
     """
     Correct attenuation on reflectivity using Py-ART tool. The attenuation from
     atmospheric gases is also corrected.
@@ -111,61 +120,17 @@ def correct_attenuation_zh_pyart(radar, refl_field='DBZ', ncp_field='NCP',
         Attenuation corrected reflectivity.
     """
     # Compute attenuation
-    _, zh_corr = pyart.correct.calculate_attenuation(radar, 0,
-                                                     rhv_min=0.3,
-                                                     refl_field=refl_field,
-                                                     ncp_field=rhv_field,
-                                                     rhv_field=rhv_field,
-                                                     phidp_field=phidp_field)
+    spec_atten, _ = pyart.correct.calculate_attenuation(radar, 0,
+                                                        rhv_min=0.3,
+                                                        refl_field=refl_field,
+                                                        ncp_field=rhv_field,
+                                                        rhv_field=rhv_field,
+                                                        phidp_field=phidp_field)
 
-    zh_corr['_Least_significant_digit'] = 2    
-    return zh_corr
+    specific_atten = np.ma.masked_invalid(spec_atten['data'])
+    r = radar.range['data'] / 1000
+    dr = r[2] - r[1]
+    attenuation = 2 * cumtrapz(specific_atten, dx=dr)
+    refl_corr = radar.fields[refl_field]['data'].copy() + attenuation
 
-
-# def correct_attenuation_new(radar, 
-#                             gatefilter, 
-#                             refl_field='DBZ', 
-#                             zdr_field='ZDR', 
-#                             phidp_field='PHIDP_GG', 
-#                             temp_field='temperature'):
-#     """
-#     Correct attenuation on reflectivity using Py-ART tool. The attenuation from
-#     atmospheric gases is also corrected.
-
-#     Parameters:
-#     ===========
-#     radar:
-#         Py-ART radar structure.
-#     gatefilter:
-#         Gate filter.
-#     refl_name: str
-#         Reflectivity field name.
-#     zdr_field: str
-#         KDP field name.
-#     phidp_field: str
-#         PHIDP field name
-#     temp_field: str
-#         Temperature field name.
-
-#     Returns:
-#     ========
-#     atten_meta: dict
-#         Specific attenuation.
-#     zh_corr: array
-#         Attenuation corrected reflectivity.
-#     """
-#     rslt = pyart.correct.calculate_attenuation_zphi(radar, 
-#                                                     gatefilter=gatefilter, 
-#                                                     refl_field=refl_field, 
-#                                                     phidp_field=phidp_field,
-#                                                     zdr_field=zdr_field,
-#                                                     temp_field=temp_field)
-
-#     spec_at, pia_dict, cor_z, spec_diff_at, pida_dict, cor_zdr = rslt
-        
-#     cor_z['data'] = cor_z['data'].astype(np.float32)
-#     cor_zdr['data'] = cor_zdr['data'].astype(np.float32)
-#     cor_z['_Least_significant_digit'] = 2
-#     cor_zdr['_Least_significant_digit'] = 2
-
-#     return cor_z, cor_zdr
+    return refl_corr

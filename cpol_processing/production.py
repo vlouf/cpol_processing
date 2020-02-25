@@ -279,9 +279,9 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
 
     # Correct data type manually
     try:
-        radar.longitude['data'] = radar.longitude['data'].filled(0).astype(np.float32)
-        radar.latitude['data'] = radar.latitude['data'].filled(0).astype(np.float32)
-        radar.altitude['data'] = radar.altitude['data'].filled(0).astype(np.int32)
+        radar.longitude['data'] = np.ma.masked_invalid(radar.longitude['data'].astype(np.float32))
+        radar.latitude['data'] = np.ma.masked_invalid(radar.latitude['data'].astype(np.float32))
+        radar.altitude['data'] = np.ma.masked_invalid(radar.altitude['data'].astype(np.int32))
     except Exception:
         pass
 
@@ -394,11 +394,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
 
     # Correct attenuation ZH and ZDR
-    zh_corr, zdr_corr = attenuation.correct_attenuation_new(radar,
-                                                            gatefilter,
-                                                            zdr_field='ZDR_CORR',
-                                                            phidp_field=phidp_field_name)
-    radar.add_field('DBZ_CORR', zh_corr, replace_existing=True)
+    zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
+    radar.add_field_like('DBZ', 'DBZ_CORR', zh_corr)
+
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter)
     radar.add_field('ZDR_CORR_ATTEN', zdr_corr)
 
     # Hydrometeors classification
