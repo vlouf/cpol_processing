@@ -5,6 +5,7 @@ Codes for creating and manipulating gate filters.
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @date: 20/11/2017
+@modification: 25/02/2020
 
 .. autosummary::
     :toctree: generated/
@@ -12,8 +13,6 @@ Codes for creating and manipulating gate filters.
     texture
     do_gatefilter_cpol
     do_gatefilter
-    filter_hardcoding
-    velocity_texture
 """
 # Libraries
 import pyart
@@ -99,18 +98,17 @@ def do_gatefilter_cpol(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='R
 
     r = radar.range['data']
     azi = radar.azimuth['data']
-    R, A = np.meshgrid(r, azi)
+    R, _ = np.meshgrid(r, azi)
     refl = radar.fields[refl_name]['data'].copy()
-    rho_corr = radar.fields[rhohv_name]['data']
-    fcut = -0.6 / 140e3 * R + 0.8
-    refl[rho_corr < fcut] = np.NaN
+    fcut = 10 * np.log10(4e-5 * R)
+    refl[refl < fcut] = np.NaN
     radar.add_field_like(refl_name, 'NDBZ', refl)
 
     gf = pyart.filters.GateFilter(radar)
     gf.exclude_invalid('NDBZ')
     gf.exclude_below(snr_name, 9)
 
-    gf.exclude_outside(zdr_name, -3.0, 7.0)    
+    gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
 
     # dphi = texture(radar.fields[phidp_name]['data'])
@@ -182,55 +180,3 @@ def do_gatefilter(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_
         pass
 
     return gf_despeckeld
-
-
-def filter_hardcoding(my_array, nuke_filter, bad=-9999):
-    """
-    Harcoding GateFilter into an array.
-
-    Parameters:
-    ===========
-        my_array: array
-            Array we want to clean out.
-        nuke_filter: gatefilter
-            Filter we want to apply to the data.
-        bad: float
-            Fill value.
-
-    Returns:
-    ========
-        to_return: masked array
-            Same as my_array but with all data corresponding to a gate filter
-            excluded.
-    """
-    filt_array = np.ma.masked_where(nuke_filter.gate_excluded, my_array.copy())
-    filt_array = filt_array.filled(fill_value=bad)
-    return np.ma.masked_where(filt_array == bad, filt_array)
-
-
-def velocity_texture(radar, vel_name='VEL'):
-    """
-    Compute velocity texture using new Bobby Jackson function in Py-ART.
-
-    Parameters:
-    ===========
-    radar:
-        Py-ART radar structure.
-    vel_name: str
-        Name of the (original) Doppler velocity field.
-
-    Returns:
-    ========
-    vdop_vel: dict
-        Velocity texture.
-    """
-
-    try:
-        v_nyq_vel = radar.instrument_parameters['nyquist_velocity']['data'][0]
-    except Exception:
-        vdop_art = radar.fields[vel_name]['data']
-        v_nyq_vel = np.max(np.abs(vdop_art))
-
-    vel_dict = pyart.retrieve.calculate_velocity_texture(radar, vel_name, nyq=v_nyq_vel)
-
-    return vel_dict
