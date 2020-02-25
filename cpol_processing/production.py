@@ -2,14 +2,16 @@
 CPOL Level 1b main production line. These are the drivers function.
 
 @title: production
-@author: Valentin Louf <valentin.louf@monash.edu>
-@copyright: Valentin Louf (2017-)
+@author: Valentin Louf
+@email: valentin.louf@bom.gov.au
+@copyright: Valentin Louf (2017-2020)
 @institution: Bureau of Meteorology and Monash University
 @date: 25/02/2020
 
 .. autosummary::
     :toctree: generated/
 
+    _mkdir
     process_and_save
     production_line
 """
@@ -52,7 +54,11 @@ def _mkdir(dir):
     return None
 
 
-def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL', use_unravel=True):
+def process_and_save(radar_file_name,
+                     outpath,
+                     sound_dir=None,
+                     instrument='CPOL',
+                     use_unravel=True):
     """
     Call processing function and write data.
 
@@ -162,7 +168,7 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
                     'site_name': 'Gunn Pt',
                     'source': 'radar',
                     'state': "NT",
-                    'standard_name_vocabulary': 'CF Standard Name Table v67',
+                    'standard_name_vocabulary': 'CF Standard Name Table v71',
                     'summary': "Volumetric scan from CPOL dual-polarization Doppler radar (Darwin, Australia)",
                     'time_coverage_start': radar_start_date.isoformat(),
                     'time_coverage_end': radar_end_date.isoformat(),
@@ -219,16 +225,14 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     07/ Correct RHOHV using Ryzhkov algorithm.
     08/ Create gatefilter (remove noise and incorrect data).
     09/ Correct ZDR using Ryzhkov algorithm.
-    10/ Process and unfold raw PHIDP using wradlib and Vulpiani algorithm.
-    11/ Compute Giangrande's PHIDP using pyart.
-    12/ Unfold velocity using pyart.
-    13/ Compute attenuation for ZH
-    14/ Compute attenuation for ZDR
-    15/ Estimate Hydrometeors classification using csu toolbox.
-    16/ Estimate Rainfall rate using csu toolbox.
-    17/ Estimate DSD retrieval using csu toolbox.
-    18/ Removing fake/temporary fieds.
-    19/ Rename fields to pyart standard names.
+    10/ Compute Giangrande's PHIDP using pyart.
+    11/ Unfold velocity.
+    12/ Compute attenuation for ZH
+    13/ Compute attenuation for ZDR
+    14/ Estimate Hydrometeors classification using csu toolbox.
+    15/ Estimate Rainfall rate using csu toolbox.
+    16/ Removing fake/temporary fieds.
+    17/ Rename fields to pyart standard names.
     """
     FIELDS_NAMES = [('VEL', 'velocity'),
                     ('VEL_UNFOLDED', 'corrected_velocity'),
@@ -423,8 +427,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         radar.fields.pop("RHOHV_CORR")
 
     # Remove obsolete fields:
-    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV', 'ZDR_CORR',
-                         'RHOHV']:
+    for obsolete_key in ["Refl", "PHI_UNF", "PHI_CORR", "height", 'TH', 'TV', 'ZDR_CORR', 'RHOHV']:
         try:
             radar.fields.pop(obsolete_key)
         except KeyError:
@@ -438,9 +441,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
             continue
 
     # Delete working variables.
-    for k in list(radar.fields.keys()):
-        if k not in OUTPUT_RADAR_FLD:
-            radar.fields.pop(k)
+    if is_cpol:
+        for k in list(radar.fields.keys()):
+            if k not in OUTPUT_RADAR_FLD:
+                radar.fields.pop(k)
 
     # Correct the standard_name metadata:
     radar_codes.correct_standard_name(radar)

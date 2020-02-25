@@ -76,14 +76,14 @@ def welcome_message():
     print("#" * 79)
     print("")
     print(" " * 25 + crayons.red("Raw radar PPIs production line.\n", bold=True))
-    print("\t- Input data directory path is: " + crayons.yellow(INPATH))
-    print("\t- Output data directory path is: " + crayons.yellow(OUTPATH))
-    print("\t- Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
-    print(f"\t- The process will occur between {crayons.yellow(START_DATE)} and {crayons.yellow(END_DATE)}.")
+    print(" - Input data directory path is: " + crayons.yellow(INPATH))
+    print(" - Output data directory path is: " + crayons.yellow(OUTPATH))
+    print(" - Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
+    print(f" - The process will occur between {crayons.yellow(START_DATE)} and {crayons.yellow(END_DATE)}.")
     if USE_UNRAVEL:
-        print("\t- " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
+        print(" - " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
     else:
-        print("\t- " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
+        print(" - " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
     print("\n" + "#" * 79 + "\n")
 
 
