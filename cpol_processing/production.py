@@ -4,7 +4,8 @@ CPOL Level 1b main production line. These are the drivers function.
 @title: production
 @author: Valentin Louf <valentin.louf@monash.edu>
 @copyright: Valentin Louf (2017-)
-@institution: Bureau of Meteorology
+@institution: Bureau of Meteorology and Monash University
+@date: 25/02/2020
 
 .. autosummary::
     :toctree: generated/
@@ -13,6 +14,7 @@ CPOL Level 1b main production line. These are the drivers function.
     production_line
 """
 # Python Standard Library
+import gc
 import os
 import time
 import uuid
@@ -21,9 +23,9 @@ import traceback
 import warnings
 
 # Other Libraries
+import pyart
 import netCDF4
 import numpy as np
-import pyart
 
 # Custom modules.
 from . import attenuation
@@ -56,20 +58,20 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
 
     Parameters:
     ===========
-        radar_file_name: str
-            Name of the input radar file.
-        outpath: str
-            Path for saving output data.
-        outpath_grid: str
-            Path for saving gridded data.
-        figure_path: str
-            Path for saving figures.
-        sound_dir: str
-            Path to radiosoundings directory.
-        instrument: str
-            Name of radar (only CPOL will change something).
-        linearz: bool
-            Gridding reflectivity in linear unit (True) or dBZ (False).
+    radar_file_name: str
+        Name of the input radar file.
+    outpath: str
+        Path for saving output data.
+    outpath_grid: str
+        Path for saving gridded data.
+    figure_path: str
+        Path for saving figures.
+    sound_dir: str
+        Path to radiosoundings directory.
+    instrument: str
+        Name of radar (only CPOL will change something).
+    linearz: bool
+        Gridding reflectivity in linear unit (True) or dBZ (False).
     """
     today = datetime.datetime.utcnow()
     if instrument == 'CPOL':
@@ -83,8 +85,6 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     _mkdir(outpath)
     outpath_ppi = os.path.join(outpath, 'ppi')
     _mkdir(outpath_ppi)
-    # figure_path = os.path.join(outpath, 'quicklooks')
-    # _mkdir(figure_path)
     tick = time.time()
 
     # Business start here.
@@ -185,6 +185,10 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
     # Write results
     pyart.io.write_cfradial(outfilename, radar, format='NETCDF4')
     print('%s processed in  %0.2fs.' % (os.path.basename(radar_file_name), (time.time() - tick)))
+
+    # Free memory
+    del radar
+    gc.collect()
 
     return None
 

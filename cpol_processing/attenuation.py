@@ -4,11 +4,12 @@ Codes for correcting and estimating attenuation on ZH and ZDR.
 @title: attenuation
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 3/03/2019
+@date: 25/02/2020
 
 .. autosummary::
     :toctree: generated/
 
+    correct_gaseous_attenuation
     correct_attenuation_zdr
     correct_attenuation_zh_pyart
 """
@@ -65,17 +66,17 @@ def correct_attenuation_zdr(radar,
 
     Parameters:
     ===========
-        radar:
-            Py-ART radar structure.
-        zdr_name: str
-            Differential reflectivity field name.
-        kdp_name: str
-            KDP field name.
+    radar:
+        Py-ART radar structure.
+    zdr_name: str
+        Differential reflectivity field name.
+    kdp_name: str
+        KDP field name.
 
     Returns:
     ========
-        zdr_corr: array
-            Attenuation corrected differential reflectivity.
+    zdr_corr: array
+        Attenuation corrected differential reflectivity.
     """
     zdr = radar.fields[zdr_name]['data'].copy()
     phi = radar.fields[phidp_name]['data'].copy()
