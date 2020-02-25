@@ -75,9 +75,8 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
                                       nyquist_velocity=nyquist,
                                       strategy='long_range')
 
-    np.ma.set_fill_value(unfvel, np.NaN)
     vel_meta = pyart.config.get_metadata('velocity')
-    vel_meta['data'] = unfvel.astype(np.float32)
+    vel_meta['data'] = np.ma.masked_where(gatefilter.gate_excluded, unfvel).astype(np.float32)
     vel_meta['_Least_significant_digit'] = 2
     vel_meta['_FillValue'] = np.NaN
     vel_meta['comment'] = 'UNRAVEL algorithm.'
