@@ -65,6 +65,7 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR'):
 
     nw_dict = {'data': Nw,
                'long_name': 'normalized_intercept_parameter',
+               'units': ' ',
                '_FillValue': np.NaN,
                '_Least_significant_digit': 2,
                'reference': "doi:10.1175/2009JTECHA1258.1"}
