@@ -261,13 +261,19 @@ def correct_standard_name(radar):
     except Exception:
         pass
 
-    good_keys = ['corrected_reflectivity', 'total_power', 'radar_estimated_rain_rate']
+    good_keys = ['corrected_reflectivity', 'total_power', 'radar_estimated_rain_rate', 'corrected_velocity']
     for k in radar.fields.keys():
         if k not in good_keys:
             try:
                 radar.fields[k].pop('standard_name')
             except Exception:
                 continue
+
+    try:
+        radar.fields['velocity']['standard_name'] = 'radial_velocity_of_scatterers_away_from_instrument'
+        radar.fields['velocity']['long_name'] = 'Doppler radial velocity of scatterers away from instrument'
+    except KeyError:
+        pass
 
     radar.latitude['standard_name'] = 'latitude'
     radar.longitude['standard_name'] = 'longitude'

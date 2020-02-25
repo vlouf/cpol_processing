@@ -80,6 +80,8 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
     vel_meta['_Least_significant_digit'] = 2
     vel_meta['_FillValue'] = np.NaN
     vel_meta['comment'] = 'UNRAVEL algorithm.'
+    vel_meta['long_name'] = 'Doppler radial velocity of scatterers away from instrument'
+    vel_meta['standard_name'] = 'radial_velocity_of_scatterers_away_from_instrument'
     vel_meta['units'] = 'm s-1'
 
     try:

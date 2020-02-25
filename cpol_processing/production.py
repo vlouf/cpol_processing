@@ -62,16 +62,12 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
         Name of the input radar file.
     outpath: str
         Path for saving output data.
-    outpath_grid: str
-        Path for saving gridded data.
-    figure_path: str
-        Path for saving figures.
     sound_dir: str
         Path to radiosoundings directory.
     instrument: str
         Name of radar (only CPOL will change something).
-    linearz: bool
-        Gridding reflectivity in linear unit (True) or dBZ (False).
+    use_unravel: bool
+        Use of UNRAVEL for dealiasing the velocity
     """
     today = datetime.datetime.utcnow()
     if instrument == 'CPOL':
@@ -119,10 +115,6 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, instrument='CPOL'
 
     if is_cpol:
         # Lat/lon informations
-        # maxlon = '132.385'
-        # minlon = '129.703'
-        # maxlat = '-10.941'
-        # minlat = '-13.552'
         latitude = radar.latitude['data']
         longitude = radar.longitude['data']
         maxlon = longitude.max()
@@ -206,6 +198,10 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         Name of the input radar file.
     sound_dir: str
         Path to radiosounding directory.
+    is_cpol: bool
+        Name of radar (only CPOL will change something).
+    use_unravel: bool
+        Use of UNRAVEL for dealiasing the velocity
 
     Returns:
     ========
@@ -258,8 +254,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
                     ('SQIV', 'normalized_coherent_power_v')]
 
     # List of keys that we'll keep in the output radar dataset.
-    OUTPUT_RADAR_FLD = ['D0', 'NW',
-                        'corrected_differential_phase',
+    OUTPUT_RADAR_FLD = ['corrected_differential_phase',
                         'corrected_differential_reflectivity',
                         'corrected_reflectivity',
                         'corrected_specific_differential_phase',
@@ -271,7 +266,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
                         'radar_estimated_rain_rate',
                         'signal_to_noise_ratio',
                         'spectrum_width',
-                        'thurai_echo_classification',
                         'total_power',
                         'velocity']
 
@@ -419,18 +413,6 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
                                           refl_name='DBZ_CORR',
                                           zdr_name='ZDR_CORR_ATTEN')
     radar.add_field("radar_estimated_rain_rate", rainfall)
-
-    # DSD retrieval
-    nw_dict, d0_dict = hydrometeors.dsd_retrieval(radar,
-                                                  gatefilter,
-                                                  kdp_name=kdp_field_name,
-                                                  zdr_name='ZDR_CORR_ATTEN')
-    radar.add_field("D0", d0_dict)
-    radar.add_field("NW", nw_dict)
-
-    # Thurai echo classification.
-    # echo_thurai = hydrometeors.merhala_class_convstrat(radar)
-    # radar.add_field('thurai_echo_classification', echo_thurai)
 
     # Removing fake and useless fields.
     if fake_ncp:
