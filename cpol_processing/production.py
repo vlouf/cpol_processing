@@ -397,8 +397,8 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
             vdop_unfold = velocity.unravel(radar, gatefilter)
         radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
 
-    # Correct attenuation ZH and ZDR
-    zh_corr = attenuation.correct_attenuation_zh_pyart(radar, phidp_field=phidp_field_name)
+    # Correct attenuation ZH and ZDR and hardcode gatefilter
+    zh_corr = attenuation.correct_attenuation_zh_pyart(radar, gatefilter, phidp_field=phidp_field_name)
     radar.add_field_like('DBZ', 'DBZ_CORR', zh_corr)
 
     zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter)

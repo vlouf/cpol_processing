@@ -70,6 +70,8 @@ def correct_attenuation_zdr(radar,
         Py-ART radar structure.
     zdr_name: str
         Differential reflectivity field name.
+    gatefilter:
+        Filter excluding non meteorological echoes.
     kdp_name: str
         KDP field name.
 
@@ -96,6 +98,7 @@ def correct_attenuation_zdr(radar,
 
 
 def correct_attenuation_zh_pyart(radar,
+                                 gatefilter,
                                  refl_field='DBZ',
                                  ncp_field='NCP',
                                  rhv_field='RHOHV_CORR',
@@ -108,6 +111,8 @@ def correct_attenuation_zh_pyart(radar,
     ===========
     radar:
         Py-ART radar structure.
+    gatefilter:
+        Filter excluding non meteorological echoes.
     refl_name: str
         Reflectivity field name.
     kdp_name: str
@@ -136,5 +141,6 @@ def correct_attenuation_zh_pyart(radar,
     attenuation = np.zeros((na, nr))
     attenuation[:, :-1] = 2 * cumtrapz(specific_atten, dx=dr)
     refl_corr = radar.fields[refl_field]['data'].copy() + attenuation
+    refl_corr = np.ma.masked_where(gatefilter.gate_excluded, refl_corr).astype(np.float32)
 
-    return refl_corr.astype(np.float32)
+    return refl_corr
