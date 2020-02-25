@@ -31,13 +31,13 @@ def main():
     print("#" * 79)
     print("")
     print(" " * 25 + crayons.red("Raw radar PPIs production line.\n", bold=True))
-    print("\t- Input data directory path is: " + crayons.yellow(INFILE))
-    print("\t- Output data directory path is: " + crayons.yellow(OUTPATH))
-    print("\t- Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
+    print(" - Input data directory path is: " + crayons.yellow(INFILE))
+    print(" - Output data directory path is: " + crayons.yellow(OUTPATH))
+    print(" - Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
     if USE_UNRAVEL:
-        print("\t- " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
+        print(" - " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
     else:
-        print("\t- " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
+        print(" - " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
     print("\n" + "#" * 79 + "\n")
 
     with warnings.catch_warnings():
