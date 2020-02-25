@@ -49,7 +49,7 @@ def unravel(radar, gatefilter, vel_name='VEL', dbz_name='DBZ', nyquist=None):
     radar:
         Py-ART radar structure.
     gatefilter:
-        GateFilter
+        Filter excluding non meteorological echoes.
     vel_name: str
         Name of the (original) Doppler velocity field.
     dbz_name: str
