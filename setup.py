@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 import io
 import os
 import sys
@@ -17,19 +16,16 @@ EMAIL = 'valentin.louf@monash.edu'
 AUTHOR = 'Valentin Louf'
 
 # What packages are required for this module to be executed?
-REQUIRED = [
-    "arm_pyart", "numpy", "csu_radartools", "crayons", "netCDF4", "scipy", "numba", "unravel"
-]
-
-# The rest you shouldn't have to touch too much :)
-# ------------------------------------------------
-# Except, perhaps the License and Trove Classifiers!
-# If you do change the License, remember to change the Trove Classifier for that!
+REQUIRED = ["arm_pyart",
+            "numpy",
+            "csu_radartools",
+            "crayons",
+            "netCDF4",
+            "scipy",
+            "unravel"]
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-# Import the README and use it as the long-description.
-# Note: this will only work if 'README.rst' is present in your MANIFEST.in file!
 with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
@@ -38,10 +34,8 @@ about = {}
 with open(os.path.join(here, NAME, '__version__.py')) as f:
     exec(f.read(), about)
 
-
 class PublishCommand(Command):
     """Support setup.py publish."""
-
     description = 'Build and publish the package.'
     user_options = []
 
@@ -71,37 +65,27 @@ class PublishCommand(Command):
 
         sys.exit()
 
-
-# Where the magic happens:
 setup(
     name=NAME,
     version=about['__version__'],
     description=DESCRIPTION,
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author=AUTHOR,
     author_email=EMAIL,
     url=URL,
-    packages=find_packages(exclude=('tests',)),
-    # If your package is a single module, use this instead of 'packages':
-    # py_modules=['mypackage'],
-
-    # entry_points={
-    #     'console_scripts': ['mycli=mymodule:cli'],
-    # },
+    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     install_requires=REQUIRED,
     include_package_data=True,
     license='ISC',
-    classifiers=[
-        # Trove classifiers
-        # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-    ],
-    # $ setup.py publish support.
-    cmdclass={
-        'publish': PublishCommand,
-    },
+    classifiers=['Development Status :: 5 - Production/Stable',
+                 'License :: OSI Approved :: MIT License',
+                 'Intended Audience :: Science/Research',
+                 'Topic :: Scientific/Engineering :: Atmospheric Science',
+                 'Programming Language :: Python',
+                 'Programming Language :: Python :: 3.6',
+                 'Programming Language :: Python :: 3.7',
+                 'Programming Language :: Python :: 3.8'],
+    keywords='radar weather meteorology dual-polarization hydrometeors rainfall',
+    cmdclass={'publish': PublishCommand,},
 )
