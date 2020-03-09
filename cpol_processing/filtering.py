@@ -76,7 +76,10 @@ def texture(data):
     return np.sqrt(num / xa_valid_count)
 
 
-def get_clustering(radar, vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):    
+def get_clustering(radar, vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'): 
+    '''
+    get_clustering
+    '''
     with gzip.GzipFile('GM_model_CPOL.pkl.gz', 'r') as gzid:
         gmm = pickle.load(gzid)
         
@@ -90,7 +93,7 @@ def get_clustering(radar, vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):
 
     r = radar.range['data']
     time = radar.time['data']
-    R, T = np.meshgrid(r, time)
+    R, _ = np.meshgrid(r, time)
 
     clus = np.zeros_like(R.flatten())
     clus[pos_droped] = clusters + 1
@@ -100,30 +103,63 @@ def get_clustering(radar, vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):
 
 
 def get_gatefilter_GMM(radar, refl_name='DBZ', vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):
-    # Cutoff
+    """
+    Filtering function adapted to CPOL before 2009 using ML Gaussian Mixture
+    Model. Function does 4 things:
+    1) Cutoff of the reflectivities below the noise level.
+    2) GMM using the texture of velocity, phidp and zdr.
+    3) Filtering using 1) and 2) results.
+    4) Removing temporary fields from the radar object.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.
+    refl_name: str
+        Reflectivity field name.
+    vel_name: str
+        Velocity field name.
+    phidp_name: str
+        Name of the PHIDP field.
+    zdr_name: str
+        Name of the differential_reflectivity field.
+
+    Returns:
+    ========
+    gf: GateFilter
+        Gate filter (excluding all bad data).
+    """
+    # 1) Cutoff
     r = radar.range['data']
     azi = radar.azimuth['data']
-    [R, A] = np.meshgrid(r, azi)
+    R, _ = np.meshgrid(r, azi)
     cutoff = 10 * np.log10(4e-5 * R)
 
     refl = radar.fields[refl_name]['data'].copy()
     refl[refl < cutoff] = np.NaN
     radar.add_field_like(refl_name, 'NPOS', refl, replace_existing=True)
 
-    # GMM clustering (indpdt from cutoff)
+    # 2) GMM clustering (indpdt from cutoff)
     cluster = get_clustering(radar, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name)
     radar.add_field_like(refl_name, 'CLUS', cluster, replace_existing=True)
 
     pos = (cluster == 1) & (radar.fields[refl_name]['data'] < 20)
     radar.add_field_like(refl_name, 'TPOS', pos, replace_existing=True)
 
-    # Using GMM and Cutoff to filter.
+    # 3) Using GMM and Cutoff to filter.
     gf = pyart.filters.GateFilter(radar)
     gf.exclude_equal('CLUS', 5)
     gf.exclude_equal('CLUS', 2)
     gf.exclude_equal('TPOS', 1)
     gf.exclude_invalid('NPOS')
     gf = pyart.correct.despeckle_field(radar, 'DBZ', gatefilter=gf)
+
+    # 4)  Removing temp files.
+    for k in ['TPOS', 'NPOS', 'CLUS']:
+        try:
+            radar.pop(k)
+        except KeyError:
+            continue
 
     return gf
 
