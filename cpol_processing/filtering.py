@@ -1,16 +1,19 @@
 """
-Codes for creating and manipulating gate filters.
+Codes for creating and manipulating gate filters. New functions: use of trained
+Gaussian Mixture Models to remove noise and clutter from CPOL data before 2009.
 
 @title: filtering
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @date: 20/11/2017
-@modification: 25/02/2020
+@modification: 09/03/2020
 
 .. autosummary::
     :toctree: generated/
 
     texture
+    get_clustering
+    get_gatefilter_GMM
     do_gatefilter_cpol
     do_gatefilter
 """
