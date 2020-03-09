@@ -71,8 +71,42 @@ def texture(data):
     return np.sqrt(num / xa_valid_count)
 
 
-def do_gatefilter_cpol(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='RHOHV_CORR',
-                       zdr_name="ZDR", snr_name='SNR'):
+def get_gatefilter_GMM(radar, refl_name='DBZ', vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):
+    # Cutoff
+    r = radar.range['data']
+    azi = radar.azimuth['data']
+    [R, A] = np.meshgrid(r, azi)
+    cutoff = 10 * np.log10(4e-5 * R)
+
+    refl = radar.fields[refl_name]['data'].copy()
+    refl[refl < cutoff] = np.NaN
+    radar.add_field_like(refl_name, 'NPOS', refl, replace_existing=True)
+
+    # GMM clustering (indpdt from cutoff)
+    cluster = get_clustering(radar)
+    radar.add_field_like(refl_name, 'CLUS', cluster, replace_existing=True)
+
+    pos = (cluster == 1) & (radar.fields[refl_name]['data'] < 20)
+    radar.add_field_like(refl_name, 'TPOS', pos, replace_existing=True)
+
+    # Using GMM and Cutoff to filter.
+    gf = pyart.filters.GateFilter(radar)
+    gf.exclude_equal('CLUS', 5)
+    gf.exclude_equal('CLUS', 2)
+    gf.exclude_equal('TPOS', 1)
+    gf.exclude_invalid('NPOS')
+    gf = pyart.correct.despeckle_field(radar, 'DBZ', gatefilter=gf)
+
+    return gf
+
+
+def do_gatefilter_cpol(radar,
+                       refl_name='DBZ',
+                       phidp_name="PHIDP",
+                       rhohv_name='RHOHV_CORR',
+                       zdr_name="ZDR",
+                       snr_name='SNR',
+                       vel_name='VEL'):
     """
     Filtering function adapted to CPOL.
 
@@ -95,6 +129,13 @@ def do_gatefilter_cpol(radar, refl_name='DBZ', phidp_name="PHIDP", rhohv_name='R
             Gate filter (excluding all bad data).
     """
     radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
+
+    if radar_start_date.year < 2009:
+        return get_gatefilter_GMM(radar, 
+                                  refl_name=refl_name, 
+                                  vel_name=vel_name, 
+                                  phidp_name=phidp_name, 
+                                  zdr_name=zdr_name)
 
     r = radar.range['data']
     azi = radar.azimuth['data']
