@@ -103,7 +103,10 @@ def get_clustering(radar, vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):
     cluster: ndarray
         Data ID using GMM (5: clutter, 2: noise, and 1: high-phidp gradient).
     '''
-    with gzip.GzipFile('GM_model_CPOL.pkl.gz', 'r') as gzid:
+    # Load and deserialize GMM
+    location = os.path.dirname(os.path.realpath(__file__))
+    my_file = os.path.join(location, 'data', 'GM_model_CPOL.pkl.gz')
+    with gzip.GzipFile(my_file, 'r') as gzid:
         gmm = pickle.load(gzid)
         
     df_orig = pd.DataFrame({'VEL': texture(radar.fields[vel_name]['data']).flatten(),
@@ -152,6 +155,7 @@ def get_gatefilter_GMM(radar, refl_name='DBZ', vel_name='VEL', phidp_name='PHIDP
     gf: GateFilter
         Gate filter (excluding all bad data).
     """
+    print('Using GMM')
     # 1) Cutoff
     r = radar.range['data']
     azi = radar.azimuth['data']
