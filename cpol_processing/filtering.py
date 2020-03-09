@@ -71,6 +71,29 @@ def texture(data):
     return np.sqrt(num / xa_valid_count)
 
 
+def get_clustering(radar, vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):    
+    with gzip.GzipFile('GM_model_CPOL.pkl.gz', 'r') as gzid:
+        gmm = pickle.load(gzid)
+        
+    df_orig = pd.DataFrame({'VEL': texture(radar.fields[vel_name]['data']).flatten(),
+                            'PHIDP': texture(radar.fields[phidp_name]['data']).flatten(),
+                            'ZDR': texture(radar.fields[zdr_name]['data']).flatten()})
+
+    df = df_orig.dropna()
+    pos_droped = df_orig.dropna().index
+    clusters = gmm.predict(df)
+
+    r = radar.range['data']
+    time = radar.time['data']
+    R, T = np.meshgrid(r, time)
+
+    clus = np.zeros_like(R.flatten())
+    clus[pos_droped] = clusters + 1
+    cluster = clus.reshape(R.shape)
+    
+    return cluster
+
+
 def get_gatefilter_GMM(radar, refl_name='DBZ', vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'):
     # Cutoff
     r = radar.range['data']
@@ -83,7 +106,7 @@ def get_gatefilter_GMM(radar, refl_name='DBZ', vel_name='VEL', phidp_name='PHIDP
     radar.add_field_like(refl_name, 'NPOS', refl, replace_existing=True)
 
     # GMM clustering (indpdt from cutoff)
-    cluster = get_clustering(radar)
+    cluster = get_clustering(radar, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name)
     radar.add_field_like(refl_name, 'CLUS', cluster, replace_existing=True)
 
     pos = (cluster == 1) & (radar.fields[refl_name]['data'] < 20)
