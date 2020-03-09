@@ -81,7 +81,27 @@ def texture(data):
 
 def get_clustering(radar, vel_name='VEL', phidp_name='PHIDP', zdr_name='ZDR'): 
     '''
-    get_clustering
+    Create cluster using a trained Gaussian Mixture Model (I use scikit-learn)
+    to cluster the radar data. Cluster 5 is clutter and 2 is noise. Cluster 1
+    correponds to a high gradient on PHIDP (folding), so it may corresponds to
+    either real data that fold or noise. A threshold on reflectivity should be
+    used on cluster 1.
+
+    Parameters:
+    ===========
+    radar:
+        Py-ART radar structure.    
+    vel_name: str
+        Velocity field name.
+    phidp_name: str
+        Name of the PHIDP field.
+    zdr_name: str
+        Name of the differential_reflectivity field.
+
+    Returns:
+    ========
+    cluster: ndarray
+        Data ID using GMM (5: clutter, 2: noise, and 1: high-phidp gradient).
     '''
     with gzip.GzipFile('GM_model_CPOL.pkl.gz', 'r') as gzid:
         gmm = pickle.load(gzid)
