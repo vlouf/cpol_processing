@@ -184,7 +184,7 @@ def get_gatefilter_GMM(radar, refl_name='DBZ', vel_name='VEL', phidp_name='PHIDP
     # 4)  Removing temp files.
     for k in ['TPOS', 'NPOS', 'CLUS']:
         try:
-            radar.pop(k)
+            radar.fields.pop(k)
         except KeyError:
             continue
 
