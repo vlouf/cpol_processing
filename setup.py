@@ -75,6 +75,7 @@ setup(
     author_email=EMAIL,
     url=URL,
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    package_data={'cpol_processing': ['data/GM_model_CPOL.pkl.gz'],
     install_requires=REQUIRED,
     include_package_data=True,
     license='ISC',
