@@ -56,7 +56,7 @@ def welcome_message():
     print("\n" + "#" * 79 + "\n")
 
 
-def buffer(inargs):
+def buffer(infile):
     """
     It calls the production line and manages it. Buffer function that is used
     to catch any problem with the processing line without screwing the whole
@@ -68,13 +68,13 @@ def buffer(inargs):
         Name of the input radar file.
     outpath: str
         Path for saving output data.
-    """
-    infile, outpath, sound_dir, use_unravel = inargs
+    """    
     try:
         cpol_processing.process_and_save(infile, 
-                                         outpath, 
-                                         sound_dir=sound_dir, 
-                                         use_unravel=use_unravel)
+                                         OUTPATH, 
+                                         sound_dir=SOUND_DIR,
+                                         do_dealiasing=DO_DEALIASING, 
+                                         use_unravel=USE_UNRAVEL)
     except Exception:
         traceback.print_exc()        
 
@@ -92,8 +92,7 @@ def main(date_range):
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
         for flist_chunk in chunks(flist, 32):
-            arglist = [(f, OUTPATH, SOUND_DIR, USE_UNRAVEL) for f in flist_chunk]
-            bag = db.from_sequence(arglist).map(buffer)
+            bag = db.from_sequence(flist_chunk).map(buffer)
             _ = bag.compute()
         del bag
 
@@ -133,11 +132,15 @@ calculation, and rainfall rate estimation."""
     parser.add_argument('--unravel', dest='unravel', action='store_true')
     parser.add_argument('--no-unravel', dest='unravel', action='store_false')
     parser.set_defaults(unravel=True)
+    parser.add_argument('--dealias', dest='dealias', action='store_true')
+    parser.add_argument('--no-dealias', dest='dealias', action='store_false')
+    parser.set_defaults(dealias=True)
 
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
     USE_UNRAVEL = args.unravel
+    DO_DEALIASING = args.dealias
 
     # Check date
     try:

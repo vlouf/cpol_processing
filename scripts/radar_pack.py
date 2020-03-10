@@ -40,7 +40,7 @@ def chunks(l, n):
         yield l[i:i + n]
 
 
-def main(inargs):
+def main(infile):
     """
     It calls the production line and manages it. Buffer function that is used
     to catch any problem with the processing line without screwing the whole
@@ -53,10 +53,12 @@ def main(inargs):
     outpath: str
         Path for saving output data.
     """
-    infile, outpath, sound_dir, use_unravel = inargs
-
     try:
-        cpol_processing.process_and_save(infile, outpath, sound_dir=sound_dir, use_unravel=use_unravel)
+        cpol_processing.process_and_save(infile,
+                                         OUTPATH,
+                                         sound_dir=SOUND_DIR,
+                                         do_dealiasing=DO_DEALIASING,
+                                         use_unravel=USE_UNRAVEL)
     except Exception:
         traceback.print_exc()
         return None
@@ -112,14 +114,26 @@ calculation, and rainfall rate estimation."""
         type=str,
         help='Ending date.',
         required=True)
+    parser.add_argument(
+        '-j',
+        '--ncpus',
+        dest='ncpus',
+        default=16,
+        type=int,
+        help='Number of process.')
     parser.add_argument('--unravel', dest='unravel', action='store_true')
     parser.add_argument('--no-unravel', dest='unravel', action='store_false')
     parser.set_defaults(unravel=True)
+    parser.add_argument('--dealias', dest='dealias', action='store_true')
+    parser.add_argument('--no-dealias', dest='dealias', action='store_false')
+    parser.set_defaults(dealias=True)
 
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
     USE_UNRAVEL = args.unravel
+    DO_DEALIASING = args.dealias
+    NCPUS = args.ncpus
 
     # Check date
     try:
@@ -144,11 +158,9 @@ calculation, and rainfall rate estimation."""
 
         print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
 
-        for flist_chunk in chunks(flist, 32):
-            arglist = [(f, OUTPATH, SOUND_DIR, USE_UNRAVEL) for f in flist_chunk]
-
+        for flist_chunk in chunks(flist, NCPUS):
             with ProcessPool() as pool:
-                future = pool.map(main, arglist, timeout=1200)
+                future = pool.map(main, flist_chunk, timeout=1200)
                 iterator = future.result()
 
                 while True:
