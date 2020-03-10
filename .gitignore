@@ -108,8 +108,7 @@ scripts/pbs/
 .DS*
 *.pbs
 *.pbs.*
-surendra.py
 .f
 *.pyc
-.vscode
+.vscode/
 settings.json
