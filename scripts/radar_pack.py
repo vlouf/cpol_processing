@@ -6,8 +6,8 @@ Tested on CPOL.
 @title: cpol_processing
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institution: Monash University
-@date: 13/03/2019
-@version: 2
+@date: 10/03/2010
+@version: 2.6
 
 .. autosummary::
     :toctree: generated/
@@ -21,9 +21,11 @@ import sys
 import glob
 import argparse
 import datetime
+import warnings
 import traceback
 
 import crayons
+import cpol_processing
 
 from concurrent.futures import TimeoutError
 from pebble import ProcessPool, ProcessExpired
@@ -51,14 +53,7 @@ def main(inargs):
     outpath: str
         Path for saving output data.
     """
-    import warnings
-    import traceback
-
     infile, outpath, sound_dir, use_unravel = inargs
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        import cpol_processing
 
     try:
         cpol_processing.process_and_save(infile, outpath, sound_dir=sound_dir, use_unravel=use_unravel)
@@ -124,7 +119,7 @@ calculation, and rainfall rate estimation."""
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
-    USE_UNRAVEL = args.unravel    
+    USE_UNRAVEL = args.unravel
 
     # Check date
     try:
