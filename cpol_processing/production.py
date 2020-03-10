@@ -58,6 +58,7 @@ def process_and_save(radar_file_name,
                      outpath,
                      sound_dir=None,
                      instrument='CPOL',
+                     do_dealiasing=True,
                      use_unravel=True):
     """
     Call processing function and write data.
@@ -72,6 +73,8 @@ def process_and_save(radar_file_name,
         Path to radiosoundings directory.
     instrument: str
         Name of radar (only CPOL will change something).
+    do_dealiasing: bool
+        Dealias velocity.
     use_unravel: bool
         Use of UNRAVEL for dealiasing the velocity
     """
@@ -191,7 +194,11 @@ def process_and_save(radar_file_name,
     return None
 
 
-def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
+def production_line(radar_file_name, 
+                    sound_dir, 
+                    is_cpol=True, 
+                    do_dealiasing=True, 
+                    use_unravel=True):
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -206,6 +213,8 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
         Path to radiosounding directory.
     is_cpol: bool
         Name of radar (only CPOL will change something).
+    do_dealiasing: bool
+        Dealias velocity.
     use_unravel: bool
         Use of UNRAVEL for dealiasing the velocity
 
@@ -388,12 +397,13 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, use_unravel=True):
     phidp_field_name = 'PHIDP_VAL'
 
     # Unfold VELOCITY
-    if not vel_missing:
-        if is_cpol:
-            vdop_unfold = velocity.unravel(radar, gatefilter, nyquist=13.3)
-        else:
-            vdop_unfold = velocity.unravel(radar, gatefilter)
-        radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
+    if do_dealiasing:
+        if not vel_missing:
+            if is_cpol:
+                vdop_unfold = velocity.unravel(radar, gatefilter, nyquist=13.3)
+            else:
+                vdop_unfold = velocity.unravel(radar, gatefilter)
+            radar.add_field('VEL_UNFOLDED', vdop_unfold, replace_existing=True)
 
     # Correct attenuation ZH and ZDR and hardcode gatefilter
     zh_corr = attenuation.correct_attenuation_zh_pyart(radar, gatefilter, phidp_field=phidp_field_name)
