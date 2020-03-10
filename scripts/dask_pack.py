@@ -1,19 +1,18 @@
 """
 Raw radar PPIs processing. Quality control, filtering, attenuation correction,
 dealiasing, unfolding, hydrometeors calculation, rainfall rate estimation.
-Tested on CPOL.
 
 @title: cpol_processing
-@author: Valentin Louf <valentin.louf@monash.edu>
-@institution: Monash University
-@date: 13/03/2019
-@version: 2
+@author: Valentin Louf <valentin.louf@bom.gov.au>
+@institution: Monash University and Bureau of Meteorology
+@date: 10/03/2020
 
 .. autosummary::
     :toctree: generated/
 
     chunks
     main
+    welcome_message
 """
 # Python Standard Library
 import os
@@ -21,9 +20,22 @@ import sys
 import glob
 import argparse
 import datetime
+import warnings
 import traceback
 
+import dask
+import dask.bag as db
 import crayons
+import cpol_processing
+
+
+def chunks(l, n):
+    """
+    Yield successive n-sized chunks from l.
+    From http://stackoverflow.com/a/312464
+    """
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 
 def welcome_message():
@@ -42,6 +54,50 @@ def welcome_message():
     else:
         print(" - " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
     print("\n" + "#" * 79 + "\n")
+
+
+def buffer(inargs):
+    """
+    It calls the production line and manages it. Buffer function that is used
+    to catch any problem with the processing line without screwing the whole
+    multiprocessing stuff.
+
+    Parameters:
+    ===========
+    infile: str
+        Name of the input radar file.
+    outpath: str
+        Path for saving output data.
+    """
+    infile, outpath, sound_dir, use_unravel = inargs
+    try:
+        cpol_processing.process_and_save(infile, 
+                                         outpath, 
+                                         sound_dir=sound_dir, 
+                                         use_unravel=use_unravel)
+    except Exception:
+        traceback.print_exc()        
+
+    return None
+
+
+def main(date_range):
+    for day in date_range:
+        input_dir = os.path.join(INPATH, str(day.year), day.strftime("%Y%m%d"), "*.*")
+        flist = sorted(glob.glob(input_dir))
+        if len(flist) == 0:
+            print('No file found for {}.'.format(day.strftime("%Y-%b-%d")))
+            continue
+
+        print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
+
+        for flist_chunk in chunks(flist, 32):
+            arglist = [(f, OUTPATH, SOUND_DIR, USE_UNRAVEL) for f in flist_chunk]
+            bag = db.from_sequence(arglist).map(buffer)
+            _ = bag.compute()
+        del bag
+
+    return None
 
 
 if __name__ == '__main__':
@@ -83,5 +139,20 @@ calculation, and rainfall rate estimation."""
     END_DATE = args.end_date
     USE_UNRAVEL = args.unravel
 
+    # Check date
+    try:
+        start = datetime.datetime.strptime(START_DATE, "%Y%m%d")
+        end = datetime.datetime.strptime(END_DATE, "%Y%m%d")
+        if start > end:
+            parser.error('End date older than start date.')
+        date_range = [start + datetime.timedelta(days=x) for x in range(0, (end - start).days + 1, )]
+    except ValueError:
+        parser.error('Invalid dates.')
+        sys.exit()
+
     # Display infos
     welcome_message()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        main(date_range)
