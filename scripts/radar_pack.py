@@ -124,10 +124,7 @@ calculation, and rainfall rate estimation."""
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
-    USE_UNRAVEL = args.unravel
-
-    # Display infos
-    welcome_message()
+    USE_UNRAVEL = args.unravel    
 
     # Check date
     try:
@@ -139,6 +136,9 @@ calculation, and rainfall rate estimation."""
     except ValueError:
         parser.error('Invalid dates.')
         sys.exit()
+
+    # Display infos
+    welcome_message()
 
     for day in date_range:
         input_dir = os.path.join(INPATH, str(day.year), day.strftime("%Y%m%d"), "*.*")
