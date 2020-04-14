@@ -5,7 +5,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 04/04/2017
-@date: 01/10/2019
+@date: 14/04/2020
 
 .. autosummary::
     :toctree: generated/
@@ -472,18 +472,15 @@ def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="
     radar.altitude['data'] = np.array([0])
 
     # print("Reading radiosounding %s" % (sonde_name))
-    interp_sonde = netCDF4.Dataset(sonde_name)
-    temperatures = interp_sonde.variables[temp_field_name][:]
-    temperatures[(temperatures < -100) | (temperatures > 100)] = np.NaN
-    try:
-        temperatures = temperatures.filled(np.NaN)
-    except AttributeError:
-        pass
-    # times = interp_sonde.variables['time'][:]
-    # heights = interp_sonde.variables['height'][:]
-
-    # Height profile corresponding to radar.
-    my_profile = pyart.retrieve.fetch_radar_time_profile(interp_sonde, radar)
+    with netCDF4.Dataset(sonde_name) as interp_sonde:
+        temperatures = interp_sonde[temp_field_name][:]
+        temperatures[(temperatures < -100) | (temperatures > 100)] = np.NaN
+        try:
+            temperatures = temperatures.filled(np.NaN)
+        except AttributeError:
+            pass
+        # Height profile corresponding to radar.
+        my_profile = pyart.retrieve.fetch_radar_time_profile(interp_sonde, radar)
 
     # CPOL altitude is 50 m.
     good_altitude = my_profile['height'] >= 0
