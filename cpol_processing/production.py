@@ -26,7 +26,7 @@ import warnings
 
 # Other Libraries
 import pyart
-import netCDF4
+import cftime
 import numpy as np
 
 # Custom modules.
@@ -102,8 +102,14 @@ def process_and_save(radar_file_name,
         print(f'{radar_file_name} has not been processed. Check logs.')
         return None
 
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
-    radar_end_date = netCDF4.num2date(radar.time['data'][-1], radar.time['units'])
+    radar_start_date = cftime.num2date(radar.time['data'][0],
+                                       radar.time['units'],
+                                       only_use_cftime_datetimes=False,
+                                       only_use_python_datetimes=True)
+    radar_end_date = cftime.num2date(radar.time['data'][-1],
+                                     radar.time['units'],
+                                     only_use_cftime_datetimes=False,
+                                     only_use_python_datetimes=True)
     outpath_ppi = os.path.join(outpath_ppi, str(radar_start_date.year))
     _mkdir(outpath_ppi)
     outpath_ppi = os.path.join(outpath_ppi, radar_start_date.strftime('%Y%m%d'))
@@ -194,10 +200,10 @@ def process_and_save(radar_file_name,
     return None
 
 
-def production_line(radar_file_name, 
-                    sound_dir, 
-                    is_cpol=True, 
-                    do_dealiasing=True, 
+def production_line(radar_file_name,
+                    sound_dir,
+                    is_cpol=True,
+                    do_dealiasing=True,
                     use_unravel=True):
     """
     Production line for correcting and estimating CPOL data radar parameters.
@@ -311,7 +317,11 @@ def production_line(radar_file_name,
         radar.azimuth['data'] = new_azimuth
 
     # Getting radar's date and time.
-    radar_start_date = netCDF4.num2date(radar.time['data'][0], radar.time['units'].replace("since", "since "))
+    radar_start_date = cftime.num2date(radar.time['data'][0],
+                                       radar.time['units'],
+                                       only_use_cftime_datetimes=False,
+                                       only_use_python_datetimes=True)    
+    
     radar.time['units'] = radar.time['units'].replace("since", "since ")
 
     # Get radiosoundings:

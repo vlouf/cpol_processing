@@ -14,7 +14,6 @@ Codes for correcting Doppler velocity.
     unravel
 """
 import pyart
-import netCDF4
 import numpy as np
 
 
