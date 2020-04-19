@@ -150,10 +150,7 @@ def check_year(radar):
     ========
         True if date seems valid and False if date century had to be corrected.
     """
-    dtime = cftime.num2date(radar.time['data'][0],
-                            radar.time['units'],
-                            only_use_cftime_datetimes=False,
-                            only_use_python_datetimes=True)
+    dtime = cftime.num2pydate(radar.time['data'][0], radar.time['units'])
     if dtime.year < 2050:
         # Date seems valid.
         return True
@@ -463,10 +460,7 @@ def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="
         snr: dict
             Signal to noise ratio.
     """
-    radar_start_date = cftime.num2date(radar.time['data'][0],
-                                       radar.time['units'],
-                                       only_use_cftime_datetimes=False,
-                                       only_use_python_datetimes=True)
+    radar_start_date = cftime.num2pydate(radar.time['data'][0], radar.time['units'])
     # Altitude hack.
     true_alt = radar.altitude['data'].copy()
     radar.altitude['data'] = np.array([0])

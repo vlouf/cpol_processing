@@ -219,10 +219,7 @@ def do_gatefilter_cpol(radar,
         gf_despeckeld: GateFilter
             Gate filter (excluding all bad data).
     """    
-    radar_start_date = cftime.num2date(radar.time['data'][0],
-                                       radar.time['units'],
-                                       only_use_cftime_datetimes=False,
-                                       only_use_python_datetimes=True)
+    radar_start_date = cftime.num2pydate(radar.time['data'][0], radar.time['units'])
 
     if radar_start_date.year < 2009:
         return get_gatefilter_GMM(radar, 
