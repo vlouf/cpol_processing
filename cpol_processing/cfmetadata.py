@@ -11,6 +11,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
     :toctree: generated/
 
     correct_standard_name
+    correct_units
     coverage_content_type
 """
 
@@ -63,6 +64,31 @@ def correct_standard_name(radar):
     radar.latitude['standard_name'] = 'latitude'
     radar.longitude['standard_name'] = 'longitude'
     radar.altitude['standard_name'] = 'altitude'
+
+    return None
+
+
+def correct_units(radar):
+    """
+    Correct units according to CF/convention.
+
+    Parameter:
+    ==========
+    radar: Radar object
+        Py-ART data structure.
+    """
+    ufields = {'cross_correlation_ratio': '1',
+               'spectrum_width': 'm s-1'}
+
+    for k, v in ufields.items():
+        try:
+            radar.fields[k]['units'] = v
+        except KeyError:
+            pass
+
+    radar.sweep_mode['units'] = ' '
+    radar.scan_rate['units'] = 'degree s-1'
+    radar.instrument_parameters['nyquist_velocity']['units'] = 'm s-1'
 
     return None
 
