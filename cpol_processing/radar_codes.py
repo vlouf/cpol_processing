@@ -332,6 +332,12 @@ def coverage_content_type(radar):
     radar.fixed_angle['coverage_content_type'] = 'auxiliaryInformation'
     radar.sweep_mode['coverage_content_type'] = 'auxiliaryInformation'
 
+    for k in radar.instrument_parameters.keys():
+        try:
+            radar.instrument_parameters[k]['coverage_content_type'] = 'auxiliaryInformation'
+        except KeyError:
+            pass
+
     for k in radar.fields.keys():
         if k == 'radar_echo_classification':
             radar.fields[k]['coverage_content_type'] = 'thematicClassification'
