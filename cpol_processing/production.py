@@ -6,7 +6,7 @@ CPOL Level 1b main production line. These are the drivers function.
 @email: valentin.louf@bom.gov.au
 @copyright: Valentin Louf (2017-2020)
 @institution: Bureau of Meteorology and Monash University
-@date: 25/02/2020
+@date: 26/05/2020
 
 .. autosummary::
     :toctree: generated/
@@ -31,6 +31,7 @@ import numpy as np
 
 # Custom modules.
 from . import attenuation
+from . import cfmetadata
 from . import filtering
 from . import hydrometeors
 from . import phase
@@ -460,5 +461,6 @@ def production_line(radar_file_name,
     cfmetadata.correct_standard_name(radar)
     # ACDD-1.3 compliant metadata:
     cfmetadata.coverage_content_type(radar)
+    cfmetadata.correct_units(radar)
 
     return radar
