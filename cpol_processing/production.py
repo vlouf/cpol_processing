@@ -457,8 +457,8 @@ def production_line(radar_file_name,
                 radar.fields.pop(k)
 
     # Correct the standard_name metadata:
-    radar_codes.correct_standard_name(radar)
+    cfmetadata.correct_standard_name(radar)
     # ACDD-1.3 compliant metadata:
-    radar_codes.coverage_content_type(radar)
+    cfmetadata.coverage_content_type(radar)
 
     return radar
