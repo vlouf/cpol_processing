@@ -33,6 +33,13 @@ def correct_standard_name(radar):
         pass
 
     try:
+        radar.range.pop('axis')
+        radar.azimuth['axis'] = 'T'
+        radar.elevation['axis'] = 'T'
+    except Exception:
+        pass
+
+    try:
         radar.sweep_number.pop('standard_name')
         radar.fixed_angle.pop('standard_name')
         radar.sweep_mode.pop('standard_name')
