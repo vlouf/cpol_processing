@@ -105,7 +105,7 @@ if __name__ == '__main__':
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
-    OUTPATH = '/g/data/hj10/admin/cpol_level_1b/v2020/'
+    OUTPATH = '/scratch/kl02/vhl548/cpol_level_1b/v2020/'
     SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
 
     # Parse arguments
