@@ -5,7 +5,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institutions: Australian Bureau of Meteorology
 @creation: 26/05/2020
-@date: 26/05/2020
+@date: 02/06/2020
 
 .. autosummary::
     :toctree: generated/
@@ -14,6 +14,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
     correct_units
     coverage_content_type
 """
+
 
 def correct_standard_name(radar):
     """
@@ -27,43 +28,52 @@ def correct_standard_name(radar):
         Py-ART data structure.
     """
     try:
-        radar.range.pop('standard_name')
-        radar.azimuth.pop('standard_name')
-        radar.elevation.pop('standard_name')
+        radar.range.pop("standard_name")
+        radar.azimuth.pop("standard_name")
+        radar.elevation.pop("standard_name")
     except Exception:
         pass
 
     try:
-        radar.range.pop('axis')
-        radar.azimuth['axis'] = 'T'
-        radar.elevation['axis'] = 'T'
+        radar.range.pop("axis")
+        radar.azimuth["axis"] = "T"
+        radar.elevation["axis"] = "T"
     except Exception:
         pass
 
     try:
-        radar.sweep_number.pop('standard_name')
-        radar.fixed_angle.pop('standard_name')
-        radar.sweep_mode.pop('standard_name')
+        radar.sweep_number.pop("standard_name")
+        radar.fixed_angle.pop("standard_name")
+        radar.sweep_mode.pop("standard_name")
     except Exception:
         pass
 
-    good_keys = ['corrected_reflectivity', 'total_power', 'radar_estimated_rain_rate', 'corrected_velocity']
+    good_keys = [
+        "corrected_reflectivity",
+        "total_power",
+        "radar_estimated_rain_rate",
+        "corrected_velocity",
+    ]
     for k in radar.fields.keys():
         if k not in good_keys:
             try:
-                radar.fields[k].pop('standard_name')
+                radar.fields[k].pop("standard_name")
             except Exception:
                 continue
 
     try:
-        radar.fields['velocity']['standard_name'] = 'radial_velocity_of_scatterers_away_from_instrument'
-        radar.fields['velocity']['long_name'] = 'Doppler radial velocity of scatterers away from instrument'
+        radar.fields["velocity"][
+            "standard_name"
+        ] = "radial_velocity_of_scatterers_away_from_instrument"
+        radar.fields["velocity"][
+            "long_name"
+        ] = "Doppler radial velocity of scatterers away from instrument"
     except KeyError:
         pass
 
-    radar.latitude['standard_name'] = 'latitude'
-    radar.longitude['standard_name'] = 'longitude'
-    radar.altitude['standard_name'] = 'altitude'
+    radar.latitude["standard_name"] = "latitude"
+    radar.longitude["standard_name"] = "longitude"
+    radar.altitude["standard_name"] = "altitude"
 
     return None
 
@@ -77,18 +87,17 @@ def correct_units(radar):
     radar: Radar object
         Py-ART data structure.
     """
-    ufields = {'cross_correlation_ratio': '1',
-               'spectrum_width': 'm s-1'}
+    ufields = {"cross_correlation_ratio": "1", "spectrum_width": "m s-1"}
 
     for k, v in ufields.items():
         try:
-            radar.fields[k]['units'] = v
+            radar.fields[k]["units"] = v
         except KeyError:
             pass
 
-    radar.sweep_mode['units'] = ' '
-    radar.scan_rate['units'] = 'degree s-1'
-    radar.instrument_parameters['nyquist_velocity']['units'] = 'm s-1'
+    radar.sweep_mode["units"] = " "
+    radar.scan_rate["units"] = "degree s-1"
+    radar.instrument_parameters["nyquist_velocity"]["units"] = "m s-1"
 
     return None
 
@@ -102,29 +111,31 @@ def coverage_content_type(radar):
     radar: Radar object
         Py-ART data structure.
     """
-    radar.range['coverage_content_type'] = 'coordinate'
-    radar.azimuth['coverage_content_type'] = 'coordinate'
-    radar.elevation['coverage_content_type'] = 'coordinate'
-    radar.latitude['coverage_content_type'] = 'coordinate'
-    radar.longitude['coverage_content_type'] = 'coordinate'
-    radar.altitude['coverage_content_type'] = 'coordinate'
+    radar.range["coverage_content_type"] = "coordinate"
+    radar.azimuth["coverage_content_type"] = "coordinate"
+    radar.elevation["coverage_content_type"] = "coordinate"
+    radar.latitude["coverage_content_type"] = "coordinate"
+    radar.longitude["coverage_content_type"] = "coordinate"
+    radar.altitude["coverage_content_type"] = "coordinate"
 
-    radar.sweep_number['coverage_content_type'] = 'auxiliaryInformation'
-    radar.fixed_angle['coverage_content_type'] = 'auxiliaryInformation'
-    radar.sweep_mode['coverage_content_type'] = 'auxiliaryInformation'
+    radar.sweep_number["coverage_content_type"] = "auxiliaryInformation"
+    radar.fixed_angle["coverage_content_type"] = "auxiliaryInformation"
+    radar.sweep_mode["coverage_content_type"] = "auxiliaryInformation"
 
     for k in radar.instrument_parameters.keys():
         try:
-            radar.instrument_parameters[k]['coverage_content_type'] = 'auxiliaryInformation'
+            radar.instrument_parameters[k][
+                "coverage_content_type"
+            ] = "auxiliaryInformation"
         except KeyError:
             pass
 
     for k in radar.fields.keys():
-        if k == 'radar_echo_classification':
-            radar.fields[k]['coverage_content_type'] = 'thematicClassification'
-        elif k in ['normalized_coherent_power', 'normalized_coherent_power_v']:
-            radar.fields[k]['coverage_content_type'] = 'qualityInformation'
+        if k == "radar_echo_classification":
+            radar.fields[k]["coverage_content_type"] = "thematicClassification"
+        elif k in ["normalized_coherent_power", "normalized_coherent_power_v"]:
+            radar.fields[k]["coverage_content_type"] = "qualityInformation"
         else:
-            radar.fields[k]['coverage_content_type'] = 'physicalMeasurement'
+            radar.fields[k]["coverage_content_type"] = "physicalMeasurement"
 
     return None
