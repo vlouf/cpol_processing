@@ -1,3 +1,18 @@
+"""
+cpol_processing scripts for missing radar files in Radar archive on NCI.
+
+@title: cpol_processing
+@author: Valentin Louf <valentin.louf@bom.gov.au>
+@institution: Bureau of Meteorology
+@date: 27/06/2020
+
+.. autosummary::
+    :toctree: generated/
+
+    buffwe
+    chunks
+    main
+"""
 import os
 import glob
 import argparse
@@ -45,12 +60,13 @@ def chunks(l, n):
 
 def main():
     year = YEAR
-    flist = glob.glob(f'/g/data/hj10/admin/cpol_level_1a/v2019/ppi/{year}/**/*.nc')
+    flist = glob.glob(os.path.join(INPATH, f'{year}/**/*.nc'))
+    outlist = glob.glob(os.path.join(OUTPATH, f'v2020/ppi/{year}/**/*.nc'))
 
-    oset = set([f[-18:-3] for f in glob.glob(f'/scratch/kl02/vhl548/cpol_level_1b/v2020/v2020/ppi/{year}/**/*.nc')])
-    iset = set([f[-18:-3] for f in glob.glob(f'/g/data/hj10/admin/cpol_level_1a/v2019/ppi/{year}/**/*.nc')])
-
+    oset = set([f[-18:-3] for f in outlist])
+    iset = set([f[-18:-3] for f in flist])
     datelist = [*oset ^ iset]
+
     if len(datelist) == 0:
         print('No file to process.')
         return None
@@ -67,7 +83,7 @@ def main():
 
             while True:
                 try:
-                    _ = next(iterator)            
+                    _ = next(iterator)
                 except StopIteration:
                     break
                 except TimeoutError as error:
@@ -81,9 +97,25 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    Global variables definition.
+    """
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
     OUTPATH = '/scratch/kl02/vhl548/cpol_level_1b/v2020/'
     SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
-    YEAR = 2012
+
+    parser_description =  "Process missing files in archive on NCI."
+    parser = argparse.ArgumentParser(description=parser_description)
+    parser.add_argument(
+        '-y',
+        '--year',
+        dest='year',
+        default=None,
+        type=int,
+        help='Year for archive.',
+        required=True)
+
+    args = parser.parse_args()
+    YEAR = args.year
     NCPUS = 16
     main()
