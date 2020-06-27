@@ -38,11 +38,9 @@ def buffer(infile):
         Path for saving output data.
     """
     try:
-        cpol_processing.process_and_save(infile,
-                                         OUTPATH,
-                                         sound_dir=SOUND_DIR,
-                                         do_dealiasing=True,
-                                         use_unravel=True)
+        cpol_processing.process_and_save(
+            infile, OUTPATH, sound_dir=SOUND_DIR, do_dealiasing=True, use_unravel=True
+        )
     except Exception:
         traceback.print_exc()
 
@@ -55,22 +53,22 @@ def chunks(l, n):
     From http://stackoverflow.com/a/312464
     """
     for i in range(0, len(l), n):
-        yield l[i:i + n]
+        yield l[i : i + n]
 
 
 def main():
     year = YEAR
-    flist = glob.glob(os.path.join(INPATH, f'{year}/**/*.nc'))
-    outlist = glob.glob(os.path.join(OUTPATH, f'v2020/ppi/{year}/**/*.nc'))
+    flist = glob.glob(os.path.join(INPATH, f"{year}/**/*.nc"))
+    outlist = glob.glob(os.path.join(OUTPATH, f"v2020/ppi/{year}/**/*.nc"))
 
     oset = set([f[-18:-3] for f in outlist])
     iset = set([f[-18:-3] for f in flist])
     datelist = [*oset ^ iset]
 
     if len(datelist) == 0:
-        print('No file to process.')
+        print("No file to process.")
         return None
-    print(f'{year}: {len(datelist)} files to process.')
+    print(f"{year}: {len(datelist)} files to process.")
 
     inflist = []
     for d in datelist:
@@ -101,19 +99,20 @@ if __name__ == "__main__":
     Global variables definition.
     """
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
-    OUTPATH = '/scratch/kl02/vhl548/cpol_level_1b/v2020/'
+    OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/v2020/"
     SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
 
-    parser_description =  "Process missing files in archive on NCI."
+    parser_description = "Process missing files in archive on NCI."
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument(
-        '-y',
-        '--year',
-        dest='year',
+        "-y",
+        "--year",
+        dest="year",
         default=None,
         type=int,
-        help='Year for archive.',
-        required=True)
+        help="Year for archive.",
+        required=True,
+    )
 
     args = parser.parse_args()
     YEAR = args.year
