@@ -6,7 +6,7 @@ CPOL Level 1b main production line. These are the drivers function.
 @email: valentin.louf@bom.gov.au
 @copyright: Valentin Louf (2017-2020)
 @institution: Bureau of Meteorology and Monash University
-@date: 26/05/2020
+@date: 17/07/2020
 
 .. autosummary::
     :toctree: generated/
@@ -125,8 +125,8 @@ def process_and_save(radar_file_name,
 
     if is_cpol:
         # Lat/lon informations
-        latitude = radar.latitude['data']
-        longitude = radar.longitude['data']
+        latitude = radar.gate_latitude['data']
+        longitude = radar.gate_longitude['data']
         maxlon = longitude.max()
         minlon = longitude.min()
         maxlat = latitude.max()
