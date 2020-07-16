@@ -76,7 +76,7 @@ def main():
 
     for fchunk in chunks(inflist, NCPUS):
         with ProcessPool() as pool:
-            future = pool.map(buffer, fchunk, timeout=240)
+            future = pool.map(buffer, fchunk, timeout=360)
             iterator = future.result()
 
             while True:
