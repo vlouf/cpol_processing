@@ -93,6 +93,7 @@ def hydrometeor_classification(
     rhohv_name="RHOHV_CORR",
     temperature_name="temperature",
     height_name="height",
+    band="C",
 ):
     """
     Compute hydrometeo classification.
@@ -133,9 +134,9 @@ def hydrometeor_classification(
         use_temperature = False
 
     if use_temperature:
-        scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=True, band="C", T=radar_T)
+        scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=True, band=band, T=radar_T)
     else:
-        scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=False, band="C")
+        scores = csu_fhc.csu_fhc_summer(dz=refl, zdr=zdr, rho=rhohv, kdp=kdp, use_temp=False, band=band)
 
     hydro = np.argmax(scores, axis=0) + 1
     hydro[gatefilter.gate_excluded] = 0
