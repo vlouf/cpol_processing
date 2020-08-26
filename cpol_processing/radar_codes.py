@@ -37,7 +37,7 @@ import netCDF4
 import numpy as np
 
 
-def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
+def _my_snr_from_reflectivity(radar, refl_field="DBZ"):
     """
     Just in case pyart.retrieve.calculate_snr_from_reflectivity, I can calculate
     it 'by hand'.
@@ -53,18 +53,18 @@ def _my_snr_from_reflectivity(radar, refl_field='DBZ'):
     snr: dict
         Signal to noise ratio.
     """
-    range_grid, _ = np.meshgrid(radar.range['data'], radar.azimuth['data'])
+    range_grid, _ = np.meshgrid(radar.range["data"], radar.azimuth["data"])
     range_grid += 1  # Cause of 0
 
     # remove range scale.. This is basically the radar constant scaled dBm
-    pseudo_power = (radar.fields[refl_field]['data'] - 20.0 * np.log10(range_grid / 1000.0))
+    pseudo_power = radar.fields[refl_field]["data"] - 20.0 * np.log10(range_grid / 1000.0)
     # The noise_floor_estimate can fail sometimes in pyart, that's the reason
     # why this whole function exists.
     noise_floor_estimate = -40
 
-    snr_field = pyart.config.get_field_name('signal_to_noise_ratio')
+    snr_field = pyart.config.get_field_name("signal_to_noise_ratio")
     snr_dict = pyart.config.get_metadata(snr_field)
-    snr_dict['data'] = pseudo_power - noise_floor_estimate
+    snr_dict["data"] = pseudo_power - noise_floor_estimate
 
     return snr_dict
 
@@ -88,7 +88,7 @@ def _nearest(items, pivot):
     return min(items, key=lambda x: abs(x - pivot))
 
 
-def check_azimuth(radar, refl_field_name='DBZ'):
+def check_azimuth(radar, refl_field_name="DBZ"):
     """
     Checking if radar has a proper reflectivity field.  It's a minor problem
     concerning a few days in 2011 for CPOL.
@@ -104,13 +104,13 @@ def check_azimuth(radar, refl_field_name='DBZ'):
     =======
         True if radar has a proper azimuth field.
     """
-    if radar.fields[refl_field_name]['data'].shape[0] < 360:
+    if radar.fields[refl_field_name]["data"].shape[0] < 360:
         return False
 
     return True
 
 
-def check_reflectivity(radar, refl_field_name='DBZ'):
+def check_reflectivity(radar, refl_field_name="DBZ"):
     """
     Checking if radar has a proper reflectivity field.  It's a minor problem
     concerning a few days in 2011 for CPOL.
@@ -126,7 +126,7 @@ def check_reflectivity(radar, refl_field_name='DBZ'):
     =======
     True if radar has a non-empty reflectivity field.
     """
-    dbz = radar.fields[refl_field_name]['data']
+    dbz = radar.fields[refl_field_name]["data"]
 
     if np.ma.isMaskedArray(dbz):
         if dbz.count() == 0:
@@ -150,14 +150,14 @@ def check_year(radar):
     ========
         True if date seems valid and False if date century had to be corrected.
     """
-    dtime = cftime.num2pydate(radar.time['data'][0], radar.time['units'])
+    dtime = cftime.num2pydate(radar.time["data"][0], radar.time["units"])
     if dtime.year < 2050:
         # Date seems valid.
         return True
     else:
         wyr = dtime.year
-        tunit = radar.time['units']
-        radar.time['units'] = tunit.replace(str(wyr), str(wyr - 100))
+        tunit = radar.time["units"]
+        radar.time["units"] = tunit.replace(str(wyr), str(wyr - 100))
 
     return False
 
@@ -178,7 +178,7 @@ def correct_azimuth(radar):
         Is there any change?
     """
     has_changed = False
-    azimuth = radar.azimuth['data']
+    azimuth = radar.azimuth["data"]
     for sl in range(radar.nsweeps):
         azi = azimuth[radar.get_slice(sl)]
         if np.sum(azi == 0) <= 2:
@@ -201,7 +201,7 @@ def correct_azimuth(radar):
     return azimuth, has_changed
 
 
-def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
+def correct_rhohv(radar, rhohv_name="RHOHV", snr_name="SNR"):
     """
     Correct cross correlation ratio (RHOHV) from noise. From the Schuur et al.
     2003 NOAA report (p7 eq 5)
@@ -220,10 +220,10 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
         rho_corr: array
             Corrected cross correlation ratio.
     """
-    rhohv = radar.fields[rhohv_name]['data'].copy()
-    snr = radar.fields[snr_name]['data'].copy()
+    rhohv = radar.fields[rhohv_name]["data"].copy()
+    snr = radar.fields[snr_name]["data"].copy()
 
-    natural_snr = 10**(0.1 * snr)
+    natural_snr = 10 ** (0.1 * snr)
     natural_snr = natural_snr.filled(-9999)
     rho_corr = rhohv * (1 + 1 / natural_snr)
 
@@ -237,7 +237,7 @@ def correct_rhohv(radar, rhohv_name='RHOHV', snr_name='SNR'):
     return rho_corr
 
 
-def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
+def correct_zdr(radar, zdr_name="ZDR", snr_name="SNR"):
     """
     Correct differential reflectivity (ZDR) from noise. From the Schuur et al.
     2003 NOAA report (p7 eq 6)
@@ -256,8 +256,8 @@ def correct_zdr(radar, zdr_name='ZDR', snr_name='SNR'):
         corr_zdr: array
             Corrected differential reflectivity.
     """
-    zdr = radar.fields[zdr_name]['data'].copy()
-    snr = radar.fields[snr_name]['data'].copy()
+    zdr = radar.fields[zdr_name]["data"].copy()
+    snr = radar.fields[snr_name]["data"].copy()
     alpha = 1.48
     natural_zdr = 10 ** (0.1 * zdr)
     natural_snr = 10 ** (0.1 * snr)
@@ -270,6 +270,7 @@ def get_radiosoundings(sound_dir, radar_start_date):
     """
     Find the radiosoundings
     """
+
     def _fdate(flist):
         rslt = [None] * len(flist)
         for cnt, f in enumerate(flist):
@@ -278,10 +279,15 @@ def get_radiosoundings(sound_dir, radar_start_date):
             except Exception:
                 continue
         return rslt
+
     # Looking for radiosoundings:
     all_sonde_files = sorted(os.listdir(sound_dir))
 
-    pos = [cnt for cnt, f in enumerate(all_sonde_files) if fnmatch.fnmatch(f, "*" + radar_start_date.strftime("%Y%m%d") + "*")]
+    pos = [
+        cnt
+        for cnt, f in enumerate(all_sonde_files)
+        if fnmatch.fnmatch(f, "*" + radar_start_date.strftime("%Y%m%d") + "*")
+    ]
     if len(pos) > 0:
         # Looking for the exact date.
         sonde_name = all_sonde_files[pos[0]]
@@ -329,27 +335,29 @@ def read_radar(radar_file_name):
 
     # SEAPOL hack change fields key.
     try:
-        radar.fields['DBZ']
+        radar.fields["DBZ"]
     except KeyError:
-        myfields = [('SQIH', 'NCP'),
-                    ('NCPH', "NCP"),
-                    ('SNRH', 'SNR'),
-                    ('normalized_coherent_power', "NCP"),
-                    ('DBZH', "DBZ"),
-                    ("DBZH_CLEAN", "DBZ"),
-                    ('reflectivity', "DBZ"),
-                    ('WRADH', "WIDTH"),
-                    ('WIDTHH', "WIDTH"),
-                    ('sprectrum_width', "WIDTH"),
-                    ('UH', "DBZ"),
-                    ('total_power', "DBZ"),
-                    ("differential_reflectivity", "ZDR"),
-                    ("VRADH", "VEL"),
-                    ('VELH', "VEL"),
-                    ('velocity', "VEL"),
-                    ("cross_correlation_ratio", "RHOHV"),
-                    ("differential_phase", "PHIDP"),
-                    ("specific_differential_phase", "KDP")]
+        myfields = [
+            ("SQIH", "NCP"),
+            ("NCPH", "NCP"),
+            ("SNRH", "SNR"),
+            ("normalized_coherent_power", "NCP"),
+            ("DBZH", "DBZ"),
+            ("DBZH_CLEAN", "DBZ"),
+            ("reflectivity", "DBZ"),
+            ("WRADH", "WIDTH"),
+            ("WIDTHH", "WIDTH"),
+            ("sprectrum_width", "WIDTH"),
+            ("UH", "DBZ"),
+            ("total_power", "DBZ"),
+            ("differential_reflectivity", "ZDR"),
+            ("VRADH", "VEL"),
+            ("VELH", "VEL"),
+            ("velocity", "VEL"),
+            ("cross_correlation_ratio", "RHOHV"),
+            ("differential_phase", "PHIDP"),
+            ("specific_differential_phase", "KDP"),
+        ]
         for mykey, newkey in myfields:
             try:
                 radar.add_field(newkey, radar.fields.pop(mykey))
@@ -359,7 +367,7 @@ def read_radar(radar_file_name):
     return radar
 
 
-def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="temp"):
+def snr_and_sounding(radar, sonde_name, refl_field_name="DBZ", temp_field_name="temp"):
     """
     Compute the signal-to-noise ratio as well as interpolating the radiosounding
     temperature on to the radar grid. The function looks for the radiosoundings
@@ -383,10 +391,10 @@ def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="
         snr: dict
             Signal to noise ratio.
     """
-    radar_start_date = cftime.num2pydate(radar.time['data'][0], radar.time['units'])
+    radar_start_date = cftime.num2pydate(radar.time["data"][0], radar.time["units"])
     # Altitude hack.
-    true_alt = radar.altitude['data'].copy()
-    radar.altitude['data'] = np.array([0])
+    true_alt = radar.altitude["data"].copy()
+    radar.altitude["data"] = np.array([0])
 
     # print("Reading radiosounding %s" % (sonde_name))
     with netCDF4.Dataset(sonde_name) as interp_sonde:
@@ -400,30 +408,33 @@ def snr_and_sounding(radar, sonde_name, refl_field_name='DBZ', temp_field_name="
         my_profile = pyart.retrieve.fetch_radar_time_profile(interp_sonde, radar)
 
     # CPOL altitude is 50 m.
-    good_altitude = my_profile['height'] >= 0
+    good_altitude = my_profile["height"] >= 0
     # Getting the temperature
-    z_dict, temp_dict = pyart.retrieve.map_profile_to_gates(temperatures[good_altitude],
-                                                            my_profile['height'][good_altitude],
-                                                            radar)
+    z_dict, temp_dict = pyart.retrieve.map_profile_to_gates(
+        temperatures[good_altitude], my_profile["height"][good_altitude], radar
+    )
 
-    temp_info_dict = {'data': temp_dict['data'],
-                      'long_name': 'Sounding temperature at gate',
-                      'standard_name': 'temperature',
-                      'valid_min': -100, 'valid_max': 100,
-                      'units': 'degrees Celsius',
-                      'comment': 'Radiosounding date: %s' % (radar_start_date.strftime("%Y/%m/%d"))}
+    temp_info_dict = {
+        "data": temp_dict["data"],
+        "long_name": "Sounding temperature at gate",
+        "standard_name": "temperature",
+        "valid_min": -100,
+        "valid_max": 100,
+        "units": "degrees Celsius",
+        "comment": "Radiosounding date: %s" % (radar_start_date.strftime("%Y/%m/%d")),
+    }
 
     # Altitude hack
-    radar.altitude['data'] = true_alt
+    radar.altitude["data"] = true_alt
 
     # Calculate SNR
     snr = pyart.retrieve.calculate_snr_from_reflectivity(radar, refl_field=refl_field_name)
     # Sometimes the SNR is an empty array, this is due to the toa parameter.
     # Here we try to recalculate the SNR with a lower value for toa (top of atm).
-    if snr['data'].count() == 0:
+    if snr["data"].count() == 0:
         snr = pyart.retrieve.calculate_snr_from_reflectivity(radar, refl_field=refl_field_name, toa=20000)
 
-    if snr['data'].count() == 0:
+    if snr["data"].count() == 0:
         # If it fails again, then we compute the SNR with the noise value
         # given by the CPOL radar manufacturer.
         snr = _my_snr_from_reflectivity(radar, refl_field=refl_field_name)
