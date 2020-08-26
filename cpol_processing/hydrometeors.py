@@ -5,7 +5,7 @@ Codes for estimating various parameters related to Hydrometeors.
 @author: Valentin Louf <valentin.louf@monash.edu>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 04/04/2017
-@date: 20/11/2017
+@date: 26/08/2020
 
 .. autosummary::
     :toctree: generated/
@@ -195,7 +195,7 @@ def merhala_class_convstrat(radar, dbz_name="DBZ_CORR", rain_name="radar_estimat
 
 
 def rainfall_rate(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR',
-                  hydro_name='radar_echo_classification', temperature_name='temperature'):
+                  hydro_name='radar_echo_classification', temperature_name='temperature', band="C"):
     """
     Rainfall rate algorithm from csu_radartools.
 
@@ -211,6 +211,8 @@ def rainfall_rate(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR',
         KDP field name.
     hydro_name: str
         Hydrometeor classification field name.
+    band: str
+        Radar frequency band.
 
     Returns:
     ========
@@ -225,7 +227,7 @@ def rainfall_rate(radar, gatefilter, kdp_name, zdr_name, refl_name='DBZ_CORR',
     except AttributeError:
         kdp = radar.fields[kdp_name]['data']
 
-    rain, _ = csu_blended_rain.calc_blended_rain_tropical(dz=dbz, zdr=zdr, kdp=kdp, fhc=fhc, band='C')
+    rain, _ = csu_blended_rain.calc_blended_rain_tropical(dz=dbz, zdr=zdr, kdp=kdp, fhc=fhc, band=band)
 
     rain[(gatefilter.gate_excluded) | np.isnan(rain) | (rain < 0)] = 0
 
