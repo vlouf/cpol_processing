@@ -23,7 +23,7 @@ import numpy as np
 from csu_radartools import csu_liquid_ice_mass, csu_fhc, csu_blended_rain, csu_dsd
 
 
-def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name="DBZ_CORR"):
+def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name="DBZ_CORR", band="C"):
     """
     Compute the DSD retrieval using the csu library.
 
@@ -35,8 +35,10 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name="DBZ_CORR"):
         Reflectivity field name.
     zdr_name: str
         ZDR field name.
-    kdp_name: str
+    kdp_name: strs
         KDP field name.
+    band: str
+        Radar frequency band.
 
     Returns:
     ========
@@ -52,7 +54,7 @@ def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name="DBZ_CORR"):
     except AttributeError:
         kdp = radar.fields[kdp_name]["data"].copy()
 
-    d0, Nw, mu = csu_dsd.calc_dsd(dz=dbz, zdr=zdr, kdp=kdp, band="C")
+    d0, Nw, mu = csu_dsd.calc_dsd(dz=dbz, zdr=zdr, kdp=kdp, band=band)
 
     Nw = np.log10(Nw)
     Nw[gatefilter.gate_excluded] = np.NaN
@@ -114,6 +116,8 @@ def hydrometeor_classification(
         Sounding temperature field name.
     height: str
         Gate height field name.
+    band: str
+        Radar frequency band.
 
     Returns:
     ========
