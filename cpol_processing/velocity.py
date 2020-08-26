@@ -53,6 +53,8 @@ def unravel(radar, gatefilter, vel_name="VEL", dbz_name="DBZ", nyquist=None):
         Name of the (original) Doppler velocity field.
     dbz_name: str
         Name of the reflecitivity field.
+    nyquist: float
+        Nyquist velocity co-interval.
 
     Returns:
     ========
