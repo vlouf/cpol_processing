@@ -4,7 +4,7 @@ dealiasing, unfolding, hydrometeors calculation, rainfall rate estimation.
 Tested on CPOL.
 
 @title: cpol_processing
-@author: Valentin Louf <valentin.louf@monash.edu>
+@author: Valentin Louf <valentin.louf@bom.gov.au>
 @institution: Monash University
 @date: 10/03/2010
 @version: 2.6

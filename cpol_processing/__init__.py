@@ -2,7 +2,7 @@
 CPOL Level 1b main production line.
 
 @title: CPOL_PROD_1b
-@author: Valentin Louf <valentin.louf@monash.edu>
+@author: Valentin Louf <valentin.louf@bom.gov.au>
 @institution: Bureau of Meteorology
 
 .. autosummary::

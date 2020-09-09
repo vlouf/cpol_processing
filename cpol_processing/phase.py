@@ -2,7 +2,7 @@
 Codes for correcting the differential phase and estimating KDP.
 
 @title: phase
-@author: Valentin Louf <valentin.louf@monash.edu>
+@author: Valentin Louf <valentin.louf@bom.gov.au>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @date: 08/02/2020
 
