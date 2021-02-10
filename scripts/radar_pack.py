@@ -6,7 +6,7 @@ Tested on CPOL.
 @title: cpol_processing
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institution: Monash University
-@date: 10/03/2010
+@date: 10/02/2021
 @version: 2.6
 
 .. autosummary::
@@ -21,7 +21,6 @@ import sys
 import glob
 import argparse
 import datetime
-import warnings
 import traceback
 
 import crayons
@@ -37,7 +36,7 @@ def chunks(l, n):
     From http://stackoverflow.com/a/312464
     """
     for i in range(0, len(l), n):
-        yield l[i:i + n]
+        yield l[i : i + n]
 
 
 def main(infile):
@@ -53,15 +52,9 @@ def main(infile):
     outpath: str
         Path for saving output data.
     """
-    try:
-        cpol_processing.process_and_save(infile,
-                                         OUTPATH,
-                                         sound_dir=SOUND_DIR,
-                                         do_dealiasing=DO_DEALIASING,
-                                         use_unravel=USE_UNRAVEL)
-    except Exception:
-        traceback.print_exc()
-        return None
+    _ = cpol_processing.process_and_save(
+        infile, OUTPATH, sound_dir=SOUND_DIR, do_dealiasing=DO_DEALIASING, use_unravel=USE_UNRAVEL
+    )
 
     return None
 
@@ -84,48 +77,30 @@ def welcome_message():
     print("\n" + "#" * 79 + "\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     Global variables definition.
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
-    OUTPATH = '/scratch/kl02/vhl548/cpol_level_1b/v2020/'
+    OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/v2020/"
     SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
 
     # Parse arguments
-    parser_description =  """Raw radar PPIs processing. It provides Quality
+    parser_description = """Raw radar PPIs processing. It provides Quality
 control, filtering, attenuation correction, dealiasing, unfolding, hydrometeors
 calculation, and rainfall rate estimation."""
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument(
-        '-s',
-        '--start-date',
-        dest='start_date',
-        default=None,
-        type=str,
-        help='Starting date.',
-        required=True)
-    parser.add_argument(
-        '-e',
-        '--end-date',
-        dest='end_date',
-        default=None,
-        type=str,
-        help='Ending date.',
-        required=True)
-    parser.add_argument(
-        '-j',
-        '--ncpus',
-        dest='ncpus',
-        default=16,
-        type=int,
-        help='Number of process.')
-    parser.add_argument('--unravel', dest='unravel', action='store_true')
-    parser.add_argument('--no-unravel', dest='unravel', action='store_false')
+        "-s", "--start-date", dest="start_date", default=None, type=str, help="Starting date.", required=True
+    )
+    parser.add_argument("-e", "--end-date", dest="end_date", default=None, type=str, help="Ending date.", required=True)
+    parser.add_argument("-j", "--ncpus", dest="ncpus", default=16, type=int, help="Number of process.")
+    parser.add_argument("--unravel", dest="unravel", action="store_true")
+    parser.add_argument("--no-unravel", dest="unravel", action="store_false")
     parser.set_defaults(unravel=True)
-    parser.add_argument('--dealias', dest='dealias', action='store_true')
-    parser.add_argument('--no-dealias', dest='dealias', action='store_false')
+    parser.add_argument("--dealias", dest="dealias", action="store_true")
+    parser.add_argument("--no-dealias", dest="dealias", action="store_false")
     parser.set_defaults(dealias=True)
 
     args = parser.parse_args()
@@ -140,10 +115,10 @@ calculation, and rainfall rate estimation."""
         start = datetime.datetime.strptime(START_DATE, "%Y%m%d")
         end = datetime.datetime.strptime(END_DATE, "%Y%m%d")
         if start > end:
-            parser.error('End date older than start date.')
-        date_range = [start + datetime.timedelta(days=x) for x in range(0, (end - start).days + 1, )]
+            parser.error("End date older than start date.")
+        date_range = [start + datetime.timedelta(days=x) for x in range(0, (end - start).days + 1,)]
     except ValueError:
-        parser.error('Invalid dates.')
+        parser.error("Invalid dates.")
         sys.exit()
 
     # Display infos
@@ -153,10 +128,10 @@ calculation, and rainfall rate estimation."""
         input_dir = os.path.join(INPATH, str(day.year), day.strftime("%Y%m%d"), "*.*")
         flist = sorted(glob.glob(input_dir))
         if len(flist) == 0:
-            print('No file found for {}.'.format(day.strftime("%Y-%b-%d")))
+            print("No file found for {}.".format(day.strftime("%Y-%b-%d")))
             continue
 
-        print(f'{len(flist)} files found for ' + day.strftime("%Y-%b-%d"))
+        print(f"{len(flist)} files found for " + day.strftime("%Y-%b-%d"))
 
         for flist_chunk in chunks(flist, NCPUS):
             with ProcessPool() as pool:
