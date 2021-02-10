@@ -73,7 +73,7 @@ def main(start, end):
         for chunk in chunks(argslist, 32):
             bag = db.from_sequence(chunk).starmap(cpol_processing.process_and_save)
             _ = bag.compute()
-        
+
         del bag
         gc.collect()
     return None
@@ -115,7 +115,7 @@ calculation, and rainfall rate estimation."""
         start = datetime.datetime.strptime(START_DATE, "%Y%m%d")
         end = datetime.datetime.strptime(END_DATE, "%Y%m%d")
         if start > end:
-            parser.error("End date older than start date.")        
+            parser.error("End date older than start date.")
     except ValueError:
         parser.error("Invalid dates.")
         sys.exit()
