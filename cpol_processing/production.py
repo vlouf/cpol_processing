@@ -75,12 +75,7 @@ def buffer(func):
 
 @buffer
 def process_and_save(
-    radar_file_name: str,
-    outpath: str,
-    sound_dir: str = None,
-    do_dealiasing: bool = True,
-    use_unravel: bool = True,
-    instrument: str = "CPOL",
+    radar_file_name: str, outpath: str, sound_dir: str = None, do_dealiasing: bool = True, instrument: str = "CPOL",
 ) -> None:
     """
     Call processing function and write data.
@@ -96,9 +91,7 @@ def process_and_save(
     instrument: str
         Name of radar (only CPOL will change something).
     do_dealiasing: bool
-        Dealias velocity.
-    use_unravel: bool
-        Use of UNRAVEL for dealiasing the velocity
+        Dealias velocity.    
     """
     today = datetime.datetime.utcnow()
     if instrument == "CPOL":
@@ -117,7 +110,7 @@ def process_and_save(
     # Business start here.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol, use_unravel=use_unravel)
+        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol, do_dealiasing=do_dealiasing)
     # Business over.
 
     if radar is None:
@@ -219,7 +212,7 @@ def process_and_save(
 
 
 def production_line(
-    radar_file_name: str, sound_dir: str, is_cpol: bool = True, do_dealiasing: bool = True, use_unravel: bool = True
+    radar_file_name: str, sound_dir: str, is_cpol: bool = True, do_dealiasing: bool = True
 ) -> pyart.core.radar.Radar:
     """
     Production line for correcting and estimating CPOL data radar parameters.
@@ -236,9 +229,7 @@ def production_line(
     is_cpol: bool
         Name of radar (only CPOL will change something).
     do_dealiasing: bool
-        Dealias velocity.
-    use_unravel: bool
-        Use of UNRAVEL for dealiasing the velocity
+        Dealias velocity.    
 
     Returns:
     ========
