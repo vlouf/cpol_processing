@@ -17,10 +17,9 @@ Codes for estimating various parameters related to Hydrometeors.
     rainfall_rate
 """
 # Other Libraries
-import pyart
 import numpy as np
 
-from csu_radartools import csu_liquid_ice_mass, csu_fhc, csu_blended_rain, csu_dsd
+from csu_radartools import csu_fhc, csu_blended_rain, csu_dsd
 
 
 def dsd_retrieval(radar, gatefilter, kdp_name, zdr_name, refl_name="DBZ_CORR", band="C"):

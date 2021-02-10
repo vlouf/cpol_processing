@@ -14,7 +14,6 @@ Codes for correcting the differential phase and estimating KDP.
     phidp_giangrande
 """
 import pyart
-import scipy
 import numpy as np
 
 from scipy import integrate

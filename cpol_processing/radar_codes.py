@@ -24,14 +24,11 @@ Codes for correcting and estimating various radar and meteorological parameters.
 # Python Standard Library
 import os
 import re
-import glob
-import time
 import fnmatch
 import datetime
 
 # Other Libraries
 import pyart
-import scipy
 import cftime
 import netCDF4
 import numpy as np
