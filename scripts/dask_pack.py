@@ -70,8 +70,8 @@ def main(start, end):
 
         print(f"{len(flist)} files found for " + day.strftime("%Y-%b-%d"))
 
-        for flist_chunk in chunks(flist, 32):
-            bag = db.from_sequence(flist_chunk).starmap(cpol_processing.process_and_save)
+        for chunk in chunks(argslist, 32):
+            bag = db.from_sequence(chunk).starmap(cpol_processing.process_and_save)
             _ = bag.compute()
         
         del bag
