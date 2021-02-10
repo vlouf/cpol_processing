@@ -4,12 +4,11 @@ cpol_processing scripts for missing radar files in Radar archive on NCI.
 @title: cpol_processing
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institution: Bureau of Meteorology
-@date: 27/06/2020
+@date: 10/02/2021
 
 .. autosummary::
     :toctree: generated/
 
-    buffwe
     chunks
     main
 """
@@ -24,29 +23,6 @@ from concurrent.futures import TimeoutError
 from pebble import ProcessPool, ProcessExpired
 
 
-def buffer(infile):
-    """
-    It calls the production line and manages it. Buffer function that is used
-    to catch any problem with the processing line without screwing the whole
-    multiprocessing stuff.
-
-    Parameters:
-    ===========
-    infile: str
-        Name of the input radar file.
-    outpath: str
-        Path for saving output data.
-    """
-    try:
-        cpol_processing.process_and_save(
-            infile, OUTPATH, sound_dir=SOUND_DIR, do_dealiasing=True, use_unravel=True
-        )
-    except Exception:
-        traceback.print_exc()
-
-    return None
-
-
 def chunks(l, n):
     """
     Yield successive n-sized chunks from l.
@@ -56,8 +32,7 @@ def chunks(l, n):
         yield l[i : i + n]
 
 
-def main():
-    year = YEAR
+def main(year):
     flist = glob.glob(os.path.join(INPATH, f"{year}/**/*.nc"))
     outlist = glob.glob(os.path.join(OUTPATH, f"v2020/ppi/{year}/**/*.nc"))
 
@@ -74,9 +49,13 @@ def main():
     for d in datelist:
         inflist.append([f for f in flist if d in f][0])
 
-    for fchunk in chunks(inflist, NCPUS):
+    argslist = []
+    for f in inflist:
+        argslist.append((f, OUTPATH, SOUND_DIR, True, True))
+
+    for fchunk in chunks(argslist, NCPUS):
         with ProcessPool() as pool:
-            future = pool.map(buffer, fchunk, timeout=360)
+            future = pool.starmap(cpol_processing.process_and_save, fchunk, timeout=360)
             iterator = future.result()
 
             while True:
@@ -105,16 +84,10 @@ if __name__ == "__main__":
     parser_description = "Process missing files in archive on NCI."
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument(
-        "-y",
-        "--year",
-        dest="year",
-        default=None,
-        type=int,
-        help="Year for archive.",
-        required=True,
+        "-y", "--year", dest="year", default=None, type=int, help="Year for archive.", required=True,
     )
 
     args = parser.parse_args()
     YEAR = args.year
     NCPUS = 16
-    main()
+    main(YEAR)
