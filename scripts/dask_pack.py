@@ -48,10 +48,6 @@ def welcome_message():
     print(" - Output data directory path is: " + crayons.yellow(OUTPATH))
     print(" - Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
     print(f" - The process will occur between {crayons.yellow(START_DATE)} and {crayons.yellow(END_DATE)}.")
-    if USE_UNRAVEL:
-        print(" - " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
-    else:
-        print(" - " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
     print("\n" + "#" * 79 + "\n")
 
 
@@ -78,7 +74,7 @@ def main(start: datetime.datetime, end: datetime.datetime) -> None:
 
         argslist = []
         for f in flist:
-            argslist.append((f, OUTPATH, SOUND_DIR, DO_DEALIASING, USE_UNRAVEL))
+            argslist.append((f, OUTPATH, SOUND_DIR, DO_DEALIASING))
 
         print(f"{len(flist)} files found for " + day.strftime("%Y-%b-%d"))
 
@@ -109,9 +105,6 @@ calculation, and rainfall rate estimation."""
         "-s", "--start-date", dest="start_date", default=None, type=str, help="Starting date.", required=True
     )
     parser.add_argument("-e", "--end-date", dest="end_date", default=None, type=str, help="Ending date.", required=True)
-    parser.add_argument("--unravel", dest="unravel", action="store_true")
-    parser.add_argument("--no-unravel", dest="unravel", action="store_false")
-    parser.set_defaults(unravel=True)
     parser.add_argument("--dealias", dest="dealias", action="store_true")
     parser.add_argument("--no-dealias", dest="dealias", action="store_false")
     parser.set_defaults(dealias=True)
@@ -119,7 +112,6 @@ calculation, and rainfall rate estimation."""
     args = parser.parse_args()
     START_DATE = args.start_date
     END_DATE = args.end_date
-    USE_UNRAVEL = args.unravel
     DO_DEALIASING = args.dealias
 
     # Check date

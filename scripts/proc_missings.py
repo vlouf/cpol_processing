@@ -63,7 +63,7 @@ def main(year: int) -> None:
 
     argslist = []
     for f in inflist:
-        argslist.append((f, OUTPATH, SOUND_DIR, True, True))
+        argslist.append((f, OUTPATH, SOUND_DIR, True))
 
     for fchunk in chunks(argslist, NCPUS):
         with ProcessPool() as pool:

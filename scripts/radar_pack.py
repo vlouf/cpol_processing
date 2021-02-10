@@ -52,10 +52,7 @@ def main(infile: str) -> None:
     outpath: str
         Path for saving output data.
     """
-    _ = cpol_processing.process_and_save(
-        infile, OUTPATH, sound_dir=SOUND_DIR, do_dealiasing=DO_DEALIASING, use_unravel=USE_UNRAVEL
-    )
-
+    cpol_processing.process_and_save(infile, OUTPATH, sound_dir=SOUND_DIR, do_dealiasing=DO_DEALIASING)
     return None
 
 
@@ -69,11 +66,7 @@ def welcome_message():
     print(" - Input data directory path is: " + crayons.yellow(INPATH))
     print(" - Output data directory path is: " + crayons.yellow(OUTPATH))
     print(" - Radiosounding directory path is: " + crayons.yellow(SOUND_DIR))
-    print(f" - The process will occur between {crayons.yellow(START_DATE)} and {crayons.yellow(END_DATE)}.")
-    if USE_UNRAVEL:
-        print(" - " + crayons.yellow("UNRAVEL") + " will be used as dealiasing algorithm.")
-    else:
-        print(" - " + crayons.yellow("REGION-BASED") + " will be used as dealiasing algorithm.")
+    print(f" - The process will occur between {crayons.yellow(START_DATE)} and {crayons.yellow(END_DATE)}.")    
     print("\n" + "#" * 79 + "\n")
 
 
@@ -95,18 +88,14 @@ calculation, and rainfall rate estimation."""
         "-s", "--start-date", dest="start_date", default=None, type=str, help="Starting date.", required=True
     )
     parser.add_argument("-e", "--end-date", dest="end_date", default=None, type=str, help="Ending date.", required=True)
-    parser.add_argument("-j", "--ncpus", dest="ncpus", default=16, type=int, help="Number of process.")
-    parser.add_argument("--unravel", dest="unravel", action="store_true")
-    parser.add_argument("--no-unravel", dest="unravel", action="store_false")
-    parser.set_defaults(unravel=True)
+    parser.add_argument("-j", "--ncpus", dest="ncpus", default=16, type=int, help="Number of process.")    
     parser.add_argument("--dealias", dest="dealias", action="store_true")
     parser.add_argument("--no-dealias", dest="dealias", action="store_false")
     parser.set_defaults(dealias=True)
 
     args = parser.parse_args()
     START_DATE = args.start_date
-    END_DATE = args.end_date
-    USE_UNRAVEL = args.unravel
+    END_DATE = args.end_date    
     DO_DEALIASING = args.dealias
     NCPUS = args.ncpus
 
