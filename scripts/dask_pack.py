@@ -55,7 +55,19 @@ def welcome_message():
     print("\n" + "#" * 79 + "\n")
 
 
-def main(start, end):
+def main(start: datetime.datetime, end: datetime.datetime) -> None:
+    """
+    It calls the production line and manages it. Buffer function that is used
+    to catch any problem with the processing line without screwing the whole
+    multiprocessing stuff.
+
+    Parameters:
+    ===========
+    start: datetime.datetime
+        First date to process CPOL data
+    end: datetime.datetime
+        End date of processing CPOL data
+    """
     date_range = pd.date_range(start, end)
     for day in date_range:
         input_dir = os.path.join(INPATH, str(day.year), day.strftime("%Y%m%d"), "*.*")

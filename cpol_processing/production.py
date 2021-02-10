@@ -74,7 +74,14 @@ def buffer(func):
 
 
 @buffer
-def process_and_save(radar_file_name, outpath, sound_dir=None, do_dealiasing=True, use_unravel=True, instrument="CPOL"):
+def process_and_save(
+    radar_file_name: str,
+    outpath: str,
+    sound_dir: str = None,
+    do_dealiasing: bool = True,
+    use_unravel: bool = True,
+    instrument: str = "CPOL",
+) -> None:
     """
     Call processing function and write data.
 
@@ -211,7 +218,9 @@ def process_and_save(radar_file_name, outpath, sound_dir=None, do_dealiasing=Tru
     return None
 
 
-def production_line(radar_file_name, sound_dir, is_cpol=True, do_dealiasing=True, use_unravel=True):
+def production_line(
+    radar_file_name: str, sound_dir: str, is_cpol: bool = True, do_dealiasing: bool = True, use_unravel: bool = True
+) -> pyart.core.radar.Radar:
     """
     Production line for correcting and estimating CPOL data radar parameters.
     The naming convention for these parameters is assumed to be DBZ, ZDR, VEL,
@@ -233,7 +242,7 @@ def production_line(radar_file_name, sound_dir, is_cpol=True, do_dealiasing=True
 
     Returns:
     ========
-    radar: Object
+    radar: pyart.core.radar.Radar
         Py-ART radar structure.
 
     PLAN:

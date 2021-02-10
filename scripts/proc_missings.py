@@ -32,7 +32,19 @@ def chunks(l, n):
         yield l[i : i + n]
 
 
-def main(year):
+def main(year: int) -> None:
+    """
+    It calls the production line and manages it. Buffer function that is used
+    to catch any problem with the processing line without screwing the whole
+    multiprocessing stuff.
+
+    Parameters:
+    ===========
+    infile: str
+        Name of the input radar file.
+    outpath: str
+        Path for saving output data.
+    """
     flist = glob.glob(os.path.join(INPATH, f"{year}/**/*.nc"))
     outlist = glob.glob(os.path.join(OUTPATH, f"v2020/ppi/{year}/**/*.nc"))
 

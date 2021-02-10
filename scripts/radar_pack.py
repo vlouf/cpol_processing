@@ -39,7 +39,7 @@ def chunks(l, n):
         yield l[i : i + n]
 
 
-def main(infile):
+def main(infile: str) -> None:
     """
     It calls the production line and manages it. Buffer function that is used
     to catch any problem with the processing line without screwing the whole
