@@ -4,14 +4,15 @@ CPOL Level 1b main production line. These are the drivers function.
 @title: production
 @author: Valentin Louf
 @email: valentin.louf@bom.gov.au
-@copyright: Valentin Louf (2017-2020)
+@copyright: Valentin Louf (2017-2021)
 @institution: Bureau of Meteorology and Monash University
-@date: 17/07/2020
+@date: 10/02/2010
 
 .. autosummary::
     :toctree: generated/
 
     _mkdir
+    buffer
     process_and_save
     production_line
 """
@@ -55,7 +56,25 @@ def _mkdir(dir):
     return None
 
 
-def process_and_save(radar_file_name, outpath, sound_dir=None, instrument="CPOL", do_dealiasing=True, use_unravel=True):
+def buffer(func):
+    """
+    Decorator to catch and kill error message. Almost want to name the function
+    dont_fail.
+    """
+
+    def wrapper(*args, **kwargs):
+        try:
+            rslt = func(*args, **kwargs)
+        except Exception:
+            traceback.print_exc()
+            rslt = None
+        return rslt
+
+    return wrapper
+
+
+@buffer
+def process_and_save(radar_file_name, outpath, sound_dir=None, do_dealiasing=True, use_unravel=True, instrument="CPOL"):
     """
     Call processing function and write data.
 
