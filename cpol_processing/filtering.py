@@ -185,7 +185,7 @@ def get_gatefilter_GMM(
     gf.exclude_equal("CLUS", 2)
     gf.exclude_equal("TPOS", 1)
     gf.exclude_invalid("NPOS")
-    gf = pyart.correct.despeckle_field(radar, "DBZ", gatefilter=gf)
+    gf = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
     # 4)  Removing temp files.
     for k in ["TPOS", "NPOS", "CLUS"]:
