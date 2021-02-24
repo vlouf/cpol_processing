@@ -5,8 +5,8 @@ Gaussian Mixture Models to remove noise and clutter from CPOL data before 2009.
 @title: filtering.py
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 20/11/2017
-@modification: 02/06/2020
+@created: 20/11/2017
+@date: 25/02/2021
 
 .. autosummary::
     :toctree: generated/
@@ -90,7 +90,7 @@ def get_clustering(radar, vel_name="VEL", phidp_name="PHIDP", zdr_name="ZDR"):
     Parameters:
     ===========
     radar:
-        Py-ART radar structure.    
+        Py-ART radar structure.
     vel_name: str
         Velocity field name.
     phidp_name: str
@@ -132,7 +132,9 @@ def get_clustering(radar, vel_name="VEL", phidp_name="PHIDP", zdr_name="ZDR"):
     return cluster
 
 
-def get_gatefilter_GMM(radar, refl_name="DBZ", vel_name="VEL", phidp_name="PHIDP", zdr_name="ZDR"):
+def get_gatefilter_GMM(
+    radar, refl_name: str = "DBZ", vel_name: str = "VEL", phidp_name: str = "PHIDP", zdr_name: str = "ZDR"
+):
     """
     Filtering function adapted to CPOL before 2009 using ML Gaussian Mixture
     Model. Function does 4 things:
@@ -171,9 +173,7 @@ def get_gatefilter_GMM(radar, refl_name="DBZ", vel_name="VEL", phidp_name="PHIDP
     radar.add_field_like(refl_name, "NPOS", refl, replace_existing=True)
 
     # 2) GMM clustering (indpdt from cutoff)
-    cluster = get_clustering(
-        radar, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name
-    )
+    cluster = get_clustering(radar, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name)
     radar.add_field_like(refl_name, "CLUS", cluster, replace_existing=True)
 
     pos = (cluster == 1) & (radar.fields[refl_name]["data"] < 20)
@@ -199,44 +199,42 @@ def get_gatefilter_GMM(radar, refl_name="DBZ", vel_name="VEL", phidp_name="PHIDP
 
 def do_gatefilter_cpol(
     radar,
-    refl_name="DBZ",
-    phidp_name="PHIDP",
-    rhohv_name="RHOHV_CORR",
-    zdr_name="ZDR",
-    snr_name="SNR",
-    vel_name="VEL",
+    refl_name: str = "DBZ",
+    phidp_name: str = "PHIDP",
+    rhohv_name: str = "RHOHV_CORR",
+    zdr_name: str = "ZDR",
+    snr_name: str = "SNR",
+    vel_name: str = "VEL",
 ):
     """
     Filtering function adapted to CPOL.
 
     Parameters:
     ===========
-        radar:
-            Py-ART radar structure.
-        refl_name: str
-            Reflectivity field name.
-        rhohv_name: str
-            Cross correlation ratio field name.
-        ncp_name: str
-            Name of the normalized_coherent_power field.
-        zdr_name: str
-            Name of the differential_reflectivity field.
+    radar:
+        Py-ART radar structure.
+    refl_name: str
+        Reflectivity field name.
+    rhohv_name: str
+        Cross correlation ratio field name.
+    ncp_name: str
+        Name of the normalized_coherent_power field.
+    zdr_name: str
+        Name of the differential_reflectivity field.
 
     Returns:
     ========
-        gf_despeckeld: GateFilter
-            Gate filter (excluding all bad data).
+    gf_despeckeld: GateFilter
+        Gate filter (excluding all bad data).
     """
     radar_start_date = cftime.num2pydate(radar.time["data"][0], radar.time["units"])
 
     if radar_start_date.year < 2009:
-        return get_gatefilter_GMM(
-            radar,
-            refl_name=refl_name,
-            vel_name=vel_name,
-            phidp_name=phidp_name,
-            zdr_name=zdr_name,
+        gf = get_gatefilter_GMM(
+            radar, refl_name=refl_name, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name,
         )
+    else:
+        gf = pyart.filters.GateFilter(radar)
 
     r = radar.range["data"]
     azi = radar.azimuth["data"]
@@ -246,43 +244,39 @@ def do_gatefilter_cpol(
     refl[refl < fcut] = np.NaN
     radar.add_field_like(refl_name, "NDBZ", refl)
 
-    gf = pyart.filters.GateFilter(radar)
     gf.exclude_invalid("NDBZ")
     gf.exclude_below(snr_name, 9)
-
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
 
-    # dphi = texture(radar.fields[phidp_name]['data'])
-    # radar.add_field_like(phidp_name, 'PHITXT', dphi)
-    # gf.exclude_above('PHITXT', 20)
     if radar_start_date.year > 2007:
-        gf.exclude_below(rhohv_name, 0.5)
+        gf.exclude_below(rhohv_name, 0.7)
+    else:
+        rhohv = radar.fields[rhohv_name]["data"]
+        pos = np.zeros_like(rhohv) + 1
+        pos[(R < 75e3) & (rhohv < 0.7)] = 0
+        radar.add_field_like(refl_name, "TMPRH", pos)
+        gf.exclude_equal("TMPRH", 0)
 
     # Remove rings in march 1999.
     if radar_start_date.year == 1999 and radar_start_date.month == 3:
         radar.add_field_like(refl_name, "RRR", R)
         gf.exclude_above("RRR", 140e3)
-        radar.fields.pop("RRR")
 
     gf_despeckeld = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
-    # Remove tmp fields.
-    try:
-        radar.fields.pop("NDBZ")        
-    except Exception:
-        pass
+    # Remove temporary fields.
+    for k in ["NDBZ", "RRR", "TMPRH"]:
+        try:
+            radar.fields.pop(k)
+        except KeyError:
+            pass
 
     return gf_despeckeld
 
 
 def do_gatefilter(
-    radar,
-    refl_name="DBZ",
-    phidp_name="PHIDP",
-    rhohv_name="RHOHV_CORR",
-    zdr_name="ZDR",
-    snr_name="SNR",
+    radar, refl_name="DBZ", phidp_name="PHIDP", rhohv_name="RHOHV_CORR", zdr_name="ZDR", snr_name="SNR",
 ):
     """
     Basic filtering function for dual-polarisation data.
