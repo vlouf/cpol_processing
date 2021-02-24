@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 
 
-def texture(data):
+def texture(data: np.ndarray) -> np.ndarray:
     """
     Compute the texture of data.
     Compute the texture of the data by comparing values with a 3x3 neighborhood
@@ -79,7 +79,7 @@ def texture(data):
     return np.sqrt(num / xa_valid_count)
 
 
-def get_clustering(radar, vel_name="VEL", phidp_name="PHIDP", zdr_name="ZDR"):
+def get_clustering(radar, vel_name: str = "VEL", phidp_name: str = "PHIDP", zdr_name: str = "ZDR"):
     """
     Create cluster using a trained Gaussian Mixture Model (I use scikit-learn)
     to cluster the radar data. Cluster 5 is clutter and 2 is noise. Cluster 1
@@ -161,34 +161,22 @@ def get_gatefilter_GMM(
     gf: GateFilter
         Gate filter (excluding all bad data).
     """
-    print("Using GMM")
-    # 1) Cutoff
-    r = radar.range["data"]
-    azi = radar.azimuth["data"]
-    R, _ = np.meshgrid(r, azi)
-    cutoff = 10 * np.log10(4e-5 * R)
-
-    refl = radar.fields[refl_name]["data"].copy()
-    refl[refl < cutoff] = np.NaN
-    radar.add_field_like(refl_name, "NPOS", refl, replace_existing=True)
-
-    # 2) GMM clustering (indpdt from cutoff)
+    # GMM clustering (indpdt from cutoff)
     cluster = get_clustering(radar, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name)
     radar.add_field_like(refl_name, "CLUS", cluster, replace_existing=True)
 
     pos = (cluster == 1) & (radar.fields[refl_name]["data"] < 20)
     radar.add_field_like(refl_name, "TPOS", pos, replace_existing=True)
 
-    # 3) Using GMM and Cutoff to filter.
+    # Using GMM results to filter.
     gf = pyart.filters.GateFilter(radar)
     gf.exclude_equal("CLUS", 5)
     gf.exclude_equal("CLUS", 2)
     gf.exclude_equal("TPOS", 1)
-    gf.exclude_invalid("NPOS")
     gf = pyart.correct.despeckle_field(radar, refl_name, gatefilter=gf)
 
-    # 4)  Removing temp files.
-    for k in ["TPOS", "NPOS", "CLUS"]:
+    # Removing temp keys.
+    for k in ["TPOS", "CLUS"]:
         try:
             radar.fields.pop(k)
         except KeyError:
@@ -254,7 +242,7 @@ def do_gatefilter_cpol(
     else:
         rhohv = radar.fields[rhohv_name]["data"]
         pos = np.zeros_like(rhohv) + 1
-        pos[(R < 75e3) & (rhohv < 0.7)] = 0
+        pos[(R < 90e3) & (rhohv < 0.7)] = 0
         radar.add_field_like(refl_name, "TMPRH", pos)
         gf.exclude_equal("TMPRH", 0)
 
@@ -276,28 +264,33 @@ def do_gatefilter_cpol(
 
 
 def do_gatefilter(
-    radar, refl_name="DBZ", phidp_name="PHIDP", rhohv_name="RHOHV_CORR", zdr_name="ZDR", snr_name="SNR",
+    radar,
+    refl_name: str = "DBZ",
+    phidp_name: str = "PHIDP",
+    rhohv_name: str = "RHOHV_CORR",
+    zdr_name: str = "ZDR",
+    snr_name: str = "SNR",
 ):
     """
     Basic filtering function for dual-polarisation data.
 
     Parameters:
     ===========
-        radar:
-            Py-ART radar structure.
-        refl_name: str
-            Reflectivity field name.
-        rhohv_name: str
-            Cross correlation ratio field name.
-        ncp_name: str
-            Name of the normalized_coherent_power field.
-        zdr_name: str
-            Name of the differential_reflectivity field.
+    radar:
+        Py-ART radar structure.
+    refl_name: str
+        Reflectivity field name.
+    rhohv_name: str
+        Cross correlation ratio field name.
+    ncp_name: str
+        Name of the normalized_coherent_power field.
+    zdr_name: str
+        Name of the differential_reflectivity field.
 
     Returns:
     ========
-        gf_despeckeld: GateFilter
-            Gate filter (excluding all bad data).
+    gf_despeckeld: GateFilter
+        Gate filter (excluding all bad data).
     """
     # Initialize gatefilter
     gf = pyart.filters.GateFilter(radar)
