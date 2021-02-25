@@ -217,12 +217,12 @@ def do_gatefilter_cpol(
     """
     radar_start_date = cftime.num2pydate(radar.time["data"][0], radar.time["units"])
 
-    if radar_start_date.year < 2009:
-        gf = get_gatefilter_GMM(
-            radar, refl_name=refl_name, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name,
-        )
-    else:
-        gf = pyart.filters.GateFilter(radar)
+    # if radar_start_date.year < 2009:
+    gf = get_gatefilter_GMM(
+        radar, refl_name=refl_name, vel_name=vel_name, phidp_name=phidp_name, zdr_name=zdr_name,
+    )
+    # else:
+    #     gf = pyart.filters.GateFilter(radar)
 
     r = radar.range["data"]
     azi = radar.azimuth["data"]
@@ -237,14 +237,14 @@ def do_gatefilter_cpol(
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
 
-    if radar_start_date.year > 2007:
-        gf.exclude_below(rhohv_name, 0.7)
-    else:
-        rhohv = radar.fields[rhohv_name]["data"]
-        pos = np.zeros_like(rhohv) + 1
-        pos[(R < 90e3) & (rhohv < 0.7)] = 0
-        radar.add_field_like(refl_name, "TMPRH", pos)
-        gf.exclude_equal("TMPRH", 0)
+    # if radar_start_date.year > 2007:
+    #     gf.exclude_below(rhohv_name, 0.7)
+    # else:
+    rhohv = radar.fields[rhohv_name]["data"]
+    pos = np.zeros_like(rhohv) + 1
+    pos[(R < 90e3) & (rhohv < 0.7)] = 0
+    radar.add_field_like(refl_name, "TMPRH", pos)
+    gf.exclude_equal("TMPRH", 0)
 
     # Remove rings in march 1999.
     if radar_start_date.year == 1999 and radar_start_date.month == 3:
