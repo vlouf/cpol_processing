@@ -4,7 +4,7 @@ Codes for correcting and estimating attenuation on ZH and ZDR.
 @title: attenuation
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institutions: Monash University and the Australian Bureau of Meteorology
-@date: 02/06/2020
+@date: 24/02/2021
 
 .. autosummary::
     :toctree: generated/
@@ -12,16 +12,16 @@ Codes for correcting and estimating attenuation on ZH and ZDR.
     correct_attenuation_zdr
     correct_attenuation_zh_pyart
 """
-# Other Libraries
+from typing import Dict
+
 import pyart
 import numpy as np
-
 from scipy.integrate import cumtrapz
 
 
 def correct_attenuation_zdr(
-    radar, gatefilter, zdr_name="ZDR_CORR", phidp_name="PHIDP_VAL", alpha=0.016
-):
+    radar, gatefilter, zdr_name: str = "ZDR_CORR", phidp_name: str = "PHIDP_GG", alpha: float = 0.016
+) -> Dict:
     """
     Correct attenuation on differential reflectivity. KDP_GG has been
     cleaned of noise, that's why we use it.
@@ -36,12 +36,14 @@ def correct_attenuation_zdr(
     ===========
     radar:
         Py-ART radar structure.
+    gatefilter: GateFilter
+        Filter excluding non meteorological echoes.
     zdr_name: str
         Differential reflectivity field name.
-    gatefilter:
-        Filter excluding non meteorological echoes.
-    kdp_name: str
-        KDP field name.
+    phidp_name: str
+        PHIDP field name.
+    alpha: float
+        Z-PHI coefficient.
 
     Returns:
     ========
@@ -51,10 +53,11 @@ def correct_attenuation_zdr(
     zdr = radar.fields[zdr_name]["data"].copy()
     phi = radar.fields[phidp_name]["data"].copy()
 
-    zdr_corr = zdr + 0.016 * phi
+    zdr_corr = zdr + alpha * phi
     zdr_corr[gatefilter.gate_excluded] = np.NaN
     zdr_corr = np.ma.masked_invalid(zdr_corr)
     np.ma.set_fill_value(zdr_corr, np.NaN)
+
     # Z-PHI coefficient from Bringi et al. 2001
     zdr_meta = pyart.config.get_metadata("differential_reflectivity")
     zdr_meta["description"] = "Attenuation corrected differential reflectivity using Bringi et al. 2001."
@@ -66,13 +69,8 @@ def correct_attenuation_zdr(
 
 
 def correct_attenuation_zh_pyart(
-    radar,
-    gatefilter,
-    refl_field="DBZ",
-    ncp_field="NCP",
-    rhv_field="RHOHV_CORR",
-    phidp_field="PHIDP_GG",
-):
+    radar, gatefilter, refl_field: str = "DBZ", rhv_field: str = "RHOHV_CORR", phidp_field: str = "PHIDP_GG",
+) -> np.ndarray:
     """
     Correct attenuation on reflectivity using Py-ART tool. The attenuation from
     atmospheric gases is also corrected.
@@ -85,25 +83,19 @@ def correct_attenuation_zh_pyart(
         Filter excluding non meteorological echoes.
     refl_name: str
         Reflectivity field name.
-    kdp_name: str
-        KDP field name.
+    phidp_name: str
+        PHIDP field name.
+    rhv_field: str
+        RHOHV field name.
 
     Returns:
     ========
-    atten_meta: dict
-        Specific attenuation.
-    zh_corr: array
+    zh_corr: np.ndarray
         Attenuation corrected reflectivity.
     """
     # Compute attenuation
     spec_atten, _ = pyart.correct.calculate_attenuation(
-        radar,
-        0,
-        rhv_min=0.3,
-        refl_field=refl_field,
-        ncp_field=rhv_field,
-        rhv_field=rhv_field,
-        phidp_field=phidp_field,
+        radar, 0, rhv_min=0.3, refl_field=refl_field, ncp_field=rhv_field, rhv_field=rhv_field, phidp_field=phidp_field,
     )
 
     specific_atten = np.ma.masked_invalid(spec_atten["data"])
