@@ -5,7 +5,7 @@ Codes for correcting and estimating various radar and meteorological parameters.
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institutions: Monash University and the Australian Bureau of Meteorology
 @creation: 04/04/2017
-@date: 26/05/2020
+@date: 24/02/2021
 
 .. autosummary::
     :toctree: generated/
@@ -305,29 +305,28 @@ def get_radiosoundings(sound_dir, radar_start_date):
     return sonde_name
 
 
-def read_radar(radar_file_name):
+def read_radar(radar_file_name: str) -> pyart.core.radar.Radar:
     """
     Read the input radar file.
 
     Parameter:
     ==========
-        radar_file_name: str
-            Radar file name.
+    radar_file_name: str
+        Radar file name.
 
     Return:
     =======
-        radar: struct
-            Py-ART radar structure.
+    radar: pyart.core.radar.Radar
+        Py-ART radar structure.
     """
     # Read the input radar file.
     try:
-        if ".h5" in radar_file_name:
-            radar = pyart.aux_io.read_odim_h5(radar_file_name, file_field_names=True)
-        elif ".hdf" in radar_file_name:
+        if radar_file_name.lower().endswith((".h5", ".hdf", ".hdf5")):
             radar = pyart.aux_io.read_odim_h5(radar_file_name, file_field_names=True)
         else:
             radar = pyart.io.read(radar_file_name)
     except Exception:
+        print(f"!!!! Problem with {radar_file_name} !!!!")
         raise
 
     # SEAPOL hack change fields key.
