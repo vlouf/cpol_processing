@@ -73,6 +73,19 @@ def buffer(func):
     return wrapper
 
 
+class Chronos():
+    def __init__(self, messg=None):
+        self.messg = messg
+    def __enter__(self):
+        self.start = time.time()
+    def __exit__(self, ntype, value, traceback):
+        self.time = time.time() - self.start
+        if self.messg is not None:
+            print(f"{self.messg} took {self.time:.2f}s.")
+        else:
+            print(f"Processed in {self.time:.2f}s.")
+
+
 @buffer
 def process_and_save(
     radar_file_name: str, outpath: str, sound_dir: str = None, do_dealiasing: bool = True, instrument: str = "CPOL",
@@ -110,8 +123,9 @@ def process_and_save(
     # Business start here.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol, do_dealiasing=do_dealiasing)
+        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol, do_dealiasing=do_dealiasing)        
     # Business over.
+    gc.collect()
 
     if radar is None:
         print(f"{radar_file_name} has not been processed. Check logs.")
@@ -201,12 +215,12 @@ def process_and_save(
         radar.metadata = metadata
 
     # Write results
-    pyart.io.write_cfradial(outfilename, radar, format="NETCDF4")
+    with Chronos(f"Writing {outfilename}"):
+        pyart.io.write_cfradial(outfilename, radar, format="NETCDF4")
     print("%s processed in  %0.2fs." % (os.path.basename(radar_file_name), (time.time() - tick)))
 
     # Free memory
     del radar
-    gc.collect()
 
     return None
 
@@ -403,20 +417,22 @@ def production_line(
         ncp["data"][gatefilter.gate_included] = 1
         radar.add_field("NCP", ncp)
 
-    phidp, kdp = phase.phidp_giangrande(radar, gatefilter)
-    radar.add_field("PHIDP_VAL", phidp)
-    radar.add_field("KDP_VAL", kdp)
-    kdp_field_name = "KDP_VAL"
-    phidp_field_name = "PHIDP_VAL"
+    with Chronos("PHIDP"):
+        phidp, kdp = phase.phidp_giangrande(radar, gatefilter)
+        radar.add_field("PHIDP_VAL", phidp)
+        radar.add_field("KDP_VAL", kdp)
+        kdp_field_name = "KDP_VAL"
+        phidp_field_name = "PHIDP_VAL"
 
     # Unfold VELOCITY
     if do_dealiasing:
-        if not vel_missing:
-            if is_cpol:
-                vdop_unfold = velocity.unravel(radar, gatefilter, nyquist=13.3)
-            else:
-                vdop_unfold = velocity.unravel(radar, gatefilter)
-            radar.add_field("VEL_UNFOLDED", vdop_unfold, replace_existing=True)
+        with Chronos("Dealiasing"):
+            if not vel_missing:
+                if is_cpol:
+                    vdop_unfold = velocity.unravel(radar, gatefilter, nyquist=13.3)
+                else:
+                    vdop_unfold = velocity.unravel(radar, gatefilter)
+                radar.add_field("VEL_UNFOLDED", vdop_unfold, replace_existing=True)
 
     # Correct attenuation ZH and ZDR and hardcode gatefilter
     zh_corr = attenuation.correct_attenuation_zh_pyart(radar, gatefilter, phidp_field=phidp_field_name)
