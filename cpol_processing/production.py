@@ -6,7 +6,7 @@ CPOL Level 1b main production line. These are the drivers function.
 @email: valentin.louf@bom.gov.au
 @copyright: Valentin Louf (2017-2021)
 @institution: Bureau of Meteorology and Monash University
-@date: 10/02/2010
+@date: 25/03/2021
 
 .. autosummary::
     :toctree: generated/
@@ -91,7 +91,7 @@ def process_and_save(
     instrument: str
         Name of radar (only CPOL will change something).
     do_dealiasing: bool
-        Dealias velocity.    
+        Dealias velocity.
     """
     today = datetime.datetime.utcnow()
     if instrument == "CPOL":
@@ -154,9 +154,9 @@ def process_and_save(
             "Conventions": "CF-1.6, ACDD-1.3",
             "acknowledgement": "This work has been supported by the U.S. Department of Energy Atmospheric Systems Research Program through the grant DE-SC0014063. Data may be freely distributed.",
             "country": "Australia",
-            "creator_email": "valentin.louf@bom.gov.au",
-            "creator_name": "Valentin Louf",
-            "creator_url": "github.com/vlouf",
+            "creator_email": "CPOL-support@bom.gov.au",
+            "creator_name": "Commonwealth of Australia, Bureau of Meteorology, Science and Innovation, Research, Weather and Environmental Prediction, Radar Science and Nowcasting",
+            "creator_url": "http://www.bom.gov.au/australia/radar/",
             "date_created": today.isoformat(),
             "geospatial_bounds": f"POLYGON(({minlon:0.6} {minlat:0.6},{minlon:0.6} {maxlat:0.6},{maxlon:0.6} {maxlat:0.6},{maxlon:0.6} {minlat:0.6},{minlon:0.6} {minlat:0.6}))",
             "geospatial_lat_max": f"{maxlat:0.6}",
@@ -173,7 +173,7 @@ def process_and_save(
             "instrument_type": "radar",
             "keywords": "radar, tropics, Doppler, dual-polarization",
             "license": "CC BY-NC-SA 4.0",
-            "naming_authority": "au.org.nci",
+            "naming_authority": "au.gov.bom",
             "origin_altitude": origin_altitude,
             "origin_latitude": origin_latitude,
             "origin_longitude": origin_longitude,
@@ -229,7 +229,7 @@ def production_line(
     is_cpol: bool
         Name of radar (only CPOL will change something).
     do_dealiasing: bool
-        Dealias velocity.    
+        Dealias velocity.
 
     Returns:
     ========
