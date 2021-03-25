@@ -422,7 +422,7 @@ def production_line(
     zh_corr = attenuation.correct_attenuation_zh_pyart(radar, gatefilter, phidp_field=phidp_field_name)
     radar.add_field_like("DBZ", "DBZ_CORR", zh_corr)
 
-    zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter)
+    zdr_corr = attenuation.correct_attenuation_zdr(radar, gatefilter, phidp_name=phidp_field_name)
     radar.add_field("ZDR_CORR_ATTEN", zdr_corr)
 
     # Hydrometeors classification
