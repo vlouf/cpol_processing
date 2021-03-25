@@ -15,6 +15,7 @@ cpol_processing scripts for missing radar files in Radar archive on NCI.
 import os
 import glob
 import traceback
+from typing import Iterable, Any
 
 import cpol_processing
 
@@ -22,7 +23,7 @@ from concurrent.futures import TimeoutError
 from pebble import ProcessPool, ProcessExpired
 
 
-def chunks(l, n):
+def chunks(l: Any, n: int) -> Iterable[Any]:
     """
     Yield successive n-sized chunks from l.
     From http://stackoverflow.com/a/312464
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     """
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
     OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/v2020/"
-    SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"    
+    SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
     NCPUS = 16
     for YEAR in range(2009, 2018):
         main(YEAR)
