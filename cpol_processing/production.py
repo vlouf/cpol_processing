@@ -417,7 +417,7 @@ def production_line(
         ncp["data"][gatefilter.gate_included] = 1
         radar.add_field("NCP", ncp)
 
-    with Chronos("PHIDP"):
+    with Chronos(f"PHIDP for {os.path.basename(radar_file_name)}"):
         phidp, kdp = phase.phidp_giangrande(radar, gatefilter)
         radar.add_field("PHIDP_VAL", phidp)
         radar.add_field("KDP_VAL", kdp)
@@ -426,7 +426,7 @@ def production_line(
 
     # Unfold VELOCITY
     if do_dealiasing:
-        with Chronos("Dealiasing"):
+        with Chronos(f"UNRAVEL for {os.path.basename(radar_file_name)}"):
             if not vel_missing:
                 if is_cpol:
                     vdop_unfold = velocity.unravel(radar, gatefilter, nyquist=13.3)
