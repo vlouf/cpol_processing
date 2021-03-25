@@ -4,7 +4,7 @@ cpol_processing scripts for missing radar files in Radar archive on NCI.
 @title: cpol_processing
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institution: Bureau of Meteorology
-@date: 10/02/2021
+@date: 26/03/2021
 
 .. autosummary::
     :toctree: generated/
@@ -14,7 +14,6 @@ cpol_processing scripts for missing radar files in Radar archive on NCI.
 """
 import os
 import glob
-import argparse
 import traceback
 
 import cpol_processing
@@ -46,14 +45,14 @@ def main(year: int) -> None:
         Path for saving output data.
     """
     flist = glob.glob(os.path.join(INPATH, f"{year}/**/*.nc"))
-    outlist = glob.glob(os.path.join(OUTPATH, f"v2020/ppi/{year}/**/*.nc"))
+    outlist = glob.glob(os.path.join(OUTPATH, f"v2021/ppi/{year}/**/*.nc"))
 
     oset = set([f[-18:-3] for f in outlist])
     iset = set([f[-18:-3] for f in flist])
     datelist = [*oset ^ iset]
 
     if len(datelist) == 0:
-        print("No file to process.")
+        print(f"No file to process for {YEAR}.")
         return None
     print(f"{year}: {len(datelist)} files to process.")
 
@@ -91,15 +90,7 @@ if __name__ == "__main__":
     """
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
     OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/v2020/"
-    SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
-
-    parser_description = "Process missing files in archive on NCI."
-    parser = argparse.ArgumentParser(description=parser_description)
-    parser.add_argument(
-        "-y", "--year", dest="year", default=None, type=int, help="Year for archive.", required=True,
-    )
-
-    args = parser.parse_args()
-    YEAR = args.year
+    SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"    
     NCPUS = 16
-    main(YEAR)
+    for YEAR in range(2009, 2018):
+        main(YEAR)
