@@ -349,10 +349,6 @@ def production_line(
     radar_start_date = cftime.num2pydate(radar.time["data"][0], radar.time["units"])
     radar.time["units"] = radar.time["units"].replace("since", "since ")
 
-    # Get radiosoundings:
-    if sound_dir is not None:
-        radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)
-
     # Correct Doppler velocity units.
     try:
         radar.fields["VEL"]["units"] = "m s-1"
@@ -376,6 +372,7 @@ def production_line(
     # Compute SNR and extract radiosounding temperature.
     # Requires radiosoundings
     if sound_dir is not None:
+        radiosonde_fname = radar_codes.get_radiosoundings(sound_dir, radar_start_date)
         try:
             height, temperature, snr = radar_codes.snr_and_sounding(radar, radiosonde_fname)
             radar.add_field("temperature", temperature, replace_existing=True)
