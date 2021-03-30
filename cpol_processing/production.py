@@ -6,7 +6,7 @@ CPOL Level 1b main production line. These are the drivers function.
 @email: valentin.louf@bom.gov.au
 @copyright: Valentin Louf (2017-2021)
 @institution: Bureau of Meteorology and Monash University
-@date: 25/03/2021
+@date: 30/03/2021
 
 .. autosummary::
     :toctree: generated/
@@ -123,7 +123,7 @@ def process_and_save(
     # Business start here.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol, do_dealiasing=do_dealiasing)        
+        radar = production_line(radar_file_name, sound_dir, is_cpol=is_cpol, do_dealiasing=do_dealiasing)
     # Business over.
     gc.collect()
 
@@ -318,6 +318,10 @@ def production_line(
         radar = pyart.io.read(radar_file_name)
     else:
         radar = radar_codes.read_radar(radar_file_name)
+
+    pos = radar.range['data'] < 3e3
+    for k in radar.fields.keys():
+        radar.fields[k]['data'][:, pos] = np.NaN
 
     # Correct data type manually
     try:
