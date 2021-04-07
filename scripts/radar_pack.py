@@ -6,7 +6,7 @@ Tested on CPOL.
 @title: cpol_processing
 @author: Valentin Louf <valentin.louf@bom.gov.au>
 @institution: Monash University
-@date: 10/02/2021
+@date: 08/04/2021
 @version: 2.6
 
 .. autosummary::
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     """
     # Main global variables (Path directories).
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
-    OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/v2020/"
+    OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/"
     SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
 
     # Parse arguments

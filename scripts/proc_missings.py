@@ -32,6 +32,11 @@ def chunks(l: Any, n: int) -> Iterable[Any]:
         yield l[i : i + n]
 
 
+def buffer(infile):
+    cpol_processing.process_and_save(infile, OUTPATH, SOUND_DIR, True)
+    return None
+
+
 def main(year: int) -> None:
     """
     It calls the production line and manages it. Buffer function that is used
@@ -61,13 +66,9 @@ def main(year: int) -> None:
     for d in datelist:
         inflist.append([f for f in flist if d in f][0])
 
-    argslist = []
-    for f in inflist:
-        argslist.append((f, OUTPATH, SOUND_DIR, True))
-
-    for fchunk in chunks(argslist, NCPUS):
+    for fchunk in chunks(inflist, NCPUS):
         with ProcessPool() as pool:
-            future = pool.starmap(cpol_processing.process_and_save, fchunk, timeout=360)
+            future = pool.map(buffer, fchunk, timeout=360)
             iterator = future.result()
 
             while True:
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     Global variables definition.
     """
     INPATH = "/g/data/hj10/admin/cpol_level_1a/v2019/ppi/"
-    OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/v2020/"
+    OUTPATH = "/scratch/kl02/vhl548/cpol_level_1b/"
     SOUND_DIR = "/g/data/kl02/vhl548/darwin_ancillary/DARWIN_radiosonde"
     NCPUS = 16
     for YEAR in range(2009, 2018):
