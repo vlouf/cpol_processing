@@ -227,12 +227,12 @@ def do_gatefilter_cpol(
     r = radar.range["data"]
     azi = radar.azimuth["data"]
     R, _ = np.meshgrid(r, azi)
-    refl = radar.fields[refl_name]["data"].copy()
-    fcut = 10 * np.log10(4e-5 * R)
-    refl[refl < fcut] = np.NaN
-    radar.add_field_like(refl_name, "NDBZ", refl)
+    # refl = radar.fields[refl_name]["data"].copy()
+    # fcut = 10 * np.log10(4e-5 * R)
+    # refl[refl < fcut] = np.NaN
+    # radar.add_field_like(refl_name, "NDBZ", refl)
 
-    gf.exclude_invalid("NDBZ")
+    # gf.exclude_invalid("NDBZ")
     gf.exclude_below(snr_name, 9)
     gf.exclude_outside(zdr_name, -3.0, 7.0)
     gf.exclude_outside(refl_name, -20.0, 80.0)
