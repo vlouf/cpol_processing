@@ -21,6 +21,8 @@ jobs:
       run: |
         pylint `ls -R|grep .py$|xargs`
     - name: Analysing the code with black
+      run: |
         black -l 120 .
     - name: Analysing the code with isort
+      run: |
        isort . --check-only --profile black
