@@ -23,4 +23,4 @@ jobs:
     - name: Analysing the code with black
         black -l 120 .
     - name: Analysing the code with isort
-      isort . --check-only --profile black
+       isort . --check-only --profile black
